@@ -1,0 +1,13 @@
+{
+    "Lua.diagnostics.disable": [
+        "unused-local",
+        "undefined-global",
+        "duplicate-index",
+        "set-for-state",
+        "redundant-parameter",
+        "lowercase-global"
+    ],
+    "Lua.diagnostics.globals": [
+        "tblLogistic"
+    ]
+}

@@ -1,0 +1,14 @@
+Ciao a tutti,
+Questo è un video introduttivo di DSMC in cui cercherò di spiegarvi in poche parole cos'è e come funziona questa mod
+
+in questo video presento DSMC, una mod per DCS World
+che consente di salvare lo scenario durante la missione, 
+in qualsiasi momento, permettendo di dare persistenza 
+alle vostre attività o ad una campagna
+
+Questo video è la versione italiana del video originale,
+quindi i testi nelle slide seguenti sono in inglese, ma cercheremo di farla breve 
+e passare subito all'azione e farvi vedere come funziona
+
+l'obiettivo del video è sostanzialmente spiegare cos'è DSMC
+e spiegare in minimi termini come usarlo
