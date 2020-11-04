@@ -33,7 +33,7 @@ local VersionAMVI   = false
  ]]
 
 TRPS = {} -- DONT REMOVE!
-local _debugMode = true
+local _debugMode = false
 
 -- ************************************************************************
 -- *********************  USER CONFIGURATION ******************************
@@ -70,7 +70,7 @@ if VersionAMVI == true then
     TRPS.enableCrates = true
     TRPS.unpackRestriction = true
     TRPS.forceCrateToBeMoved = true
-    TRPS.allowPlatoons = false
+    TRPS.allowPlatoons = true
     TRPS.UnitNumLimits = false
     TRPS.slingLoad = true
     TRPS.enableCrates = true
@@ -31176,8 +31176,8 @@ TRPS.JTAC_lock = "all" -- "vehicle" OR "troop" OR "all" forces JTAC to only lock
 --------------- CUSTOM DSMC Code // MIST DEPENDANCIES ---------------
 
 -- from mist cloned functions
-TRPS.nextGroupId 		    = DSMC_baseGcounter or 57000
-TRPS.nextUnitId 		    = DSMC_baseUcounter or 67000
+local trpsGpId 				= DSMC_baseGcounter or 57000
+local trpsUnitId 			= DSMC_baseUcounter or 67000
 local trpsDynAddIndex 		= {[' air '] = 0, [' hel '] = 0, [' gnd '] = 0, [' bld '] = 0, [' static '] = 0, [' shp '] = 0}
 local trpsAddedObjects 		= {}  -- da mist
 local trpsAddedGroups 		= {}  -- da mist
@@ -31420,7 +31420,8 @@ function TRPS.dynAdd(newGroup)
 	end
 	if newGroup.clone or not newGroup.groupId then
 		trpsDynAddIndex[typeName] = trpsDynAddIndex[typeName] + 1
-		newGroup.groupId = TRPS.getNextGroupId()
+		trpsGpId = trpsGpId + 1         -- DSMC
+		newGroup.groupId = trpsGpId     -- DSMC
     end    
 	if newGroup.groupName or newGroup.name then
 		if newGroup.groupName then
@@ -31453,7 +31454,8 @@ function TRPS.dynAdd(newGroup)
     for unitIndex, unitData in pairs(newGroup.units) do
         local originalName = newGroup.units[unitIndex].unitName or newGroup.units[unitIndex].name
         if newGroup.clone or not unitData.unitId then
-            newGroup.units[unitIndex].unitId = TRPS.getNextUnitId()   -- DSMC
+            trpsUnitId = trpsUnitId + 1                     -- DSMC
+            newGroup.units[unitIndex].unitId = trpsUnitId   -- DSMC
         end
         if newGroup.units[unitIndex].unitName or newGroup.units[unitIndex].name then
             if newGroup.units[unitIndex].unitName then
@@ -31505,6 +31507,61 @@ function TRPS.dynAdd(newGroup)
         trpsAddedObjects[#trpsAddedObjects + 1] = TRPS.deepCopy(newGroup.units[unitIndex])
     end
 
+
+    --[[ OLD
+	for unitIndex, unitData in pairs(newGroup.units) do
+		local originalName = newGroup.units[unitIndex].unitName or newGroup.units[unitIndex].name
+		if newGroup.clone or not unitData.unitId then
+			trpsUnitId = trpsUnitId + 1
+			newGroup.units[unitIndex].unitId = trpsUnitId
+		end
+		if newGroup.units[unitIndex].unitName or newGroup.units[unitIndex].name then
+			if newGroup.units[unitIndex].unitName then
+				newGroup.units[unitIndex].name = newGroup.units[unitIndex].unitName
+			elseif newGroup.units[unitIndex].name then
+				newGroup.units[unitIndex].name = newGroup.units[unitIndex].name
+			end
+		end
+		if newGroup.clone or not unitData.name then
+			newGroup.units[unitIndex].name = tostring(newGroup.name .. ' unit' .. unitIndex)
+		end
+
+		if not unitData.skill then
+			newGroup.units[unitIndex].skill = 'Random'
+		end
+
+		if not unitData.alt then
+			if newCat == 'AIRPLANE' then
+				newGroup.units[unitIndex].alt = 2000
+				newGroup.units[unitIndex].alt_type = 'RADIO'
+				newGroup.units[unitIndex].speed = 150
+			elseif newCat == 'HELICOPTER' then
+				newGroup.units[unitIndex].alt = 500
+				newGroup.units[unitIndex].alt_type = 'RADIO'
+				newGroup.units[unitIndex].speed = 60
+			end
+
+
+		end
+
+		if newCat == 'AIRPLANE' or newCat == 'HELICOPTER' then
+			if newGroup.units[unitIndex].alt_type and newGroup.units[unitIndex].alt_type ~= 'BARO' or not newGroup.units[unitIndex].alt_type then
+				newGroup.units[unitIndex].alt_type = 'RADIO'
+			end
+			if not unitData.speed then
+				if newCat == 'AIRPLANE' then
+					newGroup.units[unitIndex].speed = 150
+				elseif newCat == 'HELICOPTER' then
+					newGroup.units[unitIndex].speed = 60
+				end
+			end
+			if not unitData.payload then
+				newGroup.units[unitIndex].payload = TRPS.getPayload(originalName)
+			end
+		end
+		trpsAddedObjects[#trpsAddedObjects + 1] = TRPS.deepCopy(newGroup.units[unitIndex])
+    end
+    --]]--
 	trpsAddedGroups[#trpsAddedGroups + 1] = TRPS.deepCopy(newGroup)
 	if newGroup.route and not newGroup.route.points then
 		if not newGroup.route.points and newGroup.route[1] then
@@ -31572,11 +31629,13 @@ function TRPS.dynAddStatic(newObj)
     end
 
 	if newObj.clone or not newObj.groupId then
-		newObj.groupId = TRPS.getNextGroupId()
+		trpsGpId = trpsGpId + 1
+		newObj.groupId = trpsGpId
     end
  
 	if newObj.clone or not newObj.unitId then -- 2
-		newObj.unitId = TRPS.getNextUnitId()
+		trpsUnitId = trpsUnitId + 1
+		newObj.unitId = trpsUnitId
 	end
 
    -- newObj.name = newObj.unitName
@@ -32273,7 +32332,6 @@ TRPS.logisticUnits = {
     "logistic10",
 }
 
-TRPS.factoryObjects = {}
 
 TRPS.warehouseObjects = {
 }
@@ -32379,7 +32437,7 @@ TRPS.loadableGroups = {
 TRPS.spawnableCrates = {
     -- name of the sub menu on F10 for spawning crates
     ["Structures (FOB)"] = {
-        { weight = 800, desc = "FOB Crate - Small", unit = "FOB-SMALL"}, -- Builds a FOB! - requires 3 * TRPS.cratesRequiredForFOB
+        { weight = 800, desc = "FOB Crate - Small", unit = "FOB-SMALL" }, -- Builds a FOB! - requires 3 * TRPS.cratesRequiredForFOB
     },    
     ["Support (Refuel, Rearm, JTAC)"] = {
         { weight = 280, desc = "FARP SKP Command", unit = "SKP-11", side = 1},
@@ -32491,145 +32549,131 @@ TRPS.platoonCrates = {
 }
 
 --platoon table constructor
-function TRPS.enablePlatoons()
-    env.info(ModuleName .. " enablePlatoons: factoryok " .. tostring(TRPS.factoryok))	
-    if TRPS.allowPlatoons and TRPS.factoryok == true then
-        local function builtPltTable()
-            TRPS.platoonCrates = {}
-            local cDataside = nil
-            local curWeight = 600
-            local missionYear = tonumber(env.mission.date.Year)
-            local beforeMissionYear = missionYear - TRPS.datespan
-            --env.info(ModuleName .. " builtPltTable x1")
-            for _coalitionName, _coalitionData in pairs(env.mission.coalition) do
-                if (_coalitionName == 'red' or _coalitionName == 'blue')
-                        and type(_coalitionData) == 'table' then
-                    if _coalitionName == 'red' then
-                        Cside = 1
-                    elseif _coalitionName == 'blue' then
-                        Cside = 2
-                    end
+if TRPS.allowPlatoons then
+    function TRPS.builtPltTable()
+        TRPS.platoonCrates = {}
+        local cDataside = nil
+        local curWeight = 600
+        local missionYear = tonumber(env.mission.date.Year)
+        local beforeMissionYear = missionYear - TRPS.datespan
+        --env.info(ModuleName .. " builtPltTable x1")
+        for _coalitionName, _coalitionData in pairs(env.mission.coalition) do
+            if (_coalitionName == 'red' or _coalitionName == 'blue')
+                    and type(_coalitionData) == 'table' then
+                if _coalitionName == 'red' then
+                    Cside = 1
+                elseif _coalitionName == 'blue' then
+                    Cside = 2
+                end
 
-                    --env.info(ModuleName .. " builtPltTable Cside: " .. tostring(Cside))
+                --env.info(ModuleName .. " builtPltTable Cside: " .. tostring(Cside))
 
-                    if _coalitionData.country then --there is a country table
-                        for _, _countryData in pairs(_coalitionData.country) do
-                            if type(_countryData) == 'table' then
-                                if _countryData.helicopter or _countryData.plane or _countryData.static or _countryData.vehicle then
-                                    local _ctryName = _countryData.name 
-                                    --env.info(ModuleName .. " builtPltTable _ctryName: " .. tostring(_ctryName))
-                                    for wId, wData in pairs(TRPS.dbYears) do
-                                        local wDesc = Unit.getDescByName(wId)
-                                        if wDesc then
-                                            --env.info(ModuleName .. " builtPltTable wDesc: " .. tostring(wDesc))
-                                            if wDesc.attributes then
-                                                --env.info(ModuleName .. " builtPltTable wDesc.attributes: " .. tostring(wDesc))
-                                                if wDesc.attributes["Tanks"] then
-                                                    for countryId, countryData in pairs(wData) do
-                                                        if string.lower(_ctryName) == string.lower(countryId) then
-                                                            local yearEntryService = countryData.yStart
-                                                            if yearEntryService <= missionYear and yearEntryService >= beforeMissionYear then
-                                                                curWeight = curWeight + 1
-                                                                local string = "MBT" .. " " .. wId .. " platoon"
-                                                                local unitNum = 3
-                                                                local value = math.floor(wDesc.life/3 * unitNum / TRPS.crateReductionFactor/3)+1
-                                                                --env.info(ModuleName .. " builtPltTable value: " .. tostring(value))
-                                                                TRPS.platoonCrates[#TRPS.platoonCrates+1] = { weight = curWeight, desc = string, unit = wId, side = Cside, cratesRequired = value, quantity = unitNum, movers = true, class = "Artillery", country = _ctryName, factory = true}
-                                                            end
+                if _coalitionData.country then --there is a country table
+                    for _, _countryData in pairs(_coalitionData.country) do
+                        if type(_countryData) == 'table' then
+                            if _countryData.helicopter or _countryData.plane or _countryData.static or _countryData.vehicle then
+                                local _ctryName = _countryData.name 
+                                --env.info(ModuleName .. " builtPltTable _ctryName: " .. tostring(_ctryName))
+                                for wId, wData in pairs(TRPS.dbYears) do
+                                    local wDesc = Unit.getDescByName(wId)
+                                    if wDesc then
+                                        --env.info(ModuleName .. " builtPltTable wDesc: " .. tostring(wDesc))
+                                        if wDesc.attributes then
+                                            --env.info(ModuleName .. " builtPltTable wDesc.attributes: " .. tostring(wDesc))
+                                            if wDesc.attributes["Tanks"] then
+                                                for countryId, countryData in pairs(wData) do
+                                                    if string.lower(_ctryName) == string.lower(countryId) then
+                                                        local yearEntryService = countryData.yStart
+                                                        if yearEntryService <= missionYear and yearEntryService >= beforeMissionYear then
+                                                            curWeight = curWeight + 1
+                                                            local string = "MBT" .. " " .. wId .. " platoon"
+                                                            local unitNum = 3
+                                                            local value = math.floor(wDesc.life/3 * unitNum / TRPS.crateReductionFactor/3)+1
+                                                            --env.info(ModuleName .. " builtPltTable value: " .. tostring(value))
+                                                            TRPS.platoonCrates[#TRPS.platoonCrates+1] = { weight = curWeight, desc = string, unit = wId, side = Cside, cratesRequired = value, quantity = unitNum, movers = true, class = "Artillery", country = _ctryName}
                                                         end
                                                     end
-
-
-                                                elseif wDesc.attributes["APC"] then
-                                                    --env.info(ModuleName .. " builtPltTable wDesc.attributes APC")
-                                                    for countryId, countryData in pairs(wData) do
-                                                        if string.lower(_ctryName) == string.lower(countryId) then
-                                                            local yearEntryService = countryData.yStart
-                                                            if yearEntryService <= missionYear and yearEntryService >= beforeMissionYear then
-                                                                curWeight = curWeight + 1
-                                                                local string = "APC" .. " " .. wId .. " platoon"
-                                                                local unitNum = 3
-                                                                local value = math.floor(wDesc.life * unitNum / TRPS.crateReductionFactor)+1
-                                                                --env.info(ModuleName .. " builtPltTable value: " .. tostring(value))
-                                                                TRPS.platoonCrates[#TRPS.platoonCrates+1] = { weight = curWeight, desc = string, unit = wId, side = Cside, cratesRequired = value, quantity = unitNum, movers = true, class = "APC", country = _ctryName, factory = true}
-                                                            end
-                                                        end
-                                                    end
-
-                                                elseif wDesc.attributes["IFV"] then
-                                                    for countryId, countryData in pairs(wData) do
-                                                        if string.lower(_ctryName) == string.lower(countryId) then
-                                                            local yearEntryService = countryData.yStart
-                                                            if yearEntryService <= missionYear and yearEntryService >= beforeMissionYear then
-                                                                curWeight = curWeight + 1
-                                                                local string = "IFV" .. " " .. wId .. " platoon"
-                                                                local unitNum = 3
-                                                                local value = math.floor(wDesc.life * unitNum / TRPS.crateReductionFactor)+1
-                                                                --env.info(ModuleName .. " builtPltTable value: " .. tostring(value))
-                                                                TRPS.platoonCrates[#TRPS.platoonCrates+1] = { weight = curWeight, desc = string, unit = wId, side = Cside, cratesRequired = value, quantity = unitNum, movers = true, class = "IFV", country = _ctryName, factory = true}
-                                                            end
-                                                        end
-                                                    end                                  
-
-                                                elseif wDesc.attributes["Artillery"] then
-                                                    for countryId, countryData in pairs(wData) do
-                                                        if string.lower(_ctryName) == string.lower(countryId) then
-                                                            local yearEntryService = countryData.yStart
-                                                            if yearEntryService <= missionYear and yearEntryService >= beforeMissionYear then
-                                                                curWeight = curWeight + 1
-                                                                local string = "ARTY" .. " " .. wId .. " platoon"
-                                                                local unitNum = 3
-                                                                local value = math.floor(wDesc.life * unitNum / TRPS.crateReductionFactor)+1
-                                                                --env.info(ModuleName .. " builtPltTable value: " .. tostring(value))
-                                                                TRPS.platoonCrates[#TRPS.platoonCrates+1] = { weight = curWeight, desc = string, unit = wId, side = Cside, cratesRequired = value, quantity = unitNum, movers = true, class = "Artillery", country = _ctryName, factory = true}
-                                                            end
-                                                        end
-                                                    end
-
-
-
-                                                elseif wDesc.attributes["Air Defence vehicles"] then
-                                                    for countryId, countryData in pairs(wData) do
-                                                        if string.lower(_ctryName) == string.lower(countryId) then
-                                                            local yearEntryService = countryData.yStart
-                                                            if yearEntryService <= missionYear and yearEntryService >= beforeMissionYear then
-                                                                curWeight = curWeight + 1
-                                                                local string = "ADS" .. " " .. wId .. " platoon"
-                                                                local unitNum = 3
-                                                                local value = math.floor(wDesc.life * unitNum / TRPS.crateReductionFactor)+1
-                                                                --env.info(ModuleName .. " builtPltTable value: " .. tostring(value))
-                                                                TRPS.platoonCrates[#TRPS.platoonCrates+1] = { weight = curWeight, desc = string, unit = wId, side = Cside, cratesRequired = value, quantity = unitNum, movers = true, class = "Air Defence vehicles", country = _ctryName, factory = true}
-                                                            end
-                                                        end
-                                                    end
-
                                                 end
-                                            end
-                                        else
-                                            env.info(ModuleName .. " builtPltTable, wDesc not available for: " .. tostring(wId))
-                                        end
-                                    end
 
+
+                                            elseif wDesc.attributes["APC"] then
+                                                --env.info(ModuleName .. " builtPltTable wDesc.attributes APC")
+                                                for countryId, countryData in pairs(wData) do
+                                                    if string.lower(_ctryName) == string.lower(countryId) then
+                                                        local yearEntryService = countryData.yStart
+                                                        if yearEntryService <= missionYear and yearEntryService >= beforeMissionYear then
+                                                            curWeight = curWeight + 1
+                                                            local string = "APC" .. " " .. wId .. " platoon"
+                                                            local unitNum = 3
+                                                            local value = math.floor(wDesc.life * unitNum / TRPS.crateReductionFactor)+1
+                                                            --env.info(ModuleName .. " builtPltTable value: " .. tostring(value))
+                                                            TRPS.platoonCrates[#TRPS.platoonCrates+1] = { weight = curWeight, desc = string, unit = wId, side = Cside, cratesRequired = value, quantity = unitNum, movers = true, class = "APC", country = _ctryName}
+                                                        end
+                                                    end
+                                                end
+
+                                            elseif wDesc.attributes["IFV"] then
+                                                for countryId, countryData in pairs(wData) do
+                                                    if string.lower(_ctryName) == string.lower(countryId) then
+                                                        local yearEntryService = countryData.yStart
+                                                        if yearEntryService <= missionYear and yearEntryService >= beforeMissionYear then
+                                                            curWeight = curWeight + 1
+                                                            local string = "IFV" .. " " .. wId .. " platoon"
+                                                            local unitNum = 3
+                                                            local value = math.floor(wDesc.life * unitNum / TRPS.crateReductionFactor)+1
+                                                            --env.info(ModuleName .. " builtPltTable value: " .. tostring(value))
+                                                            TRPS.platoonCrates[#TRPS.platoonCrates+1] = { weight = curWeight, desc = string, unit = wId, side = Cside, cratesRequired = value, quantity = unitNum, movers = true, class = "IFV", country = _ctryName}
+                                                        end
+                                                    end
+                                                end                                  
+
+                                            elseif wDesc.attributes["Artillery"] then
+                                                for countryId, countryData in pairs(wData) do
+                                                    if string.lower(_ctryName) == string.lower(countryId) then
+                                                        local yearEntryService = countryData.yStart
+                                                        if yearEntryService <= missionYear and yearEntryService >= beforeMissionYear then
+                                                            curWeight = curWeight + 1
+                                                            local string = "ARTY" .. " " .. wId .. " platoon"
+                                                            local unitNum = 3
+                                                            local value = math.floor(wDesc.life * unitNum / TRPS.crateReductionFactor)+1
+                                                            --env.info(ModuleName .. " builtPltTable value: " .. tostring(value))
+                                                            TRPS.platoonCrates[#TRPS.platoonCrates+1] = { weight = curWeight, desc = string, unit = wId, side = Cside, cratesRequired = value, quantity = unitNum, movers = true, class = "Artillery", country = _ctryName}
+                                                        end
+                                                    end
+                                                end
+
+
+
+                                            elseif wDesc.attributes["Air Defence vehicles"] then
+                                                for countryId, countryData in pairs(wData) do
+                                                    if string.lower(_ctryName) == string.lower(countryId) then
+                                                        local yearEntryService = countryData.yStart
+                                                        if yearEntryService <= missionYear and yearEntryService >= beforeMissionYear then
+                                                            curWeight = curWeight + 1
+                                                            local string = "ADS" .. " " .. wId .. " platoon"
+                                                            local unitNum = 3
+                                                            local value = math.floor(wDesc.life * unitNum / TRPS.crateReductionFactor)+1
+                                                            --env.info(ModuleName .. " builtPltTable value: " .. tostring(value))
+                                                            TRPS.platoonCrates[#TRPS.platoonCrates+1] = { weight = curWeight, desc = string, unit = wId, side = Cside, cratesRequired = value, quantity = unitNum, movers = true, class = "Air Defence vehicles", country = _ctryName}
+                                                        end
+                                                    end
+                                                end
+
+                                            end
+                                        end
+                                    else
+                                        env.info(ModuleName .. " builtPltTable, wDesc not available for: " .. tostring(wId))
+                                    end
                                 end
+
                             end
                         end
                     end
                 end
             end
         end
-        builtPltTable()
-
-        if #TRPS.platoonCrates > 0 then
-            TRPS.spawnableCrates["Ground Forces"] = nil
-            TRPS.spawnableCrates["Artillery"] = nil
-            TRPS.spawnableCrates["SHORAD"] = nil
-            TRPS.spawnableCrates["Combined arms platoon"] = {}
-            for _, data in pairs(TRPS.platoonCrates) do
-                table.insert(TRPS.spawnableCrates["Combined arms platoon"], data)
-            end
-        end
-        
     end
+    TRPS.builtPltTable()
 end
 
 TRPS.unitClassCount = {
@@ -32730,6 +32774,16 @@ function updateClassCount()
 end
 updateClassCount()
 
+if TRPSallowPlatoons_main then
+    TRPS.spawnableCrates["Ground Forces"] = nil
+    TRPS.spawnableCrates["Artillery"] = nil
+    TRPS.spawnableCrates["SHORAD"] = nil
+    TRPS.spawnableCrates["Combined arms platoon"] = {}
+    for _, data in pairs(TRPS.platoonCrates) do
+        table.insert(TRPS.spawnableCrates["Combined arms platoon"], data)
+    end
+end
+
 
 -- if the unit is on this list, it will be made into a JTAC when deployed
 TRPS.jtacUnitTypes = {
@@ -32737,14 +32791,14 @@ TRPS.jtacUnitTypes = {
 }
 
 
---TRPS.nextUnitId = 1;
+TRPS.nextUnitId = 1;
 TRPS.getNextUnitId = function()
     TRPS.nextUnitId = TRPS.nextUnitId + 1
 
     return TRPS.nextUnitId
 end
 
---TRPS.nextGroupId = 1;
+TRPS.nextGroupId = 1;
 
 TRPS.getNextGroupId = function()
     TRPS.nextGroupId = TRPS.nextGroupId + 1
@@ -33586,7 +33640,7 @@ function TRPS.getTransportUnit(_unitName)
     return nil
 end
 
-function TRPS.spawnCrateStatic(_country, _unitId, _point, _name, _weight, _side) -- HERE DIFF CRATES
+function TRPS.spawnCrateStatic(_country, _unitId, _point, _name, _weight, _side)
 
     local _crate
     local _spawnedCrate
@@ -33861,23 +33915,13 @@ function TRPS.spawnCrate(_arguments)
         local _crateType = TRPS.crateLookupTable[tostring(_args[2])]
         local _heli = TRPS.getTransportUnit(_args[1])
 
-        dumpTable("TRPS._crateType.lua", _crateType)
-
         if _crateType ~= nil and _heli ~= nil and TRPS.inAir(_heli) == false then
-            if _crateType.factory then
-                if TRPS.inFactoryZone(_heli) == false then
 
-                    TRPS.displayMessageToGroup(_heli, "You are not close enough to friendly factory to get a valid platoon crate!", 10)
+            if TRPS.inLogisticsZone(_heli) == false then
 
-                    return
-                end
-            else
-                if TRPS.inLogisticsZone(_heli) == false then
+                TRPS.displayMessageToGroup(_heli, "You are not close enough to friendly logistics to get a crate!", 10)
 
-                    TRPS.displayMessageToGroup(_heli, "You are not close enough to friendly logistics to get a crate!", 10)
-
-                    return
-                end
+                return
             end
 
             if TRPS.isJTACUnitType(_crateType.unit) then
@@ -33929,7 +33973,7 @@ function TRPS.spawnCrate(_arguments)
 
             local _name = string.format("%s #%i", _crateType.desc, _unitId)
 
-            local _spawnedCrate = TRPS.spawnCrateStatic(_heli:getCountry(), _unitId, _point, _name, _crateType.weight, _side)
+            local _spawnedCrate = TRPS.spawnCrateStatic(_heli:getCountry(), _unitId, _point, _name, _crateType.weight,_side)
 
             -- add to move table
             TRPS.crateMove[_name] = _name
@@ -35206,7 +35250,6 @@ function TRPS.refreshRadioBeacons()
 
             --search used frequencies + remove, add back to unused
 
-            --[[
             for _i, _freq in ipairs(TRPS.usedUHFFrequencies) do
                 if _freq == _beaconDetails.uhf then
 
@@ -35214,7 +35257,6 @@ function TRPS.refreshRadioBeacons()
                     table.remove(TRPS.usedUHFFrequencies, _i)
                 end
             end
-            --]]--
 
             for _i, _freq in ipairs(TRPS.usedVHFFrequencies) do
                 if _freq == _beaconDetails.vhf then
@@ -35224,7 +35266,6 @@ function TRPS.refreshRadioBeacons()
                 end
             end
 
-            --[[
             for _i, _freq in ipairs(TRPS.usedFMFrequencies) do
                 if _freq == _beaconDetails.fm then
 
@@ -35232,7 +35273,6 @@ function TRPS.refreshRadioBeacons()
                     table.remove(TRPS.usedFMFrequencies, _i)
                 end
             end
-            ]]--
 
             --clean up beacon table
             table.remove(TRPS.deployedRadioBeacons, _index)
@@ -35385,8 +35425,8 @@ function TRPS.getFOBPositionString(_fob)
 
     if _beaconInfo ~= nil then
         _message = string.format("%s - %.2f KHz ", _message, _beaconInfo.vhf / 1000)
-        --_message = string.format("%s - %.2f MHz ", _message, _beaconInfo.uhf / 1000000)
-        --_message = string.format("%s - %.2f MHz ", _message, _beaconInfo.fm / 1000000)
+        _message = string.format("%s - %.2f MHz ", _message, _beaconInfo.uhf / 1000000)
+        _message = string.format("%s - %.2f MHz ", _message, _beaconInfo.fm / 1000000)
     end
 
     return _message
@@ -35790,7 +35830,7 @@ function TRPS.unpackFOBCrates(_crates, _heli)
 
             local _radioBeaconDetails = TRPS.createRadioBeacon(_args[1], _args[3], _args[2], _radioBeaconName, nil, true)
 
-            TRPS.fobBeacons[_name] = { vhf = _radioBeaconDetails.vhf } -- , uhf = _radioBeaconDetails.uhf , fm = _radioBeaconDetails.fm
+            TRPS.fobBeacons[_name] = { vhf = _radioBeaconDetails.vhf, uhf = _radioBeaconDetails.uhf, fm = _radioBeaconDetails.fm }
 
             if TRPS.troopPickupAtFOB == true then
 
@@ -35922,6 +35962,7 @@ end
 -- one for VHF and one for UHF
 -- The units are set to to NOT engage
 function TRPS.createRadioBeacon(_point, _coalition, _country, _name, _batteryTime, _isFOB)
+<<<<<<< Updated upstream
     env.info(ModuleName .. " createRadioBeacon spawning vhf")
     --local _uhfGroup = TRPS.spawnRadioBeaconUnit(_point, _country, "UHF")
     local _vhfGroup = TRPS.spawnRadioBeaconUnit(_point, _country, "VHF")
@@ -35929,6 +35970,15 @@ function TRPS.createRadioBeacon(_point, _coalition, _country, _name, _batteryTim
     env.info(ModuleName .. " createRadioBeacon spawned vhf")
     local _freq = TRPS.generateADFFrequencies()
     env.info(ModuleName .. " createRadioBeacon generated freq")
+=======
+
+    local _uhfGroup = TRPS.spawnRadioBeaconUnit(_point, _country, "UHF")
+    local _vhfGroup = TRPS.spawnRadioBeaconUnit(_point, _country, "VHF")
+    local _fmGroup = TRPS.spawnRadioBeaconUnit(_point, _country, "FM")
+
+    local _freq = TRPS.generateADFFrequencies()
+
+>>>>>>> Stashed changes
     --create timeout
     local _battery
 
@@ -35956,26 +36006,31 @@ function TRPS.createRadioBeacon(_point, _coalition, _country, _name, _batteryTim
 
     _message = string.format("%s - %.2f KHz", _message, _freq.vhf / 1000)
 
-    --_message = string.format("%s - %.2f MHz", _message, _freq.uhf / 1000000)
+    _message = string.format("%s - %.2f MHz", _message, _freq.uhf / 1000000)
 
-    -- _message = string.format("%s - %.2f MHz ", _message, _freq.fm / 1000000)
+    _message = string.format("%s - %.2f MHz ", _message, _freq.fm / 1000000)
 
 
 
     local _beaconDetails = {
         vhf = _freq.vhf,
         vhfGroup = _vhfGroup:getName(),
-        --uhf = _freq.uhf,
-        --uhfGroup = _uhfGroup:getName(),
-        --fm = _freq.fm,
-        --fmGroup = _fmGroup:getName(),
+        uhf = _freq.uhf,
+        uhfGroup = _uhfGroup:getName(),
+        fm = _freq.fm,
+        fmGroup = _fmGroup:getName(),
         text = _message,
         battery = _battery,
         coalition = _coalition,
     }
+<<<<<<< Updated upstream
     env.info(ModuleName .. " createRadioBeacon update beacon")
     TRPS.updateRadioBeacon(_beaconDetails)
     env.info(ModuleName .. " createRadioBeacon updated beacon")
+=======
+    TRPS.updateRadioBeacon(_beaconDetails)
+
+>>>>>>> Stashed changes
     table.insert(TRPS.deployedRadioBeacons, _beaconDetails)
 
     return _beaconDetails
@@ -35983,7 +36038,10 @@ end
 
 function TRPS.generateADFFrequencies()
 
+<<<<<<< Updated upstream
     --[[
+=======
+>>>>>>> Stashed changes
     if #TRPS.freeUHFFrequencies <= 3 then
         TRPS.freeUHFFrequencies = TRPS.usedUHFFrequencies
         TRPS.usedUHFFrequencies = {}
@@ -35992,7 +36050,7 @@ function TRPS.generateADFFrequencies()
     --remove frequency at RANDOM
     local _uhf = table.remove(TRPS.freeUHFFrequencies, math.random(#TRPS.freeUHFFrequencies))
     table.insert(TRPS.usedUHFFrequencies, _uhf)
-    --]]--
+
 
     if #TRPS.freeVHFFrequencies <= 3 then
         TRPS.freeVHFFrequencies = TRPS.usedVHFFrequencies
@@ -36002,15 +36060,15 @@ function TRPS.generateADFFrequencies()
     local _vhf = table.remove(TRPS.freeVHFFrequencies, math.random(#TRPS.freeVHFFrequencies))
     table.insert(TRPS.usedVHFFrequencies, _vhf)
 
-    --if #TRPS.freeFMFrequencies <= 3 then
-    --    TRPS.freeFMFrequencies = TRPS.usedFMFrequencies
-    --    TRPS.usedFMFrequencies = {}
-    --end
+    if #TRPS.freeFMFrequencies <= 3 then
+        TRPS.freeFMFrequencies = TRPS.usedFMFrequencies
+        TRPS.usedFMFrequencies = {}
+    end
 
-    --local _fm = table.remove(TRPS.freeFMFrequencies, math.random(#TRPS.freeFMFrequencies))
-    --table.insert(TRPS.usedFMFrequencies, _fm)
+    local _fm = table.remove(TRPS.freeFMFrequencies, math.random(#TRPS.freeFMFrequencies))
+    table.insert(TRPS.usedFMFrequencies, _fm)
 
-    return { vhf = _vhf} -- uhf = _uhf,, fm = _fm 
+    return { uhf = _uhf, vhf = _vhf, fm = _fm }
     --- return {uhf=_uhf,vhf=_vhf}
 end
 
@@ -36053,9 +36111,9 @@ function TRPS.updateRadioBeacon(_beaconDetails)
 
     local _vhfGroup = Group.getByName(_beaconDetails.vhfGroup)
 
-    --local _uhfGroup = Group.getByName(_beaconDetails.uhfGroup)
+    local _uhfGroup = Group.getByName(_beaconDetails.uhfGroup)
 
-    --local _fmGroup = Group.getByName(_beaconDetails.fmGroup)
+    local _fmGroup = Group.getByName(_beaconDetails.fmGroup)
 
     local _radioLoop = {}
 
@@ -36063,13 +36121,13 @@ function TRPS.updateRadioBeacon(_beaconDetails)
         table.insert(_radioLoop, { group = _vhfGroup, freq = _beaconDetails.vhf, silent = false, mode = 0 })
     end
 
-    --if _uhfGroup ~= nil and _uhfGroup:getUnits() ~= nil and #_uhfGroup:getUnits() == 1 then
-    --    table.insert(_radioLoop, { group = _uhfGroup, freq = _beaconDetails.uhf, silent = true, mode = 0 })
-    --end
+    if _uhfGroup ~= nil and _uhfGroup:getUnits() ~= nil and #_uhfGroup:getUnits() == 1 then
+        table.insert(_radioLoop, { group = _uhfGroup, freq = _beaconDetails.uhf, silent = true, mode = 0 })
+    end
 
-    --if _fmGroup ~= nil and _fmGroup:getUnits() ~= nil and #_fmGroup:getUnits() == 1 then
-    --    table.insert(_radioLoop, { group = _fmGroup, freq = _beaconDetails.fm, silent = false, mode = 1 })
-    --end
+    if _fmGroup ~= nil and _fmGroup:getUnits() ~= nil and #_fmGroup:getUnits() == 1 then
+        table.insert(_radioLoop, { group = _fmGroup, freq = _beaconDetails.fm, silent = false, mode = 1 })
+    end
 
     local _batLife = _beaconDetails.battery - timer.getTime()
 
@@ -36079,12 +36137,12 @@ function TRPS.updateRadioBeacon(_beaconDetails)
         if _vhfGroup ~= nil then
             _vhfGroup:destroy()
         end
-        --if _uhfGroup ~= nil then
-        --    _uhfGroup:destroy()
-        --end
-        --if _fmGroup ~= nil then
-        --    _fmGroup:destroy()
-        --end
+        if _uhfGroup ~= nil then
+            _uhfGroup:destroy()
+        end
+        if _fmGroup ~= nil then
+            _fmGroup:destroy()
+        end
 
         return false
     end
@@ -36201,16 +36259,16 @@ function TRPS.removeRadioBeacon(_args)
         if _closetBeacon ~= nil and _shortestDistance then
             local _vhfGroup = Group.getByName(_closetBeacon.vhfGroup)
 
-            --local _uhfGroup = Group.getByName(_closetBeacon.uhfGroup)
+            local _uhfGroup = Group.getByName(_closetBeacon.uhfGroup)
 
             local _fmGroup = Group.getByName(_closetBeacon.fmGroup)
 
             if _vhfGroup ~= nil then
                 _vhfGroup:destroy()
             end
-            --if _uhfGroup ~= nil then
-            --    _uhfGroup:destroy()
-            --end
+            if _uhfGroup ~= nil then
+                _uhfGroup:destroy()
+            end
             if _fmGroup ~= nil then
                 _fmGroup:destroy()
             end
@@ -37254,38 +37312,6 @@ function TRPS.inWaypointZone(_point,_coalition)
 end
 
 -- are we near friendly logistics zone
-function TRPS.inFactoryZone(_heli)
-
-    if TRPS.inAir(_heli) then
-        return false
-    end
-
-    local _heliPoint = _heli:getPoint()
-
-    for _, _name in pairs(TRPS.factoryObjects) do
-		
-		local _logistic = StaticObject.getByName(_name) 
-
-		if _logistic then
-			local coaTest = _logistic:getCoalition()
-			
-
-			if _logistic ~= nil and _logistic:getCoalition() == _heli:getCoalition() then
-				--get distance
-				local _dist = TRPS.getDistance(_heliPoint, _logistic:getPoint())
-
-				if _dist <= TRPS.maximumDistanceLogistic then
-					return true
-					
-				end
-			end
-		end
-    end
-
-    return false
-end
-
--- are we near friendly logistics zone
 function TRPS.inLogisticsZone(_heli)
 
     if TRPS.inAir(_heli) then
@@ -37320,7 +37346,6 @@ function TRPS.inLogisticsZone(_heli)
 
     return false
 end
-
 
 -- are far enough from a friendly logistics zone
 function TRPS.farEnoughFromLogisticZone(_heli)
@@ -37765,9 +37790,8 @@ function TRPS.addF10MenuOptions()
                                                         _crateRadioMsg = _crateRadioMsg.." (".._crate.cratesRequired..")"
                                                     end
 
-                                                    --env.info(ModuleName .. " addF10MenuOptions added command 7 for " .. tostring(_unitName) .. ", _crate.weight: " .. tostring(_crate.weight))
                                                     missionCommands.addCommandForGroup(_groupId,_crateRadioMsg, _cratePath, TRPS.spawnCrate, { _unitName, _crate.weight })
-                                                    
+                                                    --env.info(ModuleName .. " addF10MenuOptions added command 7 for " .. tostring(_unitName))
                                                 end
                                             end
                                         end
@@ -37798,7 +37822,7 @@ function TRPS.addF10MenuOptions()
                                 missionCommands.addCommandForGroup(_groupId, "List FOBs", _crateCommands, TRPS.listFOBS, { _unitName })
                             end
                         end
-                        --env.info(ModuleName .. " addF10MenuOptions added command 9 for " .. tostring(_unitName))
+                        env.info(ModuleName .. " addF10MenuOptions added command 9 for " .. tostring(_unitName))
 
                         if TRPS.enableSmokeDrop then
                             local _smokeMenu = missionCommands.addSubMenuForGroup(_groupId, "Smoke Markers", _rootPath)
@@ -39055,6 +39079,15 @@ TRPS.callbacks = {} -- function callback
 --
 --end
 
+-- create crate lookup table
+for _subMenuName, _crates in pairs(TRPS.spawnableCrates) do
+
+    for _, _crate in pairs(_crates) do
+        -- convert number to string otherwise we'll have a pointless giant
+        -- table. String means 'hashmap' so it will only contain the right number of elements
+        TRPS.crateLookupTable[tostring(_crate.weight)] = _crate
+    end
+end
 
 
 --sort out pickup zones
@@ -39242,7 +39275,56 @@ env.info("TRPS Generating FM Frequencies")
 TRPS.generateFMFrequencies()
 env.info("TRPS Generated FM Frequencies")
 
+-- Search for crates
+-- Crates are NOT returned by coalition.getStaticObjects() for some reason
+-- Search for crates in the mission editor instead
+env.info("Searching for Crates")
+for _coalitionName, _coalitionData in pairs(env.mission.coalition) do
+    if (_coalitionName == 'red' or _coalitionName == 'blue')
+            and type(_coalitionData) == 'table' then
+        if _coalitionData.country then --there is a country table
+        for _, _countryData in pairs(_coalitionData.country) do
 
+            if type(_countryData) == 'table' then
+                for _objectTypeName, _objectTypeData in pairs(_countryData) do
+                    if _objectTypeName == "static" then
+
+                        if ((type(_objectTypeData) == 'table')
+                                and _objectTypeData.group
+                                and (type(_objectTypeData.group) == 'table')
+                                and (#_objectTypeData.group > 0)) then
+
+                            for _groupId, _group in pairs(_objectTypeData.group) do
+                                if _group and _group.units and type(_group.units) == 'table' then
+                                    for _unitNum, _unit in pairs(_group.units) do
+                                        if _unit.canCargo == true then
+                                            local _cargoName = env.getValueDictByKey(_unit.name)
+											local _weight = env.getValueDictByKey(_unit.mass)				--get the cargo mass
+											local _crateType = TRPS.crateLookupTable[tostring(_weight)]		--compare cargi weight to the crate type table
+											
+											if _coalitionName == 'red' then
+												TRPS.spawnedCratesRED[_cargoName] = _crateType				--add cargo based on type
+											elseif _coalitionName == 'blue' then
+												TRPS.spawnedCratesBLUE[_cargoName] = _crateType
+                                            else
+                                                TRPS.spawnedCratesNEUTRAL[_cargoName] = _crateType
+                                            end
+											
+                                            TRPS.missionEditorCargoCrates[_cargoName] = _cargoName
+                                            --env.info("Crate Found: " .. _unit.name.." - Unit: ".._cargoName)
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        end
+    end
+end
+env.info("END search for crates")
 
 
 
@@ -39416,9 +39498,8 @@ function TRPS.AddTroopsToVehicles(_unit, _numberOrTemplate)
 end
 
 -- REDO  -- TRPS.unitClassCount
-TRPS.factoryok = false
 function TRPS.updateCTLDTables()
-	env.info(ModuleName .. " updateCTLDTables looking for ME helo, IFV, APC for add transport table and infantry groups")
+	env.info(ModuleName .. " updateTroopsTables looking for ME helo, IFV, APC for add transport table and infantry groups")
 	for _coalitionName, _coalitionData in pairs(env.mission.coalition) do		
 		if (_coalitionName == 'red' or _coalitionName == 'blue')
 				and type(_coalitionData) == 'table' then
@@ -39476,8 +39557,8 @@ function TRPS.updateCTLDTables()
 
 																		--tblTransportsUnit[unitID] = {id = unitID, name = unitName, unitType = unit:getTypeName(), air = false, coa = unit:getCoalition()}
 																		if debugProcessDetail then
-																			--trigger.action.outText(ModuleName .. " updateCTLDTables: unit " .. tostring(unitName) .. " is an APC or IFV, TRPS.transportPilotNames updated", 10)
-																			env.info(ModuleName .. " updateCTLDTables: unit " .. tostring(unitName) .. " is an APC or IFV, TRPS.transportPilotNames updated")
+																			--trigger.action.outText(ModuleName .. " updateTroopsTables: unit " .. tostring(unitName) .. " is an APC or IFV, TRPS.transportPilotNames updated", 10)
+																			env.info(ModuleName .. " updateTroopsTables: unit " .. tostring(unitName) .. " is an APC or IFV, TRPS.transportPilotNames updated")
 																		end
 																		
 																		if TRPS.useNameCoding then
@@ -39526,7 +39607,7 @@ function TRPS.updateCTLDTables()
 																			local thereshold = math.random(0,100)
 
 																			if debugProcessDetail then
-																				env.info(ModuleName .. " updateCTLDTables: thereshold " .. tostring(thereshold))
+																				env.info(ModuleName .. " updateTroopsTables: thereshold " .. tostring(thereshold))
 																			end																			
 
 																			local tableTemplate = nil
@@ -39543,43 +39624,43 @@ function TRPS.updateCTLDTables()
                                                                                         if string.find(TableBase.name, "Anti air") and string.find(TableBase.name, keyword) then
                                                                                             tableTemplate = TableBase
                                                                                             if debugProcessDetail then
-                                                                                                trigger.action.outText(ModuleName .. " updateCTLDTables, added " .. tostring(TableBase.name), 10)
+                                                                                                trigger.action.outText(ModuleName .. " updateTroopsTables, added " .. tostring(TableBase.name), 10)
                                                                                             end
                                                                                         end
                                                                                     end
-                                                                                    --env.info(ModuleName .. " updateCTLDTables: Added Anti Air infantry")
+                                                                                    --env.info(ModuleName .. " updateTroopsTables: Added Anti Air infantry")
                                                                                 elseif thereshold < _rpgThereshold then -- adding RPGs
                                                                                     for _id, TableBase in pairs(TRPS.loadableGroups) do
                                                                                         if string.find(TableBase.name, "Anti tank") and string.find(TableBase.name, keyword) then
                                                                                             tableTemplate = TableBase
                                                                                             if debugProcessDetail then
-                                                                                                trigger.action.outText(ModuleName .. " updateCTLDTables, added " .. tostring(TableBase.name), 10)
+                                                                                                trigger.action.outText(ModuleName .. " updateTroopsTables, added " .. tostring(TableBase.name), 10)
                                                                                             end
                                                                                         end
                                                                                     end
-                                                                                    --env.info(ModuleName .. " updateCTLDTables: Added Anti Tank infantry")
+                                                                                    --env.info(ModuleName .. " updateTroopsTables: Added Anti Tank infantry")
                                                                                 elseif thereshold < _mtrThereshold then -- adding Mortars
                                                                                     for _id, TableBase in pairs(TRPS.loadableGroups) do
                                                                                         if string.find(TableBase.name, "Mortar") and string.find(TableBase.name, keyword) then
                                                                                             tableTemplate = TableBase
                                                                                             if debugProcessDetail then
-                                                                                                trigger.action.outText(ModuleName .. " updateCTLDTables, added " .. tostring(TableBase.name), 10)
+                                                                                                trigger.action.outText(ModuleName .. " updateTroopsTables, added " .. tostring(TableBase.name), 10)
                                                                                             end
                                                                                         end
                                                                                     end
-                                                                                    --env.info(ModuleName .. " updateCTLDTables: Added Mortar Squad infantry")																								
+                                                                                    --env.info(ModuleName .. " updateTroopsTables: Added Mortar Squad infantry")																								
                                                                                 --elseif thereshold < _recThereshold then -- leaving void (recon unit)
-                                                                                    --env.info(ModuleName .. " updateCTLDTables: Added nothing: recon unit")																								
+                                                                                    --env.info(ModuleName .. " updateTroopsTables: Added nothing: recon unit")																								
                                                                                 else
                                                                                     for _id, TableBase in pairs(TRPS.loadableGroups) do
                                                                                         if string.find(TableBase.name, "Rifle") and string.find(TableBase.name, keyword) then
                                                                                             tableTemplate = TableBase
                                                                                             if debugProcessDetail then
-                                                                                                trigger.action.outText(ModuleName .. " updateCTLDTables, added " .. tostring(TableBase.name), 10)
+                                                                                                trigger.action.outText(ModuleName .. " updateTroopsTables, added " .. tostring(TableBase.name), 10)
                                                                                             end
                                                                                         end
                                                                                     end
-                                                                                    --env.info(ModuleName .. " updateCTLDTables: Added Standard Group infantry")																								
+                                                                                    --env.info(ModuleName .. " updateTroopsTables: Added Standard Group infantry")																								
                                                                                 end
                                                                             --end
 
@@ -39593,8 +39674,8 @@ function TRPS.updateCTLDTables()
 																		table.insert(TRPS.transportPilotNames, unitName)
 																		--tblTransportsUnit[unitID] = {id = unit:getID(), name = unitName, unitType = unit:getTypeName(), air = true, coa = unit:getCoalition()}
 																		if debugProcessDetail then
-																			trigger.action.outText(ModuleName .. " updateCTLDTables: unit " .. tostring(unitName) .. " is an helo, TRPS.transportPilotNames updated", 10)
-																			env.info(ModuleName .. " updateCTLDTables: unit " .. tostring(unitName) .. " is an helo, TRPS.transportPilotNames updated")
+																			trigger.action.outText(ModuleName .. " updateTroopsTables: unit " .. tostring(unitName) .. " is an helo, TRPS.transportPilotNames updated", 10)
+																			env.info(ModuleName .. " updateTroopsTables: unit " .. tostring(unitName) .. " is an helo, TRPS.transportPilotNames updated")
 																		end																							
 																	
 																	elseif unit:hasAttribute("Infantry") then
@@ -39613,7 +39694,7 @@ function TRPS.updateCTLDTables()
 											if infantryCount == unitCount and infantryCount > 0 then -- make group with only infantry transportable by default
                                                 if infantryCount == 1 and check_JTAC == true then
                                                     if debugProcessDetail then
-                                                        env.info(ModuleName .. " updateCTLDTables: groupName " .. tostring(groupName) .. " is a single infantry group, MANPAD, infantryCount = " .. tostring(infantryCount))
+                                                        env.info(ModuleName .. " updateTroopsTables: groupName " .. tostring(groupName) .. " is a single infantry group, MANPAD, infantryCount = " .. tostring(infantryCount))
                                                     end	
                                                     local _group = Table_group
                                                     local _side = _group:getCoalition()
@@ -39623,13 +39704,13 @@ function TRPS.updateCTLDTables()
 
                                                 else
                                                     if debugProcessDetail then
-                                                        env.info(ModuleName .. " updateCTLDTables: groupName " .. tostring(groupName) .. " is a full infantry group, infantryCount = " .. tostring(infantryCount))
+                                                        env.info(ModuleName .. " updateTroopsTables: groupName " .. tostring(groupName) .. " is a full infantry group, infantryCount = " .. tostring(infantryCount))
                                                     end												
                                                     local groupTable = Group.getByName(groupName)
                                                     if groupTable then												
                                                         if not TRPS.extractableGroups[groupName] then
                                                             table.insert(TRPS.extractableGroups, groupName)
-                                                            env.info(ModuleName .. " updateCTLDTables: group ".. tostring(groupName) .. " of units added as extractable")													
+                                                            env.info(ModuleName .. " updateTroopsTables: group ".. tostring(groupName) .. " of units added as extractable")													
                                                         end
                                                     end
                                                 end
@@ -39648,23 +39729,23 @@ function TRPS.updateCTLDTables()
 												--if _unitNum == 1 then		
 													local unitName = env.getValueDictByKey(_unit.name)
 													if unitName then						
-                                                        --env.info(ModuleName .. " updateCTLDTables: checking static unit " .. tostring(unitName) .. ", category: " .. tostring(_unit.category))
+                                                        --env.info(ModuleName .. " updateTroopsTables: checking static unit " .. tostring(unitName) .. ", category: " .. tostring(_unit.category))
                                                         if _unit.category == "Warehouses" then
 															table.insert(TRPS.logisticUnits, unitName)											
-															env.info(ModuleName .. " updateCTLDTables: unit " .. tostring(unitName) .. " is a warehouse, TRPS.logisticUnits updated")																
+															env.info(ModuleName .. " updateTroopsTables: unit " .. tostring(unitName) .. " is a warehouse, TRPS.logisticUnits updated")																
                                                             
                                                             if _unit.type == ".Ammunition depot" or _unit.type == "Warehouse" then
                                                                 table.insert(TRPS.warehouseObjects, unitName)
-                                                                env.info(ModuleName .. " updateCTLDTables: unit " .. tostring(unitName) .. " is ammo or whr object, TRPS.warehouseObjects updated")
+                                                                env.info(ModuleName .. " updateTroopsTables: unit " .. tostring(unitName) .. " is ammo or whr object, TRPS.warehouseObjects updated")
                                                             end
 
                                                         elseif _unit.category == "Fortifications" and _unit.type == "outpost" then           
-                                                            env.info(ModuleName .. " updateCTLDTables: checking FOB, found outpost object:" .. tostring(unitName))	
+                                                            env.info(ModuleName .. " updateTroopsTables: checking FOB, found outpost object:" .. tostring(unitName))	
                                                             local stObject = StaticObject.getByName(unitName)
 															if stObject then																	
 																local centerposUnit = stObject:getPosition().p
 																if centerposUnit then
-																	env.info(ModuleName .. " updateCTLDTables: checking FOB, outpost has position")
+																	env.info(ModuleName .. " updateTroopsTables: checking FOB, outpost has position")
 																	 
 																	local foundUnits = {}
 																	local volS = {
@@ -39676,9 +39757,9 @@ function TRPS.updateCTLDTables()
 																	}
 																	
 																	local ifFound = function(foundItem, val)
-																		env.info(ModuleName .. " updateCTLDTables: checking FOB, proximity object found")	                                                            
+																		env.info(ModuleName .. " updateTroopsTables: checking FOB, proximity object found")	                                                            
 																		if foundItem:getTypeName() == "TACAN_beacon" then
-																			env.info(ModuleName .. " updateCTLDTables: checking FOB, object is a beacon")	 
+																			env.info(ModuleName .. " updateTroopsTables: checking FOB, object is a beacon")	 
 																			foundUnits[#foundUnits + 1] = foundItem:getName()
 																			return true
 																		end
@@ -39689,11 +39770,11 @@ function TRPS.updateCTLDTables()
 																		
 																		--adding FOB
 																		table.insert(TRPS.logisticUnits, unitName)
-																		env.info(ModuleName .. " updateCTLDTables: checking FOB, outpost added as FOB")	 
+																		env.info(ModuleName .. " updateTroopsTables: checking FOB, outpost added as FOB")	 
 																		--if TRPS.troopPickupAtFOB == true then
 																		table.insert(TRPS.builtFOBS, unitName)			
 																		--end							
-																		env.info(ModuleName .. " updateCTLDTables: unit " .. tostring(unitName) .. " is an outpost, TRPS.logisticUnits updated")	                                                            
+																		env.info(ModuleName .. " updateTroopsTables: unit " .. tostring(unitName) .. " is an outpost, TRPS.logisticUnits updated")	                                                            
 																		
 																		--adding Beacon functionality
 																		for fId, fData in pairs(foundUnits) do
@@ -39719,40 +39800,30 @@ function TRPS.updateCTLDTables()
 																					local _message = _radioBeaconName
 																					_message = _message .. " - " .. _latLngStr
 																					_message = string.format("%s - %.2f KHz", _message, _freq.vhf / 1000)
-																					--_message = string.format("%s - %.2f MHz", _message, _freq.uhf / 1000000)                                                        
+																					_message = string.format("%s - %.2f MHz", _message, _freq.uhf / 1000000)                                                        
 																					_message = string.format("%s - %.2f MHz ", _message, _freq.fm / 1000000)                                                            
 						
 																					local _beaconDetails = {
 																						vhf = _freq.vhf,
 																						vhfGroup = unitName,
-																						--uhf = _freq.uhf,
-																						--uhfGroup = unitName,
-																						--fm = _freq.fm,
-																						--fmGroup = unitName,
+																						uhf = _freq.uhf,
+																						uhfGroup = unitName,
+																						fm = _freq.fm,
+																						fmGroup = unitName,
 																						text = _message,
 																						battery = _battery,
 																						coalition = _coalition,
 																					}
 																					TRPS.updateRadioBeacon(_beaconDetails)
 																					table.insert(TRPS.deployedRadioBeacons, _beaconDetails)                                           
-																					TRPS.fobBeacons[unitName] = { vhf = _beaconDetails.vhf } -- , uhf = _beaconDetails.uhf , fm = _beaconDetails.fm
-																					env.info(ModuleName .. " updateCTLDTables: checking FOB, beacon added")	
+																					TRPS.fobBeacons[unitName] = { vhf = _beaconDetails.vhf, uhf = _beaconDetails.uhf, fm = _beaconDetails.fm }
+																					env.info(ModuleName .. " updateTroopsTables: checking FOB, beacon added")	
 																				end
 																			--end
 																		end
 																	end
 																end
-                                                            end
-                                                        elseif _unit.type == "Workshop A" then 
-                                                            env.info(ModuleName .. " updateCTLDTables: checking Factories, found Workshop A object:" .. tostring(unitName))	
-                                                            local stObject = StaticObject.getByName(unitName)
-															if stObject then	
-                                                                table.insert(TRPS.factoryObjects, unitName)											
-                                                                env.info(ModuleName .. " updateCTLDTables: unit " .. tostring(unitName) .. " is a factory, TRPS.factoryObjects updated")	
-                                                                TRPS.factoryok = true
-                                                                env.info(ModuleName .. " updateCTLDTables: factoryok " .. tostring(TRPS.factoryok))	
-                                                            end
-
+															end
                                                         end
 													end
 												--end
@@ -39777,7 +39848,7 @@ function TRPS.updateCTLDTables()
                                                             local tblPck = {unitName, "none", 20, "yes", 0}
                                                             table.insert(TRPS.pickupZones, tblPck)
                                                             TRPS.activatePickupZone(unitName)
-                                                            env.info(ModuleName .. " updateCTLDTables: carrier added as logistic " .. tostring(unitName))	
+                                                            env.info(ModuleName .. " updateTroopsTables: carrier added as logistic " .. tostring(unitName))	
                                                         end
                                                     end
                                                 end
@@ -39792,7 +39863,7 @@ function TRPS.updateCTLDTables()
 			end
 		end
 	end
-	env.info(ModuleName .. " updateCTLDTables done")
+	env.info(ModuleName .. " updateTroopsTables done")
 end
 
 function TRPS.updateLogisticTableWithAirport()
@@ -39819,8 +39890,6 @@ end
 
 TRPS.updateCTLDTables()
 --TRPS.updateLogisticTableWithAirport()
-TRPS.enablePlatoons()
-
 
 -- Sort out extractable groups
 for _, _groupName in pairs(TRPS.extractableGroups) do
@@ -39842,80 +39911,4 @@ for _, _groupName in pairs(TRPS.extractableGroups) do
     end
 end
 
-
--- create crate lookup table
-for _subMenuName, _crates in pairs(TRPS.spawnableCrates) do
-
-    for _, _crate in pairs(_crates) do
-        -- convert number to string otherwise we'll have a pointless giant
-        -- table. String means 'hashmap' so it will only contain the right number of elements
-        TRPS.crateLookupTable[tostring(_crate.weight)] = _crate
-    end
-end
-
--- Search for crates
--- Crates are NOT returned by coalition.getStaticObjects() for some reason
--- Search for crates in the mission editor instead
-env.info("Searching for Crates")
-for _coalitionName, _coalitionData in pairs(env.mission.coalition) do
-    if (_coalitionName == 'red' or _coalitionName == 'blue')
-            and type(_coalitionData) == 'table' then
-        if _coalitionData.country then --there is a country table
-        for _, _countryData in pairs(_coalitionData.country) do
-
-            if type(_countryData) == 'table' then
-                for _objectTypeName, _objectTypeData in pairs(_countryData) do
-                    if _objectTypeName == "static" then
-
-                        if ((type(_objectTypeData) == 'table')
-                                and _objectTypeData.group
-                                and (type(_objectTypeData.group) == 'table')
-                                and (#_objectTypeData.group > 0)) then
-
-                            for _groupId, _group in pairs(_objectTypeData.group) do
-                                if _group and _group.units and type(_group.units) == 'table' then
-                                    for _unitNum, _unit in pairs(_group.units) do
-                                        if _unit.canCargo == true then
-                                            local _cargoName = env.getValueDictByKey(_unit.name)
-											local _weight = env.getValueDictByKey(_unit.mass)				--get the cargo mass
-											local _crateType = TRPS.crateLookupTable[tostring(_weight)]		--compare cargi weight to the crate type table
-											
-											if _coalitionName == 'red' then
-												TRPS.spawnedCratesRED[_cargoName] = _crateType				--add cargo based on type
-											elseif _coalitionName == 'blue' then
-												TRPS.spawnedCratesBLUE[_cargoName] = _crateType
-                                            else
-                                                TRPS.spawnedCratesNEUTRAL[_cargoName] = _crateType
-                                            end
-											
-                                            TRPS.missionEditorCargoCrates[_cargoName] = _cargoName
-                                            --env.info("Crate Found: " .. _unit.name.." - Unit: ".._cargoName)
-                                        end
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-        end
-    end
-end
-env.info("END search for crates")
-
 env.info("TRPS READY")
-
-if _debugMode then
-    timer.scheduleFunction(function()
-
-        dumpTable("TRPS.factoryObjects.lua", TRPS.factoryObjects)
-        dumpTable("TRPS.spawnableCrates.lua", TRPS.spawnableCrates)
-        dumpTable("TRPS.logisticUnits.lua", TRPS.logisticUnits)
-        dumpTable("TRPS.spawnedCratesBLUE.lua", TRPS.spawnedCratesBLUE)
-        
-
-    end,nil, timer.getTime()+6 )
-end
-
-
