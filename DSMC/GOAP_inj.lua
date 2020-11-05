@@ -189,6 +189,7 @@ if not GOAP.TerrainDb["towns"] then
     return
 end
 
+<<<<<<< Updated upstream
 function GOAP.getAngle(vector1, vector2)
     return math.deg(math.atan2(vector2.z-vector1.z, vector2.x-vector1.x))%360
 end
@@ -297,6 +298,11 @@ function GOAP.phase0_initTerrains()
 
 
 
+=======
+for tId, tData in pairs(GOAP.TerrainDb["towns"]) do
+    tData.owner = 0
+    tData.coalition = {[0] = {}, [1] = {}, [2] = {}, [3] = {}}
+>>>>>>> Stashed changes
 end
 
 --## CIRCULAR FINITE STATE MACHINE UPDATE INFO
@@ -376,7 +382,7 @@ function GOAP.performPhaseCycle()
 end
 
 -- update terrain data
-function GOAP.sizeTerrain(tblTerrain) -- upgrade with group positioning inside a table
+function GOAP.phaseA_sizeTerrain(tblTerrain) -- upgrade with group positioning inside a table
     for tId, tData in pairs(tblTerrain) do
         if tData and type(tData) == "table" then
 
@@ -678,46 +684,35 @@ end
 -- Tables
 GOAP.tblActionPlan = {
     ["Occupy_Territory"] = {
-        ["preq"] = {"Information", "Negative_cost", "Negative_ownership", "Border_Territory"},
+        ["preq"] = {"ARMED_avail", "Information", "Negative_cost"},
         ["gain"] = "Territory_ownership",
         ["action"] = "Group.goToTown", 
-        ["subaction"] = nil, 
-        ["cost_k"] = 1.5,
+        ["subaction"] = "Group.haltOnContact", 
+        ["basecost"] = 10,
     },
     ["Scout_Territory"] = {
-        ["preq"] = {"No_Information", "Unknow_cost"},
+        ["preq"] = {"RECON_avail", "Unknow_cost"},
         ["gain"] = "Information",
         ["action"] = "Group.goToTown", 
         ["subaction"] = "Group.haltOnContact", 
-        ["cost_k"] = 1.1,
-    },
-    ["Guard_Territory"] = {
-        ["preq"] = {"Negative_cost", "Positive_ownership", "Border_Territory"},
-        ["gain"] = "Territory_guard",
-        ["action"] = "Group.goToTown", 
-        ["subaction"] = nil, 
-        ["cost_k"] = 1,
-    },
-    ["Shell_Territory"] = {
-        ["preq"] = {"Positive_cost", "Negative_ownership", "Border_Territory"},
-        ["gain"] = "Territory_guard",
-        ["action"] = "Group.goToTown", 
-        ["subaction"] = nil, 
-        ["cost_k"] = 1.2,
-    },
-    ["Withdraw_Territory"] = {
-        ["preq"] = {"Positive_cost", "Negative_ownership", "No_Border_Territory"},
-        ["gain"] = "Territory_guard",
-        ["action"] = "Group.goToTown", 
-        ["subaction"] = nil, 
-        ["cost_k"] = 1.2,
-    },
+        ["basecost"] = 2,
+    },    
+
+
+
 }
 
 
 
 --## GOAP internal utils & calculation function
-function GOAP.getActionCost()
+
+function GOAP.mapCounterInArea(p)
+
+
+
+
+
+
 
 
 
@@ -1842,9 +1837,15 @@ end
 
 
 
+<<<<<<< Updated upstream
 
 
 
+=======
+
+
+
+>>>>>>> Stashed changes
 
 
 
@@ -1853,8 +1854,7 @@ env.info(("GOAP is starting initial mission setup"))
 -- set all units disperse "off" to prevent halting for movement & escape reactions
 
 -- get terrains influence
-GOAP.phase0_initTerrains()
-
+GOAP.phaseA_sizeTerrain(GOAP.TerrainDb["towns"])
 
 GOAP.setAllNotDisperse()
 -- create the basic unit list table

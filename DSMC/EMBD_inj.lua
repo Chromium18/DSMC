@@ -877,7 +877,7 @@ end
 
 EMBD.deathRecorder = {}
 function EMBD.deathRecorder:onEvent(event)
-	if event.id == world.event.S_EVENT_DEAD or event.id ==  world.event.S_EVENT_CRASH then --world.event.S_EVENT_DEAD
+	if event.id == world.event.S_EVENT_DEAD then --world.event.S_EVENT_DEAD
 		
 		local SOcategory 	= event.initiator:getCategory()
 		local SOpos 		= event.initiator:getPosition().p

@@ -4,7 +4,7 @@
 -- Choosing this option require desanitization of MissionScripting.lua. 
 -- If you didn't already done that, DSMC will do that for you!
 DSMC_AutosaveProcess		= true		-- true / false. 
-DSMC_AutosaveProcess_min	= 1			-- minutes, number, from 2 to 480
+DSMC_AutosaveProcess_min	= 10		-- minutes, number, from 2 to 480
 
 -- Server auto-close option
 DSMC_AutosaveExit_hours		= 25 		-- hours of simulation after with DCS closes, from 0 to 24 (higher values won't be accepted). If clients are online, it will delay 5 minutes and so on till nobody is online.
@@ -25,7 +25,7 @@ DSMC_TrackWarehouses		= true	 	-- true / false
 DSMC_TrackSpawnedUnits		= true	 	-- true / false
 DSMC_WeatherUpdate          = true      -- true / false
 DSMC_ExportDocuments        = true      -- true / false
-DSMC_CreateClientSlot       = true      -- true / false
+DSMC_CreateClientSlot       = false      -- true / false
 
 -- CTLD setup stuff
 DSMC_automated_CTLD			= true	 	-- true / false
@@ -47,7 +47,7 @@ DSMC_cleanDamagedSAMsites   = false     -- true / false
 
 -- CTLD advanced setup
 DSMC_CTLD_AllowCrates       = true      -- true / false
-DSMC_CTLD_AllowPlatoon		= true	 	-- true / false     BEWARE: using platoons mode will require you to set up some factories around. Check manual!
+DSMC_CTLD_AllowPlatoon		= true	 	-- true / false
 DSMC_CTLD_UseYearFilter     = true      -- true / false  
 DSMC_CTLD_UnitNumLimits     = false      -- true / false
 DSMC_CTLD_Limit_APC         = 200       -- number

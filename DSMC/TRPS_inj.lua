@@ -35963,6 +35963,7 @@ end
 -- The units are set to to NOT engage
 function TRPS.createRadioBeacon(_point, _coalition, _country, _name, _batteryTime, _isFOB)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     env.info(ModuleName .. " createRadioBeacon spawning vhf")
     --local _uhfGroup = TRPS.spawnRadioBeaconUnit(_point, _country, "UHF")
     local _vhfGroup = TRPS.spawnRadioBeaconUnit(_point, _country, "VHF")
@@ -35974,10 +35975,18 @@ function TRPS.createRadioBeacon(_point, _coalition, _country, _name, _batteryTim
 
     local _uhfGroup = TRPS.spawnRadioBeaconUnit(_point, _country, "UHF")
     local _vhfGroup = TRPS.spawnRadioBeaconUnit(_point, _country, "VHF")
+=======
+
+    local _uhfGroup = TRPS.spawnRadioBeaconUnit(_point, _country, "UHF")
+    local _vhfGroup = TRPS.spawnRadioBeaconUnit(_point, _country, "VHF")
+>>>>>>> Stashed changes
     local _fmGroup = TRPS.spawnRadioBeaconUnit(_point, _country, "FM")
 
     local _freq = TRPS.generateADFFrequencies()
 
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     --create timeout
     local _battery
@@ -36024,9 +36033,14 @@ function TRPS.createRadioBeacon(_point, _coalition, _country, _name, _batteryTim
         coalition = _coalition,
     }
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     env.info(ModuleName .. " createRadioBeacon update beacon")
     TRPS.updateRadioBeacon(_beaconDetails)
     env.info(ModuleName .. " createRadioBeacon updated beacon")
+=======
+    TRPS.updateRadioBeacon(_beaconDetails)
+
+>>>>>>> Stashed changes
 =======
     TRPS.updateRadioBeacon(_beaconDetails)
 
@@ -36039,7 +36053,10 @@ end
 function TRPS.generateADFFrequencies()
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     --[[
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
     if #TRPS.freeUHFFrequencies <= 3 then
@@ -39284,11 +39301,19 @@ for _coalitionName, _coalitionData in pairs(env.mission.coalition) do
             and type(_coalitionData) == 'table' then
         if _coalitionData.country then --there is a country table
         for _, _countryData in pairs(_coalitionData.country) do
+<<<<<<< Updated upstream
 
             if type(_countryData) == 'table' then
                 for _objectTypeName, _objectTypeData in pairs(_countryData) do
                     if _objectTypeName == "static" then
 
+=======
+
+            if type(_countryData) == 'table' then
+                for _objectTypeName, _objectTypeData in pairs(_countryData) do
+                    if _objectTypeName == "static" then
+
+>>>>>>> Stashed changes
                         if ((type(_objectTypeData) == 'table')
                                 and _objectTypeData.group
                                 and (type(_objectTypeData.group) == 'table')
