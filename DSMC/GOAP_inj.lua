@@ -190,6 +190,7 @@ if not GOAP.TerrainDb["towns"] then
 end
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 function GOAP.getAngle(vector1, vector2)
     return math.deg(math.atan2(vector2.z-vector1.z, vector2.x-vector1.x))%360
 end
@@ -298,6 +299,11 @@ function GOAP.phase0_initTerrains()
 
 
 
+=======
+for tId, tData in pairs(GOAP.TerrainDb["towns"]) do
+    tData.owner = 0
+    tData.coalition = {[0] = {}, [1] = {}, [2] = {}, [3] = {}}
+>>>>>>> Stashed changes
 =======
 for tId, tData in pairs(GOAP.TerrainDb["towns"]) do
     tData.owner = 0
@@ -1838,9 +1844,15 @@ end
 
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
 
 
+=======
+
+
+
+>>>>>>> Stashed changes
 =======
 
 
