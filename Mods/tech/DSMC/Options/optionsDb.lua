@@ -20,7 +20,7 @@ return {
 	timer_options				= DbOption.new():setValue(2):setEnforceable():radio({	Name('TMUP_cont_true')	:Value(1),
 																						Name('TMUP_cont_false')	:Value(2):OnlyArch64(),
 																					}),
-	ATRL						= DbOption.new():setValue(false):checkbox():setEnforceable(), 
-	ATRL_time 					= DbOption.new():setValue(1):slider(Range(1, 30)),
-	SLOT						= DbOption.new():setValue(false):checkbox():setEnforceable(), 	
+	ATRL						= DbOption.new():setValue(true):checkbox():setEnforceable(), 
+	ATRL_time 					= DbOption.new():setValue(1):slider(Range(1, 480)),
+	SLOT						= DbOption.new():setValue(true):checkbox():setEnforceable(), 	
 }

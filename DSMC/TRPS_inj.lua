@@ -35962,41 +35962,13 @@ end
 -- one for VHF and one for UHF
 -- The units are set to to NOT engage
 function TRPS.createRadioBeacon(_point, _coalition, _country, _name, _batteryTime, _isFOB)
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    env.info(ModuleName .. " createRadioBeacon spawning vhf")
-    --local _uhfGroup = TRPS.spawnRadioBeaconUnit(_point, _country, "UHF")
-    local _vhfGroup = TRPS.spawnRadioBeaconUnit(_point, _country, "VHF")
-    --local _fmGroup = TRPS.spawnRadioBeaconUnit(_point, _country, "FM")
-    env.info(ModuleName .. " createRadioBeacon spawned vhf")
-    local _freq = TRPS.generateADFFrequencies()
-    env.info(ModuleName .. " createRadioBeacon generated freq")
-=======
 
     local _uhfGroup = TRPS.spawnRadioBeaconUnit(_point, _country, "UHF")
     local _vhfGroup = TRPS.spawnRadioBeaconUnit(_point, _country, "VHF")
-=======
-
-    local _uhfGroup = TRPS.spawnRadioBeaconUnit(_point, _country, "UHF")
-    local _vhfGroup = TRPS.spawnRadioBeaconUnit(_point, _country, "VHF")
->>>>>>> Stashed changes
-=======
-
-    local _uhfGroup = TRPS.spawnRadioBeaconUnit(_point, _country, "UHF")
-    local _vhfGroup = TRPS.spawnRadioBeaconUnit(_point, _country, "VHF")
->>>>>>> Stashed changes
     local _fmGroup = TRPS.spawnRadioBeaconUnit(_point, _country, "FM")
 
     local _freq = TRPS.generateADFFrequencies()
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     --create timeout
     local _battery
 
@@ -36041,24 +36013,8 @@ function TRPS.createRadioBeacon(_point, _coalition, _country, _name, _batteryTim
         battery = _battery,
         coalition = _coalition,
     }
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    env.info(ModuleName .. " createRadioBeacon update beacon")
-    TRPS.updateRadioBeacon(_beaconDetails)
-    env.info(ModuleName .. " createRadioBeacon updated beacon")
-=======
     TRPS.updateRadioBeacon(_beaconDetails)
 
->>>>>>> Stashed changes
-=======
-    TRPS.updateRadioBeacon(_beaconDetails)
-
->>>>>>> Stashed changes
-=======
-    TRPS.updateRadioBeacon(_beaconDetails)
-
->>>>>>> Stashed changes
     table.insert(TRPS.deployedRadioBeacons, _beaconDetails)
 
     return _beaconDetails
@@ -36066,16 +36022,6 @@ end
 
 function TRPS.generateADFFrequencies()
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    --[[
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     if #TRPS.freeUHFFrequencies <= 3 then
         TRPS.freeUHFFrequencies = TRPS.usedUHFFrequencies
         TRPS.usedUHFFrequencies = {}
@@ -39318,27 +39264,11 @@ for _coalitionName, _coalitionData in pairs(env.mission.coalition) do
             and type(_coalitionData) == 'table' then
         if _coalitionData.country then --there is a country table
         for _, _countryData in pairs(_coalitionData.country) do
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 
             if type(_countryData) == 'table' then
                 for _objectTypeName, _objectTypeData in pairs(_countryData) do
                     if _objectTypeName == "static" then
 
-=======
-
-            if type(_countryData) == 'table' then
-                for _objectTypeName, _objectTypeData in pairs(_countryData) do
-                    if _objectTypeName == "static" then
-
->>>>>>> Stashed changes
-=======
-
-            if type(_countryData) == 'table' then
-                for _objectTypeName, _objectTypeData in pairs(_countryData) do
-                    if _objectTypeName == "static" then
-
->>>>>>> Stashed changes
                         if ((type(_objectTypeData) == 'table')
                                 and _objectTypeData.group
                                 and (type(_objectTypeData.group) == 'table')
@@ -39472,47 +39402,44 @@ function TRPS.playerLeave:onEvent(event)
 	if event.id == world.event.S_EVENT_PLAYER_LEAVE_UNIT or event.id == world.event.S_EVENT_DEAD then -- 18	
         if event.initiator then
             env.info(ModuleName .. " playerLeave event.initiator exist")
-            if event.initiator:getCategory() == 1 then
-                env.info(ModuleName .. " playerLeave event.initiator is a unit")
-                local playerId = TRPS.getPlayerNameOrUnitName(event.initiator)
-                local unitName = Unit.getName(event.initiator)
-                local _rootPath = nil
-                if playerId then
-                    env.info(ModuleName .. " playerLeave, playerId exist")
-                    for aId, aData in pairs(TRPS.addedTo) do
-                        if aId == playerId then
-                            _rootPath = aData.path
-                        end
-                    end
-                    TRPS.addedTo[playerId] = nil
-                end
-                
-
-                if unitName and playerId and _rootPath then -- NON SI PASSA DA QUI!!!!
-                    
-                    TRPS.transportPilotNames[unitName] = nil
-                    env.info(ModuleName .. " playerLeave removing entry from transportPilotNames: " .. tostring(unitName))
-                    local group = event.initiator:getGroup()
-                    local groupId = group:getID()
-
-                    if event.initiator:hasAttribute("Helicopters") and groupId then
-                        env.info(ModuleName .. " playerLeave removing entry from addedTo: " .. tostring(playerId))
-                        missionCommands.removeItemForGroup(groupId, _rootPath)
-                        --env.info(ModuleName .. " playerLeave removing entry from missionCommand: " .. tostring(playerId))
-                    end
-                else
-                    env.info(ModuleName .. " playerLeave missing parameters")
-                end
-
-                --[[
-                for id, data in pairs(TRPS.addedTo) do
-                    if id == playerId then
-                        env.info(ModuleName .. " playerLeave removing entry: " .. tostring(id))
-                        id = nil
+            local playerId = TRPS.getPlayerNameOrUnitName(event.initiator)
+            local unitName = Unit.getName(event.initiator)
+            local _rootPath = nil
+            if playerId then
+                env.info(ModuleName .. " playerLeave, playerId exist")
+                for aId, aData in pairs(TRPS.addedTo) do
+                    if aId == playerId then
+                        _rootPath = aData.path
                     end
                 end
-                --]]
+                TRPS.addedTo[playerId] = nil
             end
+            
+
+            if unitName and playerId and _rootPath then -- NON SI PASSA DA QUI!!!!
+                
+                TRPS.transportPilotNames[unitName] = nil
+                env.info(ModuleName .. " playerLeave removing entry from transportPilotNames: " .. tostring(unitName))
+                local group = event.initiator:getGroup()
+                local groupId = group:getID()
+
+                if event.initiator:hasAttribute("Helicopters") and groupId then
+                    env.info(ModuleName .. " playerLeave removing entry from addedTo: " .. tostring(playerId))
+                    missionCommands.removeItemForGroup(groupId, _rootPath)
+                    --env.info(ModuleName .. " playerLeave removing entry from missionCommand: " .. tostring(playerId))
+                end
+            else
+                env.info(ModuleName .. " playerLeave missing parameters")
+            end
+
+            --[[
+            for id, data in pairs(TRPS.addedTo) do
+                if id == playerId then
+                    env.info(ModuleName .. " playerLeave removing entry: " .. tostring(id))
+                    id = nil
+                end
+            end
+            --]]
         end
 	end
 end

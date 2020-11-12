@@ -345,9 +345,9 @@ function updateUnits(missionEnv)
 															end
 														end
 														
-														if group.route.spans then
-															group.route.spans = nil 
-														end
+														--if group.route.spans then
+														--	group.route.spans = nil 
+														--end
 														HOOK.writeDebugDetail(ModuleName .. ": updateUnits unit updated")
 														unitsUpdateNumber = unitsUpdateNumber + 1
 													end

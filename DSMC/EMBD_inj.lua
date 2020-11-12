@@ -853,7 +853,11 @@ EMBD.executeSAVE = function(recall)
 		if DSMC_lfs and DSMC_io then
 			EMBD.oncallworkflow("desanitized", recall)
 		else
-			EMBD.runDesanMessage()
+			--EMBD.oncallworkflow("sanitized", recall)
+			--trigger.action.outText("DSMC is in server mode, check saved files for possibile error. \nIt's recommended to run DCS in desanitized mode if you use dedicated server for proper DSMC operation", 10)
+			env.info(("DSMC can't work, you need to desanitize the server!"))
+			trigger.action.outText("DSMC can't work, you need to desanitize the server!", 10)
+			
 		end
 	else
 		env.info(("EMBD.executeSAVE is in standard mode"))
@@ -865,13 +869,6 @@ EMBD.executeSAVE = function(recall)
 	end
 end
 
-EMBD.runDesanMessage = function()
-	local function Desanmessage()
-		trigger.action.outText("DSMC can't work, you need to desanitize the server!", 10)
-		env.info(("DSMC can't work, you need to desanitize the server!"))
-	end
-	timer.scheduleFunction(Desanmessage, {}, timer.getTime() + 60)
-end
 
 --### EVENT HANDLERS
 
@@ -1616,3 +1613,4 @@ end
 
 
 --~=
+-- x
