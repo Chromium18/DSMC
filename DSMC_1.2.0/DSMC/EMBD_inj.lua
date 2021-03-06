@@ -2,10 +2,10 @@
 -- REWORK T/O and LAND to allow multiple sorties!
 
 local ModuleName  	= "EMBD"
-local MainVersion 	= "1"
-local SubVersion 	= "1"
-local Build 		= "1044"
-local Date			= "26/12/2020"
+local MainVersion 	= DSMC_MainVersion
+local SubVersion 	= DSMC_SubVersion
+local Build 		= DSMC_Build
+local Date			= DSMC_Date
 
 env.setErrorMessageBoxEnabled(false)
 local base 						= _G

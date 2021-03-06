@@ -1,10 +1,10 @@
 -- Dynamic Sequential Mission Campaign -- TRACK SPAWNED module
 
 local ModuleName  	= "SLOT"
-local MainVersion 	= "1"
-local SubVersion 	= "1"
-local Build 		= "1044"
-local Date			= "17/10/2020"
+local MainVersion 	= HOOK.DSMC_MainVersion
+local SubVersion 	= HOOK.DSMC_SubVersion
+local Build 		= HOOK.DSMC_Build
+local Date			= HOOK.DSMC_Date
 
 --## LIBS
 local base 			= _G

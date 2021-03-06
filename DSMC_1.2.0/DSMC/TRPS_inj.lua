@@ -3,10 +3,10 @@
 -- and a few spots in between (alt.sanity)
 
 local ModuleName  	= "TRPS_inj"
-local MainVersion 	= "1"
-local SubVersion 	= "1"
-local Build 		= "1044"
-local Date			= "02/02/2021"
+local MainVersion 	= DSMC_MainVersion or "missing, loaded without DSMC"
+local SubVersion 	= DSMC_SubVersion or "missing, loaded without DSMC"
+local Build 		= DSMC_Build or "missing, loaded without DSMC"
+local Date			= DSMC_Date or "missing, loaded without DSMC"
 
 --[[
     Combat Troop and Logistics Drop
