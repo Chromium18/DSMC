@@ -42,6 +42,7 @@ function updateStTime(missionEnv)
 	
 
 	if HOOK.TMUP_cont_var == 1 then
+
 		HOOK.writeDebugDetail(ModuleName .. ": HOOK.TMUP_cont_var 1")
 		local NEWtime 				= CURtime + DCS.getModelTime() -- CURtime --((math.floor((timer.getTime()/60))+1)*60)			
 		--local NEWtimeTable			= os.date("*t", NEWtime)			
@@ -51,7 +52,9 @@ function updateStTime(missionEnv)
 		--local zeroTime				= tonumber(os.time{year=1970, month=1, day=1, hour=0, sec=1})
 		local NEWstartTimeZero		= tonumber(os.time{year=NEWstartDateYear, month=NEWstartDateMonth, day=NEWstartDateDay, hour=0}) -- + zeroTime		
 		NEWstartTime				= NEWtime - NEWstartTimeZero
-	else
+	
+	elseif HOOK.TMUP_cont_var == 2 then
+	
 		HOOK.writeDebugDetail(ModuleName .. ": HOOK.TMUP_cont_var 2")
 
 		math.randomseed(os.time())
@@ -69,7 +72,7 @@ function updateStTime(missionEnv)
 			end
 		end
 		--]]--
-
+	
 		local RandomTime			= RandomHour*60*60
 		local NEWtime 				= CURday + 24*60*60 -- + RandomTime
 		local NEWtimeTable			= os.date("*t", NEWtime)			
@@ -77,6 +80,16 @@ function updateStTime(missionEnv)
 		NEWstartDateMonth			= tonumber(os.date("%m", NEWtime))
 		NEWstartDateDay				= tonumber(os.date("%d", NEWtime))
 		NEWstartTime				= RandomTime		
+
+	else
+		
+		HOOK.writeDebugDetail(ModuleName .. ": HOOK.TMUP_cont_var 3")
+		
+		NEWstartDateYear			= tonumber(os.date("%Y"))
+		NEWstartDateMonth			= tonumber(os.date("%m"))
+		NEWstartDateDay				= tonumber(os.date("%d"))
+		NEWstartTime				= CURstartTime
+	
 	end
 
 	missionEnv.start_time 			= NEWstartTime

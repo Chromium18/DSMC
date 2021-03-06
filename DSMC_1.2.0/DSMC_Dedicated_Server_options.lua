@@ -14,13 +14,12 @@ DSMC_AutosaveProcess_min	= 1			-- minutes, number, from 2 to 480
 DSMC_MapPersistence 		= true		-- true / false
 DSMC_StaticDeadUnits 		= true		-- true / false
 DSMC_UpdateStartTime		= true 		-- true / false
-DSMC_UpdateStartTime_mode	= 1 		-- Ignored if UpdateStartTime is false. 1 = keep continous scenery. 2 = start the next day, random hour
+DSMC_UpdateStartTime_mode	= 1 		-- 1,2 or 3. Ignored if UpdateStartTime is false. 1 = keep continous scenery. 2 = start the next day, random hour. 3 = use current date, default mission time.
 DSMC_TrackWarehouses		= true	 	-- true / false
 DSMC_TrackSpawnedUnits		= true	 	-- true / false
 DSMC_WeatherUpdate          = true      -- true / false
 DSMC_ExportDocuments        = true      -- true / false
 DSMC_CreateClientSlot       = true      -- true / false
-DSMC_CreateSlotCoalition    = "blue"     -- "all", "blue", "red". Case sensitive. If wrong, it reverts to "all". If blue or red, slots will be created only for that coalition
 
 -- CTLD setup stuff
 DSMC_automated_CTLD			= true	 	-- true / false
@@ -34,7 +33,7 @@ DSMC_DebugMode				= false		-- true / false
 DSMC_WarehouseAutoSetup     = true      -- true / false If true, at each mission end the supply net will be automatically rebuilt. Check manual!
 DSMC_DisableF10save			= true      -- true / false F10 menù save option disable switch
 DSMC_AutosaveExit_hours		= 25        -- hours of simulation after with DCS closes, from 0 to 24 (higher values won't be accepted). If clients are online, it will delay 5 minutes and so on till nobody is online.
-
+DSMC_CreateSlotCoalition    = "blue"     -- "all", "blue", "red". Case sensitive. If wrong, it reverts to "all". If blue or red, slots will be created only for that coalition
 
 
 
