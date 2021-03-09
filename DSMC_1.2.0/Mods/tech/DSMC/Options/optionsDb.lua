@@ -19,6 +19,7 @@ return {
 	--AIEsuppression				= DbOption.new():setValue(false):checkbox():setEnforceable(),
 	timer_options				= DbOption.new():setValue(2):setEnforceable():radio({	Name('TMUP_cont_true')	:Value(1),
 																						Name('TMUP_cont_false')	:Value(2):OnlyArch64(),
+																						Name('TMUP_cont_real')	:Value(3):OnlyArch64(),
 																					}),
 	ATRL						= DbOption.new():setValue(true):checkbox():setEnforceable(), 
 	ATRL_time 					= DbOption.new():setValue(1):slider(Range(1, 30)),

@@ -70,7 +70,6 @@ local ComboListSkin = {
 }
 
 
-
 dialog = {
 	["children"] = {
 		["containerPlugin"] = {
@@ -234,7 +233,7 @@ dialog = {
 							["h"] = verticalBound,
 							["w"] = width,
 							["x"] = leftMargin1,
-							["y"] = verticalStack*12,
+							["y"] = verticalStack*13,
 						},
 						["enabled"] = true,
 						["text"] = "$DSMC_Title_LOG",
@@ -451,7 +450,7 @@ dialog = {
 								["h"] = verticalBound,
 								["w"] = 800, 
 								["x"] = leftMargin1,
-								["y"] = verticalStack*13,
+								["y"] = verticalStack*14,
 						},
 						["enabled"] = true,
 						["state"] = false,
@@ -608,6 +607,79 @@ dialog = {
 						["state"] = false,
 						["tabOrder"] = 0,
 						["text"] = "$TMUP_cont_FALSE",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = {
+						["params"] = {
+							["name"] = "radioButtonSkin_options",
+						},
+						["states"] = {
+							["hover"] = {
+								[1] = {
+									["text"] = {
+										["vertAlign"] = {
+											["offset"] = 0,
+										},
+									},
+								},
+								[2] = {
+									["text"] = {
+										["vertAlign"] = {
+											["offset"] = 0,
+										},
+									},
+								},
+							},
+							["pressed"] = {
+								[1] = {
+									["text"] = {
+										["vertAlign"] = {
+											["offset"] = 0,
+										},
+									},
+								},
+								[2] = {
+									["text"] = {
+										["vertAlign"] = {
+											["offset"] = 0,
+										},
+									},
+								},
+							},
+							["released"] = {
+								[1] = {
+									["text"] = {
+										["vertAlign"] = {
+											["offset"] = 0,
+										},
+									},
+								},
+								[2] = {
+									["text"] = {
+										["vertAlign"] = {
+											["offset"] = 0,
+										},
+									},
+								},
+							},
+						},
+					},
+					["type"] = "RadioButton",
+				},
+				["TMUP_cont_realRadioButton"] = {
+					["params"] = {
+						["bounds"] = {
+								["h"] = verticalBound,
+								["w"] = 800,
+								["x"] = leftMargin1,
+								["y"] = verticalStack*11.25,
+						},
+						["enabled"] = true,
+						["state"] = false,
+						["tabOrder"] = 0,
+						["text"] = "$TMUP_cont_REAL",
 						["tooltip"] = "",
 						["visible"] = true,
 						["zindex"] = 0,

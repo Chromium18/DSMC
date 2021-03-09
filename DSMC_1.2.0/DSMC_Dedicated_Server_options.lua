@@ -4,7 +4,7 @@
 -- Choosing this option require desanitization of MissionScripting.lua. 
 -- If you didn't already done that, DSMC will do that for you!
 DSMC_AutosaveProcess		= true		-- true / false. 
-DSMC_AutosaveProcess_min	= 1			-- minutes, number, from 2 to 480
+DSMC_AutosaveProcess_min	= 2			-- minutes, number, from 2 to 480
 
 -- those variables are the same you find in options menù. They are checked by the loader.lua only
 -- after options menù! So if you're running with graphics, those options will be used. If you're
@@ -32,9 +32,10 @@ DSMC_DebugMode				= false		-- true / false
 -- Server-side only options
 DSMC_WarehouseAutoSetup     = true      -- true / false If true, at each mission end the supply net will be automatically rebuilt. Check manual!
 DSMC_DisableF10save			= true      -- true / false F10 menù save option disable switch
-DSMC_AutosaveExit_hours		= 25        -- hours of simulation after with DCS closes, from 0 to 24 (higher values won't be accepted). If clients are online, it will delay 5 minutes and so on till nobody is online.
-DSMC_CreateSlotCoalition    = "blue"     -- "all", "blue", "red". Case sensitive. If wrong, it reverts to "all". If blue or red, slots will be created only for that coalition
-
+DSMC_AutosaveExit_hours		= 25        -- value, 1->24 or 25. hours of simulation after with DCS closes, from 0 to 24 (higher values won't be accepted). If clients are online, it will delay 5 minutes and so on till nobody is online.
+DSMC_AutosaveExit_time      = 0         -- value, 1->23. hour at witch DCS will automatically close regardless of clients or other settings. works only if DSMC_AutosaveExit_hours is set to >24. Values out of the 1-23 range will be ignored.
+DSMC_AutoRestart_active     = false     -- true / false If true, DSMC will load a dynamically created .bat file (base version in DSMC\files, kindly provided by Maverick87Shaka) that will monitor DCS process. Once it close, it will try to load up automatically. BEWARE: no stop on that process is provided, you must do it on your own.
+DSMC_CreateSlotCoalition    = "all"     -- "all", "blue", "red". Case sensitive. If wrong, it reverts to "all". If blue or red, slots will be created only for that coalition
 
 
 

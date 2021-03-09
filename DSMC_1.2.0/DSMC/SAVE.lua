@@ -862,6 +862,10 @@ function save()
 
 		end	
 
+		if HOOK.ADTR_var == true and tblAddResources then
+			updateMapResources(env.mission, mRes_env.mapResource, tblAddResources)
+		end			
+
 		--updateBases(env.mission, wrhs_env.warehouses)
 		HOOK.writeDebugDetail(ModuleName .. " d1")
 		if HOOK.UPAP_var == true then

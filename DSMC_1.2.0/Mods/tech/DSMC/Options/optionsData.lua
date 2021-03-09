@@ -11,6 +11,7 @@ cdata =
 	TMUP_txt				= _("Change next scenery simulation date & time"),
 	TMUP_cont_TRUE			= _("Saved scenery start at end of current mission (continous time)"),
 	TMUP_cont_FALSE			= _("Saved scenery start the next day, random hour (staged time)"), 
+	TMUP_cont_REAL			= _("Saved scenery start on real world date, same time as original mission"), 
 	
 	DSMC_Title_SRV			= _("Server options (works in multiplayer only)"),
 	ATRL_txt				= _("Server option to autosave with defined frequency the scenery"), 
@@ -31,12 +32,3 @@ cdata =
 	DEBUG_txt				= _("Enable detail debug mode. WARNING: can impact framerates & playability, activate only for reproduce a bug"),
 	--DEBUG_help				= _("When DEBUG mode is active, the reload options works with minutes instead of hours! so choosing '3' mean reload every 3 minutes"),
 }
-
-	--OBJECT_CREATION			= _("Saved file dead objects add options"), -- OBJECT_CREATION	
-	--OTHER_OPTIONS			= _("Other options"),	
-	--KEEP_GROUPS_ROUTES		= _("Retain editor group's routes"),
-	--AIR_UNIT_TRACKED		= _("Remove dead planes & helicopters when dead"),
-	--TRACK_ADDED_GROUPS		= _("Save spawned groups (except infantry/manpads units)"),
-	--TRACK_ADDED_INFANTRY	= _("Save spawned infantry/manpads also"),
-	--AIE_LOGISTIC			= _("Enable object driven logistic system"),
-	--AIE_SUPPRESSION			= _("Use suppression fire effects on ground units"),

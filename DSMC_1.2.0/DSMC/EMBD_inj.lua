@@ -371,6 +371,8 @@ function EMBD.sendUnitsData(missionEnv)	--what does it do with statics??
 							if exclude == false then
 								for unitID, unit in pairs(group["units"]) do																			
 									local isAlive = true
+
+									-- filter dead units
 									for id, deadData in pairs (tblDeadUnits) do
 										if tonumber(deadData.unitId) == tonumber(unit.unitId) then
 											isAlive = false
@@ -1859,7 +1861,7 @@ if DSMC_debugProcessDetail then
 	env.info(("EMBD: DSMC variable settings: DSMC_server = " ..tostring(DSMC_server)))
 	env.info(("EMBD: DSMC variable settings: DSMC_debugProcessDetail = " ..tostring(DSMC_debugProcessDetail)))
 	env.info(("EMBD: DSMC variable settings: DSMC_autosavefrequency = " ..tostring(DSMC_autosavefrequency)))
-	env.info(("EMBD: DSMC variable settings: DSMC_AutosaveExit_hours = " ..tostring(DSMC_AutosaveExit_hours)))
+	env.info(("EMBD: DSMC variable settings: DSMC_AutosaveExit_timer = " ..tostring(DSMC_AutosaveExit_timer)))
 end
 
 --do functions
@@ -1870,8 +1872,8 @@ if DSMC_autosavefrequency and DSMC_multy and DSMC_io and DSMC_lfs then
 	timer.scheduleFunction(EMBD.scheduleAutosave, {}, timer.getTime() + tonumber(DSMC_autosavefrequency))
 end
 
-if DSMC_AutosaveExit_hours then
-	if DSMC_AutosaveExit_hours > 0 then
+if DSMC_AutosaveExit_timer then
+	if DSMC_AutosaveExit_timer > 0 then
 		local function autostop()
 			if DSMC_allowStop == false then
 				trigger.action.outText("DSMC is trying to restart the server! land or disconnect as soon as you can: DSMC will try again in 10 minutes", 10)		
@@ -1880,7 +1882,7 @@ if DSMC_AutosaveExit_hours then
 				timer.scheduleFunction(autostop, {}, timer.getTime() + 10)
 			end
 		end
-		timer.scheduleFunction(autostop, {}, timer.getTime() + tonumber(DSMC_AutosaveExit_hours*3600))
+		timer.scheduleFunction(autostop, {}, timer.getTime() + tonumber(DSMC_AutosaveExit_timer))
 	end
 end
 

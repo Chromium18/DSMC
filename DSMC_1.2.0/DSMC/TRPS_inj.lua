@@ -31124,7 +31124,7 @@ TRPS.disableAllSmoke = false -- if true, all smoke is diabled at pickup and drop
 TRPS.enableSmokeDrop = true -- if false, helis and c-130 will not be able to drop smoke
 TRPS.crateOpsDistance = 100 -- max distance in meters from unit to crates to allow drop & loading operation, DSMC
 TRPS.maxExtractDistance = 125 -- max distance from vehicle to troops to allow a group extraction
-TRPS.maximumDistanceLogistic = 200 -- max distance from vehicle to logistics to allow a loading or spawning operation 
+TRPS.maximumDistanceLogistic = 300 -- max distance from vehicle to logistics to allow a loading or spawning operation 
 TRPS.maximumSearchDistance = 4000 -- max distance for troops to search for enemy
 TRPS.maximumMoveDistance = 100 -- max distance for troops to move from drop point if no enemy is nearby
 TRPS.minimumDeployDistance = 1000 -- minimum distance from a friendly pickup zone where you can deploy a crate. DSMC: also work reversed for movers! it became the maximum distance from warehouse where you can unpack movers crates
@@ -31183,8 +31183,8 @@ TRPS.JTAC_maxDistance = 10000 -- How far a JTAC can "see" in meters (with Line o
 TRPS.JTAC_smokeOn_RED = false -- enables marking of target with smoke for RED forces
 TRPS.JTAC_smokeOn_BLUE = false -- enables marking of target with smoke for BLUE forces
 
-TRPS.JTAC_smokeColour_RED = 4 -- RED side smoke colour -- Green = 0 , Red = 1, White = 2, Orange = 3, Blue = 4
-TRPS.JTAC_smokeColour_BLUE = 1 -- BLUE side smoke colour -- Green = 0 , Red = 1, White = 2, Orange = 3, Blue = 4
+TRPS.JTAC_smokeColour_RED = 3 -- RED side smoke colour -- Green = 0 , Red = 1, White = 2, Orange = 3, Blue = 4
+TRPS.JTAC_smokeColour_BLUE = 2 -- BLUE side smoke colour -- Green = 0 , Red = 1, White = 2, Orange = 3, Blue = 4
 TRPS.JTAC_smokeColous = {"Green", "Red", "White", "Orange", "Blue", "No smoke"}
 
 TRPS.JTAC_jtacStatusF10 = TRPS_JTAC_dropEnabled or false -- enables F10 JTAC Status menu

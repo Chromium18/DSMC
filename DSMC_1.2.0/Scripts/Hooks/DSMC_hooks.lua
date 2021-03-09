@@ -35,8 +35,8 @@ package.path =
 DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "2"
-DSMC_Build 			= "1241"
-DSMC_Date			= "06/03/2021"
+DSMC_Build 			= "1247"
+DSMC_Date			= "09/03/2021"
 
 -- ## DEBUG TO TEXT FUNCTION
 debugProcess	= true -- this should be left on for testers normal ops and test missions
@@ -210,6 +210,8 @@ function loadDSMCHooks()
 	SLOT_var							= opt_SLOT_var or DSMC_CreateClientSlot
 	SLOT_coa_var						= DSMC_CreateSlotCoalition or "all" -- to test, set this "blue" or "red"
 	STOP_var							= DSMC_AutosaveExit_hours
+	STOP_var_time						= DSMC_AutosaveExit_time
+	RSTS_var							= DSMC_AutoRestart_active
 	SBEO_var							= DSMC_BuilderToolsBeta or false -- opt_SBEO or    NOT USED NOW if true some mess may happen
 	TRPS_var							= opt_TRPS_var or DSMC_automated_CTLD
 	TRPS_setup_var						= opt_TRPS_setup_var or DSMC_CTLD_RealSlingload
@@ -246,6 +248,8 @@ function loadDSMCHooks()
 	writeDebugBase(DSMC_ModuleName .. ": SLOT_coa_var = " ..tostring(SLOT_coa_var))
 	writeDebugBase(DSMC_ModuleName .. ": UPAP_var = " ..tostring(UPAP_var))
 	writeDebugBase(DSMC_ModuleName .. ": STOP_var = " ..tostring(STOP_var))
+	writeDebugBase(DSMC_ModuleName .. ": STOP_var_time = " ..tostring(STOP_var_time))
+	writeDebugBase(DSMC_ModuleName .. ": RSTS_var = " ..tostring(RSTS_var))
 	writeDebugBase(DSMC_ModuleName .. ": SBEO_var = " ..tostring(SBEO_var))
 	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup_var realslingload = " ..tostring(TRPS_setup_var))
 	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup2_var platoons = " ..tostring(TRPS_setup2_var))
@@ -269,7 +273,7 @@ function loadDSMCHooks()
 		autosavefrequency = tonumber(ATRL_time_var) * 60
 	end
 	
-	-- check STO_var
+	-- check STOP_var
 	if STOP_var then
 		if type(STOP_var) == 'number' then
 			if STOP_var > 24 then
@@ -277,6 +281,21 @@ function loadDSMCHooks()
 			end
 		else
 			STOP_var = nil
+		end
+	end
+
+	-- check STOP_var_time
+	if STOP_var_time then
+		if not STOP_var then
+			if type(STOP_var_time) == 'number' then
+				if STOP_var_time > 23 or STOP_var_time < 1 then
+					STOP_var_time = nil
+				end
+			else
+				STOP_var_time = nil
+			end
+		else
+			STOP_var_time = nil
 		end
 	end
 
@@ -423,6 +442,70 @@ function recoverAutosave()
 	end
 end
 
+function loadRestart()
+
+	writeDebugDetail(DSMC_ModuleName .. ": loadRestart, started")
+
+	-- WARNING: DO NOT INDENT LINES BELOW OR THE BATCH FILE WON'T WORK ANYMORE PROPERLY!!!!
+
+local code = [[echo Checking DCS process...
+@echo off
+REM this script is done to provide restart automation
+set "titleWhileRunning=DSMC_DCS_Server_Monitor"
+]] .. "\n"
+code = code .. 'set DCS_PATH=' .. '"' .. lfs.currentdir() .. 'bin\\'     .. '"' .. "\n"
+code = code .. [[tasklist /v /fi "imagename eq cmd.exe" /fi "windowtitle eq %titleWhileRunning%" | find "%titleWhileRunning%" >NUL
+if %ERRORLEVEL% EQU 0  echo Powershell script already running, wait for it to finish. >&2 & exit /b 1
+
+title %titleWhileRunning%
+taskkill /F /IM DCS.exe
+Color 9A
+echo LAUNCHING DCS...
+
+:Serverrestart
+cd /D %DCS_PATH%
+start "" /wait /min DCS.exe --server --norender
+timeout 10
+echo ============
+goto Serverrestart]]
+
+	writeDebugDetail(DSMC_ModuleName .. ": loadRestart, code created")
+
+	local o = io.open(DSMCdirectory .. 'Files/' .. "DSMC_Restart_DCS.bat", "w")
+	o:write(code)
+	o:close()
+
+	writeDebugDetail(DSMC_ModuleName .. ": loadRestart, .bat file created")
+
+	local revString = DSMCdirectory .. 'Files/' .. 'DSMC_Restart_DCS.bat'
+	local startString = string.gsub(revString, "\\", "/")
+
+	--[[""C:\Program Files\National Instruments\LabVIEW 2009\LabVIEW.exe" "C:\Program Files\National Instruments\LabVIEW 2009\examples\viserver\cmdline.llb\CommandLine.vi" -- 4.0"]]
+	local strCmd = tostring(startString)
+	writeDebugDetail(DSMC_ModuleName .. ": loadRestart, " .. strCmd)
+
+	local function Execute(cmd)
+		local exitCode = os.execute(cmd)
+		if exitCode ~= 0 then
+		   -- If the exit status isn't 0 this should indicate the execution
+		   -- wasn't a complete success. We'll return the pre-defined error
+		   -- message for this exit status or a generic one.
+		   return "Done with possible errors exit code "..exitCode..":\r\n"..cmd
+		else
+		   return "Done"
+		end
+	end
+
+	local loading, errors = Execute(tostring('"' .. strCmd ..  '"'))
+	writeDebugDetail(DSMC_ModuleName .. ": loadRestart, .bat file executed: " .. tostring(loading))
+	writeDebugDetail(DSMC_ModuleName .. ": loadRestart, .bat file errors: " .. tostring(errors))
+
+	--local retry, reErrors = Execute([["C:/Users/Admin/Saved Games/DCS.openbeta_server/DSMC/Files/DSMC_Restart_DCS.bat"]])
+	--writeDebugDetail(DSMC_ModuleName .. ": loadRestart, .bat file retry: " .. tostring(retry))
+	--writeDebugDetail(DSMC_ModuleName .. ": loadRestart, .bat file reErrors: " .. tostring(reErrors))
+
+end
+
 -- callback on start
 function startDSMCprocess()
 	if UTIL and SAVE then
@@ -514,7 +597,27 @@ function startDSMCprocess()
 						
 						--## EXPORT IN SSE ENVIRONMENT THE SAVE MODULE
 						if STOP_var then
-							UTIL.inJectCode("autoexitvar", "DSMC_AutosaveExit_hours = " .. tostring(STOP_var))
+							UTIL.inJectCode("autoexitvar", "DSMC_AutosaveExit_timer = " .. tostring(STOP_var*3600))
+						elseif STOP_var_time then
+							
+							local date_table = os.date("*t")
+							local hour, minute, second = date_table.hour, date_table.min, date_table.sec
+							local hour_s = hour*3600
+							local min_s = minute*60
+							local curSec = second+min_s+hour_s
+							writeDebugDetail(DSMC_ModuleName .. ": curSec = " .. tostring(curSec))
+							local deltaSeconds = nil
+							if STOP_var_time*3600 > curSec then
+								deltaSeconds = (STOP_var_time*3600) - curSec 
+							else
+								deltaSeconds = (24*3600) - curSec + (STOP_var_time*3600)
+							end
+
+							writeDebugDetail(DSMC_ModuleName .. ": deltaSeconds = " .. tostring(deltaSeconds))
+							if deltaSeconds then
+								
+								UTIL.inJectCode("autoexitvar", "DSMC_AutosaveExit_timer = " .. tostring(deltaSeconds))
+							end
 						end
 
 						-- code from WRHS module
@@ -643,6 +746,16 @@ function startDSMCprocess()
 						writeDebugDetail(DSMC_ModuleName .. ": created dir = " .. tostring(missionfilesdirectory .. "Temp/"))
 						UTIL.copyFile(loadedMissionPath, DSMCfiles .. "tempFile.miz")					
 						
+						if STOP_var or STOP_var then
+							if RSTS_var then
+								writeDebugBase(DSMC_ModuleName .. ": STOP_var is true, activating autorestart .bat file")
+								loadRestart()
+								writeDebugBase(DSMC_ModuleName .. ": STOP_var is true, .bat file activated")
+							end
+						else
+							writeDebugBase(DSMC_ModuleName .. ": STOP_var is false, no autorestart required")
+						end
+
 						writeDebugBase(DSMC_ModuleName .. ": Initial loop done, mission is started now!")
 					else
 						writeDebugDetail(DSMC_ModuleName .. ": setMaxId failed to get base counters! HALT ALL")
@@ -970,6 +1083,7 @@ function DSMC.onTriggerMessage(message)
 			writeDebugDetail(DSMC_ModuleName .. ": there are " .. tostring(num_clients) .. " clients connected")
 			if num_clients == 0 then
 				writeDebugBase(DSMC_ModuleName .. ": Closing DCS!")
+
 				DCS.stopMission()
 				DCSshouldCloseNow = true
 			else
