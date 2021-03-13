@@ -18,11 +18,20 @@ HOOK.writeDebugDetail(ModuleName .. ": local required loaded")
 
 -- ## LOCAL VARIABLES
 TMUPloaded						= false
-local maxHourDay				= 15  -- this is the maximum clock hour that could be set for mission start, from 03 to "x", in hour
---local minHournight				= 21 -- must be less than 23!
+local minHourTime				= DSMC_StarTimeHourMin or 4   -- this is the minimum clock hour that could be set for mission start
+local maxHourTime				= DSMC_StarTimeHourMax or 16  -- this is the maximum clock hour that could be set for mission start
 
 -- ## MANUAL TABLES
 
+
+
+-- ## CHECK FUNCTION
+if minHourTime < 1 or minHourTime > 14 then
+	minHourTime = 4
+end
+if maxHourTime < 15 or maxHourTime > 23 then
+	maxHourTime = 16
+end
 
 -- ## ELAB FUNCTION
 function updateStTime(missionEnv)
@@ -59,7 +68,7 @@ function updateStTime(missionEnv)
 
 		math.randomseed(os.time())
 		math.random(); math.random(); math.random()
-		local RandomHour = math.floor(math.random()*maxHourDay-3+1-0.00001)+3
+		local RandomHour = math.random(minHourTime, maxHourTime)
 		
 		--[[ old code
 		local RandomHour			= math.random(0, 23) -- math.floor(8 + RandomSeed*13)

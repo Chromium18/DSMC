@@ -133,7 +133,8 @@ NewMissionPath 				= missionfilesdirectory .. "Temp/" .. NewMizTempDir .. "missi
 OldDictPath 				= missionfilesdirectory .. "Temp/" .. "dictionary"
 NewDictPath 				= missionfilesdirectory .. "Temp/" .. NewMizTempDir .."l10n/" .. "DEFAULT/" .. "dictionary"	
 OldMResPath 				= missionfilesdirectory .. "Temp/" .. "mapResource"
-NewMResPath 				= missionfilesdirectory .. "Temp/" .. NewMizTempDir .."l10n/" .. "DEFAULT/" .. "mapResource"	
+NewMResPath 				= missionfilesdirectory .. "Temp/" .. NewMizTempDir .."l10n/" .. "DEFAULT/" .. "mapResource"
+NewFilesDir					= missionfilesdirectory .. "Temp/" .. NewMizTempDir .."l10n/" .. "DEFAULT/"
 OldWrhsPath 				= missionfilesdirectory .. "Temp/" .. "warehouses"
 NewWrhsPath 				= missionfilesdirectory .. "Temp/" .. NewMizTempDir .."warehouses"
 logpath 					= lfs.writedir() .. "Logs/mixpath.txt"
@@ -393,6 +394,10 @@ function loadDSMCHooks()
 		GOAP 						= require("GOAP")
 		writeDebugBase(DSMC_ModuleName .. ": loaded in GOAP module")
 	end
+	if UTIL.fileExist(DSMCdirectory .. "ADTR" .. ".lua") == true then
+		ADTR 						= require("ADTR")
+		writeDebugBase(DSMC_ModuleName .. ": loaded in ADTR module")
+	end
 
 	-- check minimum settings to create callbacks
 	if UTIL and SAVE then
@@ -465,7 +470,7 @@ echo LAUNCHING DCS...
 :Serverrestart
 cd /D %DCS_PATH%
 start "" /wait /min DCS.exe --server --norender
-timeout 10
+timeout 40
 echo ============
 goto Serverrestart]]
 

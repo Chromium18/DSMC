@@ -737,6 +737,13 @@ function updateBriefing(missionEnv, dictionaryEnv)
 end
 HOOK.writeDebugDetail(ModuleName .. ": updateBriefing loaded")
 
+function updateResources(missionEnv, mapEnv, tblRes)
+	if ADTR and ADTR.ADTRloaded == true then
+		ADTR.updateMapResources(missionEnv, mapEnv, tblRes)
+	end	
+end
+HOOK.writeDebugDetail(ModuleName .. ": updateResources loaded")
+
 function save() 
 	HOOK.writeDebugDetail(ModuleName .. ": save starting... ")
 	local processDone = false
@@ -862,8 +869,12 @@ function save()
 
 		end	
 
-		if HOOK.ADTR_var == true and tblAddResources then
-			updateMapResources(env.mission, mRes_env.mapResource, tblAddResources)
+		if ADTR.tblAddResources then
+			HOOK.writeDebugDetail(ModuleName .. " adding external files")
+			updateResources(env.mission, mRes_env.mapResource, ADTR.tblAddResources)
+			HOOK.writeDebugDetail(ModuleName .. " external files added")
+		else
+			HOOK.writeDebugDetail(ModuleName .. " no external files available")
 		end			
 
 		--updateBases(env.mission, wrhs_env.warehouses)
@@ -1275,9 +1286,10 @@ function buildNewMizFile(loadedMissionPath, loadedMizFileName, cpm_path)
 		
 		local zipFile, err = minizip.unzOpen(loadedMissionPath, 'rb')
 		zipFile:unzGoToFirstFile() --vai al primo file dello zip		
-		local NewSaveresourceFiles = {}
+		DSMC_NewSaveresourceFiles = {}
 		local CreatedDirectories = {}
 		local function Unpack()
+			local SaveresourceFiles = {}
 			while true do --scompattalo e passa al prossimo
 				local filename = zipFile:unzGetCurrentFileName()
 				local BaseTempDir = HOOK.missionfilesdirectory .. "Temp/" .. HOOK.NewMizTempDir
@@ -1425,17 +1437,17 @@ function buildNewMizFile(loadedMissionPath, loadedMizFileName, cpm_path)
 				end	
 				
 				zipFile:unzUnpackCurrentFile(fullPath) 
-				NewSaveresourceFiles[filename] = fullPath
+				SaveresourceFiles[filename] = fullPath
 				if not zipFile:unzGoToNextFile() then 
 					break
 				end
 			end
-			return NewSaveresourceFiles
+			return SaveresourceFiles
 		end
-		Unpack() -- execute the unpacking
+		DSMC_NewSaveresourceFiles = Unpack() -- execute the unpacking
 		HOOK.writeDebugDetail(ModuleName .. ": buildNewMizFile - unpack ok")
 
-		save()		
+		save()
 		UTIL.moveFile(HOOK.OldMissionPath, HOOK.NewMissionPath)
 		HOOK.writeDebugDetail(ModuleName .. ": buildNewMizFile - mission file moved")
 		UTIL.moveFile(HOOK.OldDictPath, HOOK.NewDictPath)			
@@ -1445,15 +1457,19 @@ function buildNewMizFile(loadedMissionPath, loadedMizFileName, cpm_path)
 		UTIL.moveFile(HOOK.OldMResPath, HOOK.NewMResPath)
 		HOOK.writeDebugDetail(ModuleName .. ": buildNewMizFile - mapResource file moved")
 
+		UTIL.dumpTable("DSMC_NewSaveresourceFiles.lua", DSMC_NewSaveresourceFiles)
+
 		local miz = minizip.zipCreate(NewMizPath)
 		if miz then
 			HOOK.writeDebugDetail(ModuleName .. ": buildNewMizFile - new miz zip created")
 			
 			local function packMissionResources(miz)
-				for file, fullPath in pairs(NewSaveresourceFiles) do
+				for file, fullPath in pairs(DSMC_NewSaveresourceFiles) do
 					local fileIsThere = UTIL.fileExist(fullPath)
 					if fileIsThere == true then
-						miz:zipAddFile(file, fullPath)					
+						miz:zipAddFile(file, fullPath)
+					else
+						HOOK.writeDebugBase(ModuleName .. ": missing files to repack: " .. tostring(file))			
 					end
 					os.remove(fullPath)
 				end
@@ -1463,25 +1479,7 @@ function buildNewMizFile(loadedMissionPath, loadedMizFileName, cpm_path)
 			zipFile:unzClose()		
 			HOOK.writeDebugDetail(ModuleName .. ": buildNewMizFile - repack ok")	
 			
-			--[[
-			local deletedir = function(dir)
-				for file in lfs.dir(dir) do
-					local file_path = dir..'/'..file
-					if file ~= "." and file ~= ".." then
-						if lfs.attributes(file_path, 'mode') == 'file' then
-							os.remove(file_path)
-						elseif lfs.attributes(file_path, 'mode') == 'directory' then
-							deletedir(file_path)
-						end
-					end
-				end
-				lfs.rmdir(dir)
-				HOOK.writeDebugDetail(ModuleName .. ": remove dir: " .. tostring(dir))
-			end
-			deletedir(HOOK.missionfilesdirectory .. "Temp/")
-
-			--]]
-			UTIL.dumpTable("CreatedDirectories.lua", CreatedDirectories)			
+			--UTIL.dumpTable("CreatedDirectories.lua", CreatedDirectories)			
 			
 			while #CreatedDirectories>0 do
 				local maxId = 0
@@ -1509,9 +1507,11 @@ function buildNewMizFile(loadedMissionPath, loadedMizFileName, cpm_path)
 				UPAP.weatherExport = true
 				HOOK.writeDebugDetail(ModuleName .. ": buildNewMizFile - UPAP.weatherExport: " .. tostring(UPAP.weatherExport))	
 			end
-
+			
+			DSMC_NewSaveresourceFiles = nil
 			net.dostring_in("mission", [[a_do_script("trigger.action.outText('scenery saved!', 10)")]])
 			UTIL.inJectCode("DSMC_allowStop", "DSMC_allowStop = true")
+
 			return true
 		else
 			HOOK.writeDebugDetail(ModuleName .. ": buildNewMizFile - no miz created")
@@ -1520,6 +1520,7 @@ function buildNewMizFile(loadedMissionPath, loadedMizFileName, cpm_path)
 	else
 		HOOK.writeDebugBase(ModuleName .. ": buildNewMizFile, errors: tblAirbases or tblUnitsUpdate missing")	
 	end
+
 
 	tblDeadUnits					= nil
 	tblDeadScenObj					= nil
