@@ -13,7 +13,7 @@
 --      3 - Pilot Life Limit - No Aircraft Disabling 
 
 local ModuleName  	= "DCSR_inj"
-local MainVersion 	= DSMCS_MainVersion or "missing, loaded without DSMC"
+local MainVersion 	= DSMC_MainVersion or "missing, loaded without DSMC"
 local SubVersion 	= DSMC_SubVersion or "missing, loaded without DSMC"
 local Build 		= DSMC_Build or "missing, loaded without DSMC"
 local Date			= DSMC_Date or "missing, loaded without DSMC"
@@ -1098,9 +1098,16 @@ function DCSR.addCsar(_coalition , _country, _point, _typeName, _unitName, _play
   else
       _text = _description
   end
-  
+  --
   DCSR.woundedGroups[_spawnedGroup:getName()] = { side = _spawnedGroup:getCoalition(), originalUnit = _unitName, desc = _text, typename = _typeName, frequency = _freq, player = _playerName }
- 
+  
+  -- reversing
+  if noMessage == false then
+    noMessage = true
+  else
+    noMessage = false
+  end
+
   DCSR.initSARForPilot(_spawnedGroup, _freq, noMessage)
   
   if _spawnedGroup ~= nil then
@@ -2058,7 +2065,7 @@ function DCSR.checkCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedGr
                     --check height!
                     local _height = _heliUnit:getPoint().y - _woundedLeader:getPoint().y
 
-                    if _height <= 20.0 then
+                    if _height <= 30.0 then
 
                         local _time = DCSR.hoverStatus[_lookupKeyHeli]
 
@@ -2572,26 +2579,31 @@ function DCSR.addMedevacMenuItem()
     
     for _key, _group in pairs (_allHeliGroups) do
       
-      local _unit = _group:getUnit(1) -- Asume that there is only one unit in the flight for players
-      if _unit ~= nil then 
-        if _unit:isExist() == true then         
-          local unitName = _unit:getName()
-            local _type = _unit:getTypeName()
-            if DCSR.aircraftType[_type] ~= nil then
-              if DCSR.csarUnits[_unit:getName()] == nil then
-                DCSR.csarUnits[_unit:getName()] = _unit:getName()
-                
-                  for _woundedName, _groupInfo in pairs(DCSR.woundedGroups) do
-                    if _groupInfo.side == _group:getCoalition() then
-                    
-                      -- Schedule timer to check when to pop smoke
-                      timer.scheduleFunction(DCSR.checkWoundedGroupStatus, { _unit:getName() , _woundedName }, timer.getTime() + 5)
+        local unitsTbl = _group:getUnits()
+        --local _unit = _group:getUnit(1) -- Asume that there is only one unit in the flight for players
+        for _, _unit in pairs(unitsTbl) do
+            
+            if _unit ~= nil then 
+                if _unit:isExist() == true then         
+                local unitName = _unit:getName()
+                    local _type = _unit:getTypeName()
+                    if DCSR.aircraftType[_type] ~= nil then
+                        if DCSR.csarUnits[_unit:getName()] == nil then
+                            DCSR.csarUnits[_unit:getName()] = _unit:getName()
+                            
+                            for _woundedName, _groupInfo in pairs(DCSR.woundedGroups) do
+                                if _groupInfo.side == _group:getCoalition() then
+                                
+                                -- Schedule timer to check when to pop smoke
+                                timer.scheduleFunction(DCSR.checkWoundedGroupStatus, { _unit:getName() , _woundedName }, timer.getTime() + 5)
+                                end
+                            end
+                        end
                     end
-                  end
-              end
+                end
             end
         end
-      end
+
     end
     
     for key, unitName in pairs(DCSR.csarFixedUnits) do
@@ -2609,20 +2621,24 @@ function DCSR.addMedevacMenuItem()
     for _, _unitName in pairs(DCSR.csarUnits) do
 
         local _unit = DCSR.getSARHeli(_unitName)
-
+        --env.info("a1")
         if _unit ~= nil then
-            
+            --env.info("a2")
             local _CTLDpathID = DCSR.getPlayerNameOrUnitName(_unit)
+            --env.info("a3:" .. tostring(_CTLDpathID))
             if _CTLDpathID then
+                --env.info("a4")
                 local _menuCode = "CSAR for " .. tostring(_CTLDpathID)
                 local _addedId = _CTLDpathID
                 local _groupId = DCSR.getGroupId(_unit)
+                local _unitId = _unit:getID()
+                local _group = _unit:getGroup()
 
                 if _groupId then
-
+                    --env.info("a5")
                     if DCSR.addedTo[tostring(_addedId)] == nil then
-
-                        DCSR.addedTo[tostring(_addedId)] = true
+                        --env.info("a6")
+                        
 
                         local _rootPath = missionCommands.addSubMenuForGroup(_groupId, _menuCode, {"DSMC"})
 
@@ -2634,6 +2650,7 @@ function DCSR.addMedevacMenuItem()
                         missionCommands.addCommandForGroup(_groupId, "Request Signal Flare", _rootPath, DCSR.signalFlare, _unitName)
                         missionCommands.addCommandForGroup(_groupId, "Request Smoke", _rootPath, DCSR.reqsmoke, _unitName)
                         
+                        DCSR.addedTo[tostring(_addedId)] = {path = _rootPath, groupId = _groupId, unitId = _unitId, unitName = _unitName, curTime = timer.getTime(), group = _group}
                     end
                 end
             else
@@ -2859,8 +2876,67 @@ timer.scheduleFunction(DCSR.addMedevacMenuItem, nil, timer.getTime() + 5)
     -- Schedule timer to reactivate things
     --timer.scheduleFunction(DCSR.reactivateAircraft, nil, timer.getTime() + 5)
 --end
-
 world.addEventHandler(DCSR.eventHandler)
+
+-- looping removal function
+function DCSR.playerRemovalLoop()
+    -- schedule
+    timer.scheduleFunction(DCSR.playerRemovalLoop, nil, timer.getTime() + 1)
+
+    -- check
+    for pName, pData in pairs(DCSR.addedTo) do
+        local check = false
+
+        if pData and type(pData) == "table" then
+
+            -- name & life checks 
+            if pData.unitName then
+                local u = Unit.getByName(pData.unitName)
+                if u then
+                    if u:getLife() > 1 then
+                        check = true
+                    end
+                end
+            end
+
+            if check == false then
+                if debugProcessDetail then
+                    env.info(ModuleName .. " playerRemovalLoop deleting " .. tostring(pName) .. ", unit name: " .. tostring(pData.unitName))
+                end
+
+                if pData.path and pData.groupId then
+
+                    --if event.initiator:hasAttribute("Air") then
+                        if debugProcessDetail then
+                            env.info(ModuleName .. " playerRemovalLoop removing menù entry from addedTo: " .. tostring(pName))
+                        end
+                        missionCommands.removeItemForGroup(pData.groupId, pData.path)
+                    --end
+
+                end
+
+                --[[ remove from transportpilot
+                for tId, tData in pairs (TRPS.transportPilotNames) do 
+                    if tData == pData.unitName then
+                        tId = nil
+                        if debugProcessDetail then
+                            env.info(ModuleName .. " playerRemovalLoop deleted transportPilotNames entry")
+                        end
+                    end
+                end
+                --]]--
+                        
+                DCSR.addedTo[pName] = nil
+                --table.remove(TRPS.addedTo, pName)
+                if debugProcessDetail then
+                    env.info(ModuleName .. " playerRemovalLoop deleted addedTo entry")
+                end
+            end
+        end
+    end
+end
+DCSR.playerRemovalLoop()
+
 
 env.info("CSAR event handler added")
 

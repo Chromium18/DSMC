@@ -40119,7 +40119,7 @@ function TRPS.playerLeave:onEvent(event)
                 end
                 
 
-                if unitName and playerId and _rootPath then -- NON SI PASSA DA QUI!!!!
+                if unitName and playerId and _rootPath then 
                     
                     TRPS.transportPilotNames[unitName] = nil
                     env.info(ModuleName .. " playerLeave removing entry from transportPilotNames: " .. tostring(unitName))

@@ -1619,6 +1619,15 @@ function EMBD.collectSpawned:onEvent(event)
 				if not Unit.getPlayerName(event.initiator) then					
 					env.info(("EMBD.collectSpawned unit, non-player"))
 					local ei_gName = Unit.getGroup(event.initiator):getName()
+
+					if ei_gName and type(ei_gName) == "string" then
+						if string.find(ei_gName, "Downed Pilot") then
+							env.info(("EMBD.collectSpawned unit is a downed pilot, skipping"))
+							return
+						end
+					end
+
+
 					local ei = Unit.getGroup(event.initiator)
 					local ei_pos = event.initiator:getPosition().p
 					local ei_unitTableSource = ei:getUnits()

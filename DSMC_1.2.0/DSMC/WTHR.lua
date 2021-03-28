@@ -1167,6 +1167,15 @@ staticWeatherDb =  -- theatre, date.Month, probability data
 	},
 }
 
+newWeatherPresets =
+{
+	[1] = {id = 1, iprec = 2, oktThr = 3},
+	[2] = {id = 1, iprec = 2, oktThr = 3},
+	[3] = {id = 1, iprec = 2, oktThr = 3},
+	[4] = {id = 1, iprec = 2, oktThr = 3},
+
+}
+
 --# FUNCTIONS
 
 function rndFactorCorrection(value)

@@ -482,7 +482,7 @@ dialog = {
 					["skin"] = CheckBoxSkin,
 					["type"] = "CheckBox",
 				},							
-				["DCRSCheckbox"] = {
+				["DCSRCheckbox"] = {
 					["params"] = {
 						["bounds"] = {
 							["h"] = verticalBound,
@@ -493,7 +493,7 @@ dialog = {
 						["enabled"] = true,
 						["state"] = false,
 						["tabOrder"] = 0,
-						["text"] = "$DCRS_txt",
+						["text"] = "$DCSR_txt",
 						["tooltip"] = "",
 						["visible"] = true,
 						["zindex"] = 0,
