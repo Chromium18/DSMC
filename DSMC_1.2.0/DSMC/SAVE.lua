@@ -862,10 +862,12 @@ function save()
 			GOAP.createColourZones(env.mission, tblTerrainDb)
 
 			--test
-			GOAP.planGroundGroup(env.mission, 6, "Dziguri", true, dict_env.dictionary, 600)
-			--planAirGroup(missionEnv, id, task, pos, delay)
-			local id = 14
-			GOAP.planAirGroup(id, env.mission, dict_env.dictionary, "CAP", {x = 0, y = 1000, z = 0})
+			GOAP.planGroundGroup(env.mission, 6, "CHERKESSK", true, dict_env.dictionary, 600)
+			--planAirGroup(id, missionEnv, task, pos, delay)
+			GOAP.planAirGroup(14, env.mission, dict_env.dictionary, "Strike", {x = 6466, y = 0, z = 383469}, 600)
+			GOAP.planAirGroup(15, env.mission, dict_env.dictionary, "CAP", {x = 0, y = 6096, z = 0}, 900)
+			GOAP.planAirGroup(16, env.mission, dict_env.dictionary, "CAS", {x = 6466, y = 0, z = 383469}, 300)
+
 
 		end	
 

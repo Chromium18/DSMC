@@ -1,6 +1,5 @@
--- THIS IS AN EXACT CLONE OF CTLD by Ciribob, with added code to remove mist dependancies and add some automation.
--- custom DSMC code is at bottom!
--- and a few spots in between (alt.sanity)
+-- THIS IS MODIFIED VERSION OF CTLD by Ciribob, with added code to remove mist dependancies and add some automation.
+
 
 local ModuleName  	= "TRPS_inj"
 local MainVersion 	= DSMC_MainVersion or "missing, loaded without DSMC"
@@ -31213,8 +31212,6 @@ if not DSMC_baseUcounter then
 end
 
 
-
-
 local trpsDynAddIndex 		= {[' air '] = 0, [' hel '] = 0, [' gnd '] = 0, [' bld '] = 0, [' static '] = 0, [' shp '] = 0}
 local trpsAddedObjects 		= {}  -- da mist
 local trpsAddedGroups 		= {}  -- da mist
@@ -32360,7 +32357,6 @@ TRPS.unitLoadLimits = {
 	["Ka-50"] = 0,
 
 }
-
 
 -- ************** Allowable actions for UNIT TYPES ******************
 
@@ -40663,18 +40659,5 @@ end
 
 
 
-        --[[
-        ["Support & logistic"] = {
-            { weight = 591, desc = "Command SKP", unit = "SKP-11", side = 1},
-            { weight = 593, desc = "Rearm Ural", unit = "Ural-375", side = 1},
-            { weight = 595, desc = "Electric generator Zil-131", unit = "ZiL-131 APA-80", side = 1},
-            { weight = 597, desc = "Fuel tank vehicle ATZ", unit = "ATZ-10", side = 1},
-
-            { weight = 592, desc = "Hummer vehicle", unit = "Hummer", side = 2},
-            { weight = 594, desc = "Rearm vehicle M-818", unit = "M 818", side = 2},
-            { weight = 596, desc = "Utility vehicle HEMTT TFFT", unit = "HEMTT TFFT", side = 2},
-            { weight = 598, desc = "Fuel tank vehicle HEMTT", unit = "M978 HEMTT Tanker", side = 2},
-
-            { weight = 599, desc = "Repair & rearm crate", unit = "REPAIR-CRATE", obj_crate = TRPS.repairCrateModel},
-        },   
-        --]]--
+--
+env.info((ModuleName .. ": Loaded " .. MainVersion .. "." .. SubVersion .. "." .. Build .. ", released " .. Date))

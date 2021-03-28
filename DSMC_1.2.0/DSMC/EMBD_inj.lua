@@ -189,6 +189,23 @@ function IntegratedserializeWithCycles(name, value, saved)
 	end
 end
 
+function deepCopy(object)
+    local lookup_table = {}
+	local function _copy(object)
+		if type(object) ~= "table" then
+			return object
+		elseif lookup_table[object] then
+			return lookup_table[object]
+		end
+		local new_table = {}
+		lookup_table[object] = new_table
+		for index, value in pairs(object) do
+			new_table[_copy(index)] = _copy(value)
+		end
+		return setmetatable(new_table, getmetatable(object))
+	end
+	return _copy(object)
+end
 
 if DSMC_io and DSMC_lfs then
 	env.info(("EMBD loading desanitized additional function"))
@@ -465,7 +482,7 @@ function EMBD.sendUnitsData(missionEnv)	--what does it do with statics??
 	end		
 end	
 
-function EMBD.changeWarehouseCoalition (missionEnv)
+function EMBD.changeWarehouseCoalition(missionEnv)
 	if DSMC_debugProcessDetail == true then
 		env.info(("EMBD.changeWarehouseCoalition started"))
 	end	
@@ -1732,7 +1749,7 @@ world.addEventHandler(EMBD.collectSpawned)
 --
 EMBD.airbaseFuelIndex = {}
 EMBD.fuelTest = {}
-function EMBD.fuelTest:onEvent(event)	
+function EMBD.fuelTest:onEvent(event)
 	if event.id == world.event.S_EVENT_BIRTH then 
 		env.info(("EMBD.fuelTest event birth found"))
 		if event.initiator then

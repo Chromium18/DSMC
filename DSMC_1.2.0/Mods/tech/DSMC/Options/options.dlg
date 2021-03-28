@@ -114,7 +114,7 @@ dialog = {
 							["h"] = verticalBound,
 							["w"] = width, 
 							["x"] = leftMargin2,
-							["y"] = verticalStack*6,
+							["y"] = verticalStack*7,
 						},
 						["enabled"] = true,
 						["text"] = "$DSMC_Help_AIE_1",
@@ -131,7 +131,7 @@ dialog = {
 							["h"] = verticalBound,
 							["w"] = width, 
 							["x"] = leftMargin2,
-							["y"] = verticalStack*6.5,
+							["y"] = verticalStack*7.5,
 						},
 						["enabled"] = true,
 						["text"] = "$DSMC_Help_AIE_2",
@@ -148,7 +148,7 @@ dialog = {
 							["h"] = verticalBound,
 							["w"] = width, 
 							["x"] = leftMargin2,
-							["y"] = verticalStack*7,
+							["y"] = verticalStack*8,
 						},
 						["enabled"] = true,
 						["text"] = "$DSMC_Help_AIE_3",
@@ -165,7 +165,7 @@ dialog = {
 							["h"] = verticalBound,
 							["w"] = width, 
 							["x"] = leftMargin2,
-							["y"] = verticalStack*7.5,
+							["y"] = verticalStack*8.5,
 						},
 						["enabled"] = true,
 						["text"] = "$DSMC_Help_AIE_4",
@@ -182,7 +182,7 @@ dialog = {
 							["h"] = verticalBound,
 							["w"] = width, 
 							["x"] = leftMargin2,
-							["y"] = verticalStack*8,
+							["y"] = verticalStack*9,
 						},
 						["enabled"] = true,
 						["text"] = "$DSMC_Help_AIE_5",
@@ -482,7 +482,26 @@ dialog = {
 					["skin"] = CheckBoxSkin,
 					["type"] = "CheckBox",
 				},							
-				
+				["DCRSCheckbox"] = {
+					["params"] = {
+						["bounds"] = {
+							["h"] = verticalBound,
+							["w"] = width, 
+							["x"] = leftMargin2,
+							["y"] = verticalStack*6,
+						},
+						["enabled"] = true,
+						["state"] = false,
+						["tabOrder"] = 0,
+						["text"] = "$DCRS_txt",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = CheckBoxSkin,
+					["type"] = "CheckBox",
+				},	
+
 				["SLOTCheckbox"] = {
 					["params"] = {
 						["bounds"] = {

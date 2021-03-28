@@ -23,6 +23,7 @@ cdata =
 	
 	DSMC_Title_AIE			= _("Real time simulation enhancement options"),
 	TRPS_txt				= _("Enable troops transport & crate logistic with CTLD by Ciribob"),
+	DCRS_txt				= _("Enable integrated CSAR script by Ciribob"),
 	TRPS_setup				= _("CTLD is set with real slingload setup: crates must be slingloaded"),	
 	DSMC_Help_AIE_1			= _("This option enable CTLD inside DSMC, with some added automation:\n"),	
 	DSMC_Help_AIE_2			= _("- it doesn't require setup: logistic, troops and helos are automatically recognized"),
