@@ -1,3 +1,4 @@
+-- DSMC DCSR
 -- THIS IS MODIFIED VERSION OF CSAR Script by Ciribob, with added code to remove mist dependancies and add some automation.
 
 -- ORIGINAL VERSION:
@@ -783,7 +784,7 @@ end
 
 -- DSMC added variables
 DCSR.useCoalitionMessages = DCSR_useCoalitionMessages_var or true -- if false, no coalition messages will be shown when a pilot is downed (this is for who has a dedicated human in coordination role). Modify line 528
-
+env.info(ModuleName .. ": DCSR.useCoalitionMessages " .. tostring(DCSR.useCoalitionMessages))
 
 -- Fixed Unit Name. -- DSMC left here to ensure retro-compatibility
 --E nable Csar Options for the units with the names in the list below                  
@@ -1073,7 +1074,7 @@ function DCSR.addCsar(_coalition , _country, _point, _typeName, _unitName, _play
   local _spawnedGroup = DCSR.spawnGroup( _coalition, _country, _point, _typeName )
   DCSR.addSpecialParametersToGroup(_spawnedGroup)
   
-  if noMessage ~= true then
+  if noMessage == true then
     trigger.action.outTextForCoalition(_spawnedGroup:getCoalition(), "MAYDAY MAYDAY! " .. _typeName .. " is down. ", 10)
   end
   
@@ -1187,7 +1188,7 @@ function DCSR.eventHandler:onEvent(_event)
                     return
                 end
 
-                trigger.action.outTextForCoalition(_unit:getCoalition(), "MAYDAY MAYDAY! " .. _unit:getTypeName() .. " shot down. No Chute!", 10)
+                --trigger.action.outTextForCoalition(_unit:getCoalition(), "MAYDAY MAYDAY! " .. _unit:getTypeName() .. " shot down. No Chute!", 10)
                 --DCSR.handleEjectOrCrash(_unit, true)
             else
                 env.info("Pilot Hasnt taken off, ignore")
@@ -1195,17 +1196,32 @@ function DCSR.eventHandler:onEvent(_event)
 
             return
 
-        elseif _event.id == 9 or world.event.S_EVENT_EJECTION == _event.id then
+        elseif _event.id == 9 or world.event.S_EVENT_EJECTION == _event.id then  
             --if _event.id == 9  then  -- and DCSR.csarOncrash == false
             --    return     
             --end
             env.info("Event unit - Pilot Ejected")
+
+
 
             local _unit = _event.initiator
 
             if _unit == nil then
                 return -- error!
             end
+
+            --[[
+            if _unit:getPoint() then
+                local preLand = _unit:getPoint()
+                local landType = land.getSurfaceType({x = preLand.x, y = preLand.z})
+
+                if landType == 3 then
+                    env.info("Event unit - Pilot Ejected over water, remove")
+                    return
+                end
+            end
+            --]]--
+
 
             local _coalition = _unit:getCoalition()
 
@@ -1236,7 +1252,7 @@ function DCSR.eventHandler:onEvent(_event)
 
 
             local _freq = DCSR.generateADFFrequency()
-             DCSR.addCsar(_coalition, _unit:getCountry(), _unit:getPoint()  , _unit:getTypeName(),  _unit:getName(), _unit:getPlayerName(), _freq, DCSR.useCoalitionMessages, 0)
+            DCSR.addCsar(_coalition, _unit:getCountry(), _unit:getPoint()  , _unit:getTypeName(),  _unit:getName(), _unit:getPlayerName(), _freq, DCSR.useCoalitionMessages, 0)
              
             return true
 
@@ -1714,7 +1730,6 @@ function DCSR.spawnGroup( _coalition, _country, _point, _typeName )
 
     return _spawnedGroup
 end
-
 
 function DCSR.createUnit(_x, _y, _heading, _type)
 

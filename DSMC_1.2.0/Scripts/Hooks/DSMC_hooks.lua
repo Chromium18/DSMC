@@ -727,7 +727,6 @@ function startDSMCprocess()
 						
 						-- CSAR script
 						if DCSR_var then
-
 							if DCSR_setup_var == true then
 								UTIL.inJectCode("DCSR_Setup", "DSMC_DCSR_useCoalitionMessages_var = true")
 							else
