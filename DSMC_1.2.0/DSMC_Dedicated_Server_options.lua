@@ -30,7 +30,7 @@ DSMC_automated_CTLD			= true	 	-- true / false
 DSMC_CTLD_RealSlingload		= true	 	-- true / false
 
 DSMC_automated_CSAR         = true      -- true / false
-DCSR_useCoalitionMessages   = true	 	-- true / false
+DSMC_DCSR_useCoalitionMessages   = true	 	-- true / false
 
 -- Debug. Leave on only for bugtracking!!!
 DSMC_DebugMode				= false		-- true / false

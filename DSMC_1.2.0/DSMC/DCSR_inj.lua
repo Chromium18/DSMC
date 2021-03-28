@@ -26,7 +26,18 @@ local debugProcessDetail = DSMC_debugProcessDetail or false
 
 -- All slot / Limit settings
 
-function DCRS.deepCopy(object)
+if not DSMC_baseGcounter then
+	DSMC_baseGcounter = 20010000
+end
+if not DSMC_baseUcounter then
+	DSMC_baseUcounter = 19010000
+end
+
+local DCSRDynAddIndex 		= {[' air '] = 0, [' hel '] = 0, [' gnd '] = 0, [' bld '] = 0, [' static '] = 0, [' shp '] = 0}
+local DCSRAddedObjects 		= {}  -- da mist
+local DCSRAddedGroups 		= {}  -- da mist
+
+function DCSR.deepCopy(object)
     local lookup_table = {}
 	local function _copy(object)
 		if type(object) ~= "table" then
@@ -46,7 +57,7 @@ end
 
 if TRPS then
     if TRPS.unitLoadLimits then
-        DCSR.aircraftType = DCRS.deepCopy(TRPS.unitLoadLimits)
+        DCSR.aircraftType = DCSR.deepCopy(TRPS.unitLoadLimits)
         if debugProcessDetail then
             env.info(ModuleName .. " DCSR.aircraftType created using TRPS")
         end
@@ -65,6 +76,710 @@ if not DCSR.aircraftType then
     DCSR.aircraftType["UH-1H"] = 8
     DCSR.aircraftType["Mi-8MT"] = 16
 end
+
+
+DCSR.getNextGroupId = function()
+    DSMC_baseGcounter = DSMC_baseGcounter + 1
+
+    return DSMC_baseGcounter
+end
+
+DCSR.getNextUnitId = function()
+    DSMC_baseUcounter = DSMC_baseUcounter + 1
+
+    return DSMC_baseUcounter
+end
+
+
+-- MIST import
+function DCSR.zoneToVec3(zone)
+    local new = {}
+	if type(zone) == 'table' then
+		if zone.point then
+			new.x = zone.point.x
+			new.y = zone.point.y
+			new.z = zone.point.z
+		elseif zone.x and zone.y and zone.z then
+			return zone
+		end
+		return new
+	elseif type(zone) == 'string' then
+		zone = trigger.misc.getZone(zone)
+		if zone then
+			new.x = zone.point.x
+			new.y = zone.point.y
+			new.z = zone.point.z
+			return new
+		end
+	end
+end
+
+function DCSR.round(num, idp)
+    local mult = 10^(idp or 0)
+	return math.floor(num * mult + 0.5) / mult
+end
+
+function DCSR.getPayload(unitName)
+    -- refactor to search by groupId and allow groupId and groupName as inputs
+	local unitTbl = Unit.getByName(unitName)
+	local unitId = unitTbl:getID()
+	local gpTbl = unitTbl:getGroup()
+	local gpId = gpTbl:getID()
+
+	if gpId and unitId then
+		for coa_name, coa_data in pairs(env.mission.coalition) do
+			if (coa_name == 'red' or coa_name == 'blue') and type(coa_data) == 'table' then
+				if coa_data.country then --there is a country table
+					for cntry_id, cntry_data in pairs(coa_data.country) do
+						for obj_type_name, obj_type_data in pairs(cntry_data) do
+							if obj_type_name == "helicopter" or obj_type_name == "ship" or obj_type_name == "plane" or obj_type_name == "vehicle" then	-- only these types have points
+								if ((type(obj_type_data) == 'table') and obj_type_data.group and (type(obj_type_data.group) == 'table') and (#obj_type_data.group > 0)) then	--there's a group!
+									for group_num, group_data in pairs(obj_type_data.group) do
+										if group_data and group_data.groupId == gpId then
+											for unitIndex, unitData in pairs(group_data.units) do --group index
+												if unitData.unitId == unitId then
+													return unitData.payload
+												end
+											end
+										end
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	else
+		if debugProcessDetail then
+			env.info(ModuleName .. " getPayload error, no gId or unitId")
+		end	
+		return false
+	end
+	return
+end
+
+function DCSR.deepCopy(object)
+    local lookup_table = {}
+	local function _copy(object)
+		if type(object) ~= "table" then
+			return object
+		elseif lookup_table[object] then
+			return lookup_table[object]
+		end
+		local new_table = {}
+		lookup_table[object] = new_table
+		for index, value in pairs(object) do
+			new_table[_copy(index)] = _copy(value)
+		end
+		return setmetatable(new_table, getmetatable(object))
+	end
+	return _copy(object)
+end
+
+function DCSR.dynAdd(newGroup)
+    local cntry = newGroup.country
+	if newGroup.countryId then
+		cntry = newGroup.countryId
+	end
+
+	local groupType = newGroup.category
+	local newCountry = ''
+	-- validate data
+	for countryId, countryName in pairs(country.name) do
+		if type(cntry) == 'string' then
+			cntry = cntry:gsub("%s+", "_")
+			if tostring(countryName) == string.upper(cntry) then
+				newCountry = countryName
+			end
+		elseif type(cntry) == 'number' then
+			if countryId == cntry then
+				newCountry = countryName
+			end
+		end
+	end
+
+	if newCountry == '' then
+		if debugProcessDetail then
+			env.info(ModuleName .. " dynAdd Country not found")
+		end		
+		return false
+	end
+
+	local newCat = ''
+	for catName, catId in pairs(Unit.Category) do
+		if type(groupType) == 'string' then
+			if tostring(catName) == string.upper(groupType) then
+				newCat = catName
+			end
+		elseif type(groupType) == 'number' then
+			if catId == groupType then
+				newCat = catName
+			end
+		end
+
+		if catName == 'GROUND_UNIT' and (string.upper(groupType) == 'VEHICLE' or string.upper(groupType) == 'GROUND') then
+			newCat = 'GROUND_UNIT'
+		elseif catName == 'AIRPLANE' and string.upper(groupType) == 'PLANE' then
+			newCat = 'AIRPLANE'
+		end
+	end
+	local typeName
+	if newCat == 'GROUND_UNIT' then
+		typeName = ' gnd '
+	elseif newCat == 'AIRPLANE' then
+		typeName = ' air '
+	elseif newCat == 'HELICOPTER' then
+		typeName = ' hel '
+	elseif newCat == 'SHIP' then
+		typeName = ' shp '
+	elseif newCat == 'BUILDING' then
+		typeName = ' bld '
+	end
+	if newGroup.clone or not newGroup.groupId then
+		DCSRDynAddIndex[typeName] = DCSRDynAddIndex[typeName] + 1
+		newGroup.groupId = DCSR.getNextGroupId()
+    end    
+	if newGroup.groupName or newGroup.name then
+		if newGroup.groupName then
+			newGroup.name = newGroup.groupName
+		elseif newGroup.name then
+			newGroup.name = newGroup.name
+		end
+	end
+
+	if newGroup.clone or not newGroup.name then
+		newGroup.name = tostring(newCountry .. tostring(typeName) .. DCSRDynAddIndex[typeName])
+	end
+
+	if not newGroup.hidden then
+		newGroup.hidden = false
+	end
+
+	if not newGroup.visible then
+		newGroup.visible = false
+	end
+
+	if (newGroup.start_time and type(newGroup.start_time) ~= 'number') or not newGroup.start_time then
+		if newGroup.startTime then
+			newGroup.start_time = DCSR.round(newGroup.startTime)
+		else
+			newGroup.start_time = 0
+		end
+	end
+
+    for unitIndex, unitData in pairs(newGroup.units) do
+        local originalName = newGroup.units[unitIndex].unitName or newGroup.units[unitIndex].name
+        if newGroup.clone or not unitData.unitId then
+            newGroup.units[unitIndex].unitId = DCSR.getNextUnitId()   -- DSMC
+        end
+        if newGroup.units[unitIndex].unitName or newGroup.units[unitIndex].name then
+            if newGroup.units[unitIndex].unitName then
+                newGroup.units[unitIndex].name = newGroup.units[unitIndex].unitName
+            elseif newGroup.units[unitIndex].name then
+                newGroup.units[unitIndex].name = newGroup.units[unitIndex].name
+            end
+        end
+        if newGroup.clone or not unitData.name then
+            newGroup.units[unitIndex].name = tostring(newGroup.name .. ' unit' .. unitIndex)
+        end
+
+        if not unitData.skill then
+            newGroup.units[unitIndex].skill = 'Random'
+        end
+
+        if newCat == 'AIRPLANE' or newCat == 'HELICOPTER' then
+            if newGroup.units[unitIndex].alt_type and newGroup.units[unitIndex].alt_type ~= 'BARO' or not newGroup.units[unitIndex].alt_type then
+                newGroup.units[unitIndex].alt_type = 'RADIO'
+            end
+            if not unitData.speed then
+                if newCat == 'AIRPLANE' then
+                    newGroup.units[unitIndex].speed = 150
+                elseif newCat == 'HELICOPTER' then
+                    newGroup.units[unitIndex].speed = 60
+                end
+            end
+            if not unitData.payload then
+                newGroup.units[unitIndex].payload = DCSR.getPayload(originalName)
+            end
+            if not unitData.alt then
+                if newCat == 'AIRPLANE' then
+                    newGroup.units[unitIndex].alt = 2000
+                    newGroup.units[unitIndex].alt_type = 'RADIO'
+                    newGroup.units[unitIndex].speed = 150
+                elseif newCat == 'HELICOPTER' then
+                    newGroup.units[unitIndex].alt = 500
+                    newGroup.units[unitIndex].alt_type = 'RADIO'
+                    newGroup.units[unitIndex].speed = 60
+                end
+            end
+            
+        elseif newCat == 'GROUND_UNIT' then
+            if nil == unitData.playerCanDrive then
+                unitData.playerCanDrive = true
+                unitData.transportable.randomTransportable = true -- ADDED BY DSMC
+            end
+        
+        end
+        DCSRAddedObjects[#DCSRAddedObjects + 1] = DCSR.deepCopy(newGroup.units[unitIndex])
+    end
+
+	DCSRAddedGroups[#DCSRAddedGroups + 1] = DCSR.deepCopy(newGroup)
+	if newGroup.route and not newGroup.route.points then
+		if not newGroup.route.points and newGroup.route[1] then
+			local copyRoute = newGroup.route
+			newGroup.route = {}
+			newGroup.route.points = copyRoute
+		end
+	end
+	newGroup.country = newCountry
+
+	-- sanitize table
+	newGroup.groupName = nil
+	newGroup.clone = nil
+	newGroup.category = nil
+	newGroup.country = nil
+
+	newGroup.tasks = {}
+
+	for unitIndex, unitData in pairs(newGroup.units) do
+		newGroup.units[unitIndex].unitName = nil
+	end
+
+    env.info(ModuleName .. " dynAdd newGroup data is there")
+    --dumpTable("newGroup.lua", newGroup)
+    env.info(ModuleName .. " dynAdd country.id[newCountry]: " .. tostring(country.id[newCountry]))
+    env.info(ModuleName .. " dynAdd Unit.Category[newCat]: " .. tostring(Unit.Category[newCat]))
+
+	coalition.addGroup(country.id[newCountry], Unit.Category[newCat], newGroup)
+
+	return newGroup
+
+end
+
+function DCSR.dynAddStatic(newObj)
+
+	if newObj.units and newObj.units[1] then 
+		for entry, val in pairs(newObj.units[1]) do
+			if newObj[entry] and newObj[entry] ~= val or not newObj[entry] then
+				newObj[entry] = val
+			end
+		end
+	end
+	--log:info(newObj)
+
+	local cntry = newObj.country
+	if newObj.countryId then
+		cntry = newObj.countryId
+	end
+
+	local newCountry = ''
+
+	for countryId, countryName in pairs(country.name) do
+		if type(cntry) == 'string' then
+			cntry = cntry:gsub("%s+", "_")
+			if tostring(countryName) == string.upper(cntry) then
+				newCountry = countryName
+			end
+		elseif type(cntry) == 'number' then
+			if countryId == cntry then
+				newCountry = countryName
+			end
+		end
+    end
+
+	if newCountry == '' then
+		if debugProcessDetail then
+			env.info(ModuleName .. " dynAddStatic Country not found")
+		end
+		return false
+    end
+
+	if newObj.clone or not newObj.groupId then
+		newObj.groupId = DCSR.getNextGroupId()
+    end
+ 
+	if newObj.clone or not newObj.unitId then -- 2
+		newObj.unitId = DCSR.getNextUnitId()
+	end
+
+   -- newObj.name = newObj.unitName
+	if newObj.clone or not newObj.name then
+		DCSRDynAddIndex[' static '] = DCSRDynAddIndex[' static '] + 1
+		newObj.name = (newCountry .. ' static ' .. DCSRDynAddIndex[' static '])
+    end
+
+	if not newObj.dead then
+		newObj.dead = false
+	end
+
+	if not newObj.heading then
+		newObj.heading = math.random(360)
+	end
+	
+	if newObj.categoryStatic then
+		newObj.category = newObj.categoryStatic
+	end
+	if newObj.mass then
+		newObj.category = 'Cargos'
+	end
+	
+	if newObj.shapeName then
+		newObj.shape_name = newObj.shapeName
+    end
+	if not newObj.shape_name then
+		if debugProcessDetail then
+			env.info(ModuleName .. " dynAddStatic shape not found")
+		end
+		if DCSR.tblObjectshapeNames[newObj.type] then
+			newObj.shape_name = DCSR.tblObjectshapeNames[newObj.type]
+		end
+    end
+	
+	DCSRAddedObjects[#DCSRAddedObjects + 1] = DCSR.deepCopy(newObj)
+	if newObj.x and newObj.y and newObj.type and type(newObj.x) == 'number' and type(newObj.y) == 'number' and type(newObj.type) == 'string' then
+
+        --log:info('addStaticObject')
+		coalition.addStaticObject(country.id[newCountry], newObj)
+  
+		return newObj
+	end
+	
+	if debugProcessDetail then
+		env.info(ModuleName .. " dynAddStatic Failed to add static object due to missing or incorrect value")
+    end	
+
+	return false
+end
+
+function DCSR.vecmag(vec)
+	return (vec.x^2 + vec.y^2 + vec.z^2)^0.5
+end
+
+function DCSR.vecsub(vec1, vec2)
+	return {x = vec1.x - vec2.x, y = vec1.y - vec2.y, z = vec1.z - vec2.z}
+end
+
+function DCSR.vecdp(vec1, vec2)
+	return vec1.x*vec2.x + vec1.y*vec2.y + vec1.z*vec2.z
+end
+
+function DCSR.getNorthCorrection(gPoint)	--gets the correction needed for true north
+	local point = DCSR.deepCopy(gPoint)
+	if not point.z then --Vec2; convert to Vec3
+		point.z = point.y
+		point.y = 0
+	end
+	local lat, lon = coord.LOtoLL(point)
+	local north_posit = coord.LLtoLO(lat + 1, lon)
+	return math.atan2(north_posit.z - point.z, north_posit.x - point.x)
+end
+
+function DCSR.getHeading(unit, rawHeading)
+	local unitpos = unit:getPosition()
+	if unitpos then
+		local Heading = math.atan2(unitpos.x.z, unitpos.x.x)
+		if not rawHeading then
+			Heading = Heading + DCSR.getNorthCorrection(unitpos.p)
+		end
+		if Heading < 0 then
+			Heading = Heading + 2*math.pi	-- put heading in range of 0 to 2*pi
+		end
+		return Heading
+	end
+end
+
+function DCSR.makeVec3(vec, y)
+	if not vec.z then
+		if vec.alt and not y then
+			y = vec.alt
+		elseif not y then
+			y = 0
+		end
+		return {x = vec.x, y = y, z = vec.y}
+	else
+		return {x = vec.x, y = vec.y, z = vec.z}	-- it was already Vec3, actually.
+	end
+end
+
+function DCSR.getDir(vec, point)
+	local dir = math.atan2(vec.z, vec.x)
+	if point then
+		dir = dir + DCSR.getNorthCorrection(point)
+	end
+	if dir < 0 then
+		dir = dir + 2 * math.pi	-- put dir in range of 0 to 2*pi
+	end
+	return dir
+end
+
+function DCSR.toDegree(angle)
+	return angle*180/math.pi
+end
+
+function DCSR.tostringLL(lat, lon, acc, DMS)
+
+	local latHemi, lonHemi
+	if lat > 0 then
+		latHemi = 'N'
+	else
+		latHemi = 'S'
+	end
+
+	if lon > 0 then
+		lonHemi = 'E'
+	else
+		lonHemi = 'W'
+	end
+
+	lat = math.abs(lat)
+	lon = math.abs(lon)
+
+	local latDeg = math.floor(lat)
+	local latMin = (lat - latDeg)*60
+
+	local lonDeg = math.floor(lon)
+	local lonMin = (lon - lonDeg)*60
+
+	if DMS then	-- degrees, minutes, and seconds.
+		local oldLatMin = latMin
+		latMin = math.floor(latMin)
+		local latSec = DCSR.round((oldLatMin - latMin)*60, acc)
+
+		local oldLonMin = lonMin
+		lonMin = math.floor(lonMin)
+		local lonSec = DCSR.round((oldLonMin - lonMin)*60, acc)
+
+		if latSec == 60 then
+			latSec = 0
+			latMin = latMin + 1
+		end
+
+		if lonSec == 60 then
+			lonSec = 0
+			lonMin = lonMin + 1
+		end
+
+		local secFrmtStr -- create the formatting string for the seconds place
+		if acc <= 0 then	-- no decimal place.
+			secFrmtStr = '%02d'
+		else
+			local width = 3 + acc	-- 01.310 - that's a width of 6, for example.
+			secFrmtStr = '%0' .. width .. '.' .. acc .. 'f'
+		end
+
+		return string.format('%02d', latDeg) .. ' ' .. string.format('%02d', latMin) .. '\' ' .. string.format(secFrmtStr, latSec) .. '"' .. latHemi .. '	 '
+		.. string.format('%02d', lonDeg) .. ' ' .. string.format('%02d', lonMin) .. '\' ' .. string.format(secFrmtStr, lonSec) .. '"' .. lonHemi
+
+	else	-- degrees, decimal minutes.
+		latMin = DCSR.round(latMin, acc)
+		lonMin = DCSR.round(lonMin, acc)
+
+		if latMin == 60 then
+			latMin = 0
+			latDeg = latDeg + 1
+		end
+
+		if lonMin == 60 then
+			lonMin = 0
+			lonDeg = lonDeg + 1
+		end
+
+		local minFrmtStr -- create the formatting string for the minutes place
+		if acc <= 0 then	-- no decimal place.
+			minFrmtStr = '%02d'
+		else
+			local width = 3 + acc	-- 01.310 - that's a width of 6, for example.
+			minFrmtStr = '%0' .. width .. '.' .. acc .. 'f'
+		end
+
+		return string.format('%02d', latDeg) .. ' ' .. string.format(minFrmtStr, latMin) .. '\'' .. latHemi .. '	 '
+		.. string.format('%02d', lonDeg) .. ' ' .. string.format(minFrmtStr, lonMin) .. '\'' .. lonHemi
+
+	end
+end
+
+function DCSR.ground_buildWP(point, overRideForm, overRideSpeed)
+
+	local wp = {}
+	wp.x = point.x
+
+	if point.z then
+		wp.y = point.z
+	else
+		wp.y = point.y
+	end
+	local form, speed
+
+	if point.speed and not overRideSpeed then
+		wp.speed = point.speed
+	elseif type(overRideSpeed) == 'number' then
+		wp.speed = overRideSpeed
+	else
+		wp.speed = DCSR.kmphToMps(20)
+	end
+
+	if point.form and not overRideForm then
+		form = point.form
+	else
+		form = overRideForm
+	end
+
+	if not form then
+		wp.action = 'Cone'
+	else
+		form = string.lower(form)
+		if form == 'off_road' or form == 'off road' then
+			wp.action = 'Off Road'
+		elseif form == 'on_road' or form == 'on road' then
+			wp.action = 'On Road'
+		elseif form == 'rank' or form == 'line_abrest' or form == 'line abrest' or form == 'lineabrest'then
+			wp.action = 'Rank'
+		elseif form == 'cone' then
+			wp.action = 'Cone'
+		elseif form == 'diamond' then
+			wp.action = 'Diamond'
+		elseif form == 'vee' then
+			wp.action = 'Vee'
+		elseif form == 'echelon_left' or form == 'echelon left' or form == 'echelonl' then
+			wp.action = 'EchelonL'
+		elseif form == 'echelon_right' or form == 'echelon right' or form == 'echelonr' then
+			wp.action = 'EchelonR'
+		else
+			wp.action = 'Cone' -- if nothing matched
+		end
+	end
+
+	wp.type = 'Turning Point'
+
+	return wp
+
+end
+
+function DCSR.kmphToMps(kmph)
+	return kmph/3.6
+end
+
+function DCSR.tostringMGRS(MGRS, acc)
+	if acc == 0 then
+		return MGRS.UTMZone .. ' ' .. MGRS.MGRSDigraph
+	else
+		return MGRS.UTMZone .. ' ' .. MGRS.MGRSDigraph .. ' ' .. string.format('%0' .. acc .. 'd', DCSR.round(MGRS.Easting/(10^(5-acc)), 0))
+		.. ' ' .. string.format('%0' .. acc .. 'd', DCSR.round(MGRS.Northing/(10^(5-acc)), 0))
+	end
+end
+
+function DCSR.tostringGRID(MGRS, acc)
+	if acc == 0 then
+		return MGRS.MGRSDigraph
+	else
+		return MGRS.MGRSDigraph .. string.format('%0' .. acc .. 'd', math.floor(MGRS.Easting/(10^(5-acc)), 0)) -- DCSR.round
+		.. string.format('%0' .. acc .. 'd', math.floor(MGRS.Northing/(10^(5-acc)), 0))
+	end
+end
+
+function DCSR.getAvgPos(unitNames)
+	local avgX, avgY, avgZ, totNum = 0, 0, 0, 0
+	for i = 1, #unitNames do
+		local unit
+		if Unit.getByName(unitNames[i]) then
+			unit = Unit.getByName(unitNames[i])
+		elseif StaticObject.getByName(unitNames[i]) then
+			unit = StaticObject.getByName(unitNames[i])
+		end
+		if unit then
+			local pos = unit:getPosition().p
+			if pos then -- you never know O.o
+				avgX = avgX + pos.x
+				avgY = avgY + pos.y
+				avgZ = avgZ + pos.z
+				totNum = totNum + 1
+			end
+		end
+	end
+	if totNum ~= 0 then
+		return {x = avgX/totNum, y = avgY/totNum, z = avgZ/totNum}
+	end
+end
+
+function DCSR.getLLString(vars)
+	local units = vars.units
+	local acc = vars.acc or 3
+	local DMS = vars.DMS
+	local avgPos = DCSR.getAvgPos(units)
+	if avgPos then
+		local lat, lon = coord.LOtoLL(avgPos)
+		return DCSR.tostringLL(lat, lon, acc, DMS)
+	end
+end
+
+function DCSR.getMGRSString(vars)
+	local units = vars.units
+	local acc = vars.acc or 5
+	local avgPos = DCSR.getAvgPos(units)
+	if avgPos then
+		return DCSR.tostringMGRS(coord.LLtoMGRS(coord.LOtoLL(avgPos)), acc)
+	end
+end
+
+function DCSR.metersToNM(meters)
+    return meters/1852
+end
+
+function DCSR.metersToFeet(meters)
+    return meters/0.3048
+end
+
+function DCSR.tostringBR(az, dist, alt, metric)
+    az = DCSR.round(DCSR.toDegree(az), 0)
+
+    if metric then
+        dist = DCSR.round(dist/1000, 0)
+    else
+        dist = DCSR.round(DCSR.metersToNM(dist), 0)
+    end
+
+    local s = string.format('%03d', az) .. ' for ' .. dist
+
+    if alt then
+        if metric then
+            s = s .. ' at ' .. DCSR.round(alt, 0)
+        else
+            s = s .. ' at ' .. DCSR.round(DCSR.metersToFeet(alt), 0)
+        end
+    end
+    return s
+end
+
+function DCSR.getBRString(vars)
+	local units = vars.units
+	local ref = DCSR.makeVec3(vars.ref, 0)	-- turn it into Vec3 if it is not already.
+	local alt = vars.alt
+	local metric = vars.metric
+	local avgPos = DCSR.getAvgPos(units)
+	if avgPos then
+        local vec = {x = avgPos.x - ref.x, y = avgPos.y - ref.y, z = avgPos.z - ref.z}
+        local dir = DCSR.getDir(vec, ref)
+        local dist = DCSR.get2DDist(avgPos, ref)
+        if alt then
+            alt = avgPos.y
+        end
+        return DCSR.tostringBR(dir, dist, alt, metric)
+	end
+end
+
+function DCSR.getPlayerNameOrUnitName(_heli)
+    if _heli then
+        if _heli:getPlayerName() == nil then
+            if _heli:getName() then
+                return _heli:getTypeName() .. ", name: " .. _heli:getName()
+            end
+        else
+            return _heli:getPlayerName()
+        end
+    end
+end
+
 
 -- DSMC added variables
 DCSR.useCoalitionMessages = DCSR_useCoalitionMessages_var or true -- if false, no coalition messages will be shown when a pilot is downed (this is for who has a dedicated human in coordination role). Modify line 528
@@ -298,9 +1013,6 @@ end
 -- ***************************************************************
 
 -- Sanity checks of mission designer
---assert(mist ~= nil, "\n\n** HEY MISSION-DESIGNER! **\n\nMiST has not been loaded!\n\nMake sure MiST 4.0.57 or higher is running\n*before* running this script!\n")
-
-
 
 ------------------------------
 
@@ -395,32 +1107,6 @@ function DCSR.addCsar(_coalition , _country, _point, _typeName, _unitName, _play
      Controller.setOption(_controller, AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.GREEN)
      Controller.setOption(_controller, AI.Option.Ground.id.ROE, AI.Option.Ground.val.ROE.WEAPON_HOLD)
   end
-
-end
-
-function DCSR.spawnCsarAtZone( _zone, _coalition, _description, _randomPoint)
-  local _country 
-  local freq = DCSR.generateADFFrequency()
-  local _triggerZone = trigger.misc.getZone(_zone) -- trigger to use as reference position
-  if _triggerZone == nil then
-    trigger.action.outText("Csar.lua ERROR: Cant find zone called " .. _zone, 10)
-    return
-  end
-  
-  local pos
-  if _randomPoint == true then
-    pos =  mist.getRandomPointInZone(_zone)
-    pos.z = pos.y
-    pos.y = 0
-  else
-    pos  = mist.utils.zoneToVec3(_zone)
-  end
-  if _coalition == coalition.side.BLUE then
-    _country = country.id.USA
-  else
-    _country =  country.id.RUSSIA
-  end
-  DCSR.addCsar(_coalition, _country, pos, nil, nil, nil, freq, true, _description)
 
 end
 
@@ -998,7 +1684,7 @@ end
 
 function DCSR.spawnGroup( _coalition, _country, _point, _typeName )
 
-    local _id = mist.getNextGroupId()
+    local _id = DCSR.getNextGroupId()
 
     local _groupName = "Downed Pilot #" .. _id
 
@@ -1024,7 +1710,7 @@ function DCSR.spawnGroup( _coalition, _country, _point, _typeName )
     _group.category = Group.Category.GROUND;
     _group.country = _country;
 
-    local _spawnedGroup = Group.getByName(mist.dynAdd(_group).name)
+    local _spawnedGroup = Group.getByName(DCSR.dynAdd(_group).name)
 
     return _spawnedGroup
 end
@@ -1032,7 +1718,7 @@ end
 
 function DCSR.createUnit(_x, _y, _heading, _type)
 
-    local _id = mist.getNextUnitId();
+    local _id = DCSR.getNextUnitId();
 
     local _name = string.format("Wounded Pilot #%s", _id)
 
@@ -1249,8 +1935,8 @@ function DCSR.orderGroupToMoveToPoint(_leader, _destination)
     local _group = _leader:getGroup()
 
     local _path = {}
-    table.insert(_path, mist.ground.buildWP(_leader:getPoint(), 'Off Road', 50))
-    table.insert(_path, mist.ground.buildWP(_destination, 'Off Road', 50))
+    table.insert(_path, DCSR.ground_buildWP(_leader:getPoint(), 'Off Road', 50))
+    table.insert(_path, DCSR.ground_buildWP(_destination, 'Off Road', 50))
 
     local _mission = {
         id = 'Mission',
@@ -1615,19 +2301,19 @@ function DCSR.getPositionOfWounded(_woundedGroup)
 
     local _coordinatesText = ""
     if DCSR.coordtype == 0 then -- Lat/Long DMTM
-    _coordinatesText = string.format("%s", mist.getLLString({ units = _woundedTable, acc = DCSR.coordaccuracy, DMS = 0 }))
+    _coordinatesText = string.format("%s", DCSR.getLLString({ units = _woundedTable, acc = DCSR.coordaccuracy, DMS = 0 }))
 
     elseif DCSR.coordtype == 1 then -- Lat/Long DMS
-    _coordinatesText = string.format("%s", mist.getLLString({ units = _woundedTable, acc = DCSR.coordaccuracy, DMS = 1 }))
+    _coordinatesText = string.format("%s", DCSR.getLLString({ units = _woundedTable, acc = DCSR.coordaccuracy, DMS = 1 }))
 
     elseif DCSR.coordtype == 2 then -- MGRS
-    _coordinatesText = string.format("%s", mist.getMGRSString({ units = _woundedTable, acc = DCSR.coordaccuracy }))
+    _coordinatesText = string.format("%s", DCSR.getMGRSString({ units = _woundedTable, acc = DCSR.coordaccuracy }))
 
     elseif DCSR.coordtype == 3 then -- Bullseye Imperial
-    _coordinatesText = string.format("bullseye %s", mist.getBRString({ units = _woundedTable, ref = coalition.getMainRefPoint(_woundedGroup:getCoalition()), alt = 0 }))
+    _coordinatesText = string.format("bullseye %s", DCSR.getBRString({ units = _woundedTable, ref = coalition.getMainRefPoint(_woundedGroup:getCoalition()), alt = 0 }))
 
     else -- Bullseye Metric --(medevac.coordtype == 4)
-    _coordinatesText = string.format("bullseye %s", mist.getBRString({ units = _woundedTable, ref = coalition.getMainRefPoint(_woundedGroup:getCoalition()), alt = 0, metric = 1 }))
+    _coordinatesText = string.format("bullseye %s", DCSR.getBRString({ units = _woundedTable, ref = coalition.getMainRefPoint(_woundedGroup:getCoalition()), alt = 0, metric = 1 }))
     end
 
     return _coordinatesText
@@ -2099,7 +2785,7 @@ function DCSR.inAir(_heli)
 
     -- less than 5 cm/s a second so landed
     -- BUT AI can hold a perfect hover so ignore AI
-    if mist.vec.mag(_heli:getVelocity()) < 0.05 and _heli:getPlayerName() ~= nil then
+    if DCSR.vecmag(_heli:getVelocity()) < 0.05 and _heli:getPlayerName() ~= nil then
         return false
     end
     return true
@@ -2111,17 +2797,17 @@ function DCSR.getClockDirection(_heli, _crate)
 
     local _position = _crate:getPosition().p -- get position of crate
     local _playerPosition = _heli:getPosition().p -- get position of helicopter
-    local _relativePosition = mist.vec.sub(_position, _playerPosition)
+    local _relativePosition = DCSR.vecsub(_position, _playerPosition)
 
-    local _playerHeading = mist.getHeading(_heli) -- the rest of the code determines the 'o'clock' bearing of the missile relative to the helicopter
+    local _playerHeading = DCSR.getHeading(_heli) -- the rest of the code determines the 'o'clock' bearing of the missile relative to the helicopter
 
     local _headingVector = { x = math.cos(_playerHeading), y = 0, z = math.sin(_playerHeading) }
 
     local _headingVectorPerpendicular = { x = math.cos(_playerHeading + math.pi / 2), y = 0, z = math.sin(_playerHeading + math.pi / 2) }
 
-    local _forwardDistance = mist.vec.dp(_relativePosition, _headingVector)
+    local _forwardDistance = DCSR.vecdp(_relativePosition, _headingVector)
 
-    local _rightDistance = mist.vec.dp(_relativePosition, _headingVectorPerpendicular)
+    local _rightDistance = DCSR.vecdp(_relativePosition, _headingVectorPerpendicular)
 
     local _angle = math.atan2(_rightDistance, _forwardDistance) * 180 / math.pi
 
@@ -2138,12 +2824,15 @@ end
 
 function DCSR.getGroupId(_unit)
 
-    local _unitDB = mist.DBs.unitsById[tonumber(_unit:getID())]
-    if _unitDB ~= nil and _unitDB.groupId then
-        return _unitDB.groupId
-    end
-
-    return nil
+	if _unit then
+		
+		local _group = _unit:getGroup()
+		local _groupId = _group:getID()
+		return _groupId
+	
+	end
+	
+	return nil
 end
 
 DCSR.generateVHFrequencies()

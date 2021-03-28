@@ -177,7 +177,7 @@ function loadDSMCHooks()
 							opt_WRHS_var		= pl_data.WRHS
 							opt_SPWN_var		= pl_data.SPWN
 							opt_TRPS_var		= pl_data.TRPS
-							opt_DCRS_var		= pl_data.DCRS
+							opt_DCSR_var		= pl_data.DCSR
 							opt_TRPS_setup_var	= pl_data.TRPS_setup
 							opt_DEBUG_var		= pl_data.DEBUG
 							opt_ATRL_var		= pl_data.ATRL
@@ -229,9 +229,9 @@ function loadDSMCHooks()
 	TRPS_setup10_var					= DSMC_CTLD_UseYearFilter or true
 	TRPS_setup11_var					= DSMC_CTLD_crateReductionFactor or false
 	TRPS_setup12_var					= DSMC_CTLD_JTACenable or false
-	DCRS_var							= opt_DCRS_var or DSMC_automated_CSAR
-	DCRS_setup_var						= DCSR_useCoalitionMessages
-	GOAP_var							= true -- opt_GOAP_var or DSMC_AutomaticAI
+	DCSR_var							= opt_DCSR_var or DSMC_automated_CSAR
+	DCSR_setup_var						= DSMC_DCSR_useCoalitionMessages
+	GOAP_var							= false -- opt_GOAP_var or DSMC_AutomaticAI
 
 	-- debug call
 	debugProcessDetail = DEBUG_var
@@ -245,7 +245,7 @@ function loadDSMCHooks()
 	writeDebugBase(DSMC_ModuleName .. ": WRHS_var = " ..tostring(WRHS_var))
 	writeDebugBase(DSMC_ModuleName .. ": SPWN_var = " ..tostring(SPWN_var))
 	writeDebugBase(DSMC_ModuleName .. ": TRPS_var = " ..tostring(TRPS_var))
-	writeDebugBase(DSMC_ModuleName .. ": DCRS_var = " ..tostring(DCRS_var))
+	writeDebugBase(DSMC_ModuleName .. ": DCSR_var = " ..tostring(DCSR_var))
 	writeDebugBase(DSMC_ModuleName .. ": DEBUG_var = " ..tostring(DEBUG_var))
 	writeDebugBase(DSMC_ModuleName .. ": ATRL_var = " ..tostring(ATRL_var))
 	writeDebugBase(DSMC_ModuleName .. ": ATRL_time_var = " ..tostring(ATRL_time_var))
@@ -726,24 +726,24 @@ function startDSMCprocess()
 						end		
 						
 						-- CSAR script
-						if DCRS_var then
+						if DCSR_var then
 
-							if DCRS_setup_var == true then
-								UTIL.inJectCode("DCRS_Setup", "DCSR_useCoalitionMessages_var = true")
+							if DCSR_setup_var == true then
+								UTIL.inJectCode("DCSR_Setup", "DSMC_DCSR_useCoalitionMessages_var = true")
 							else
-								UTIL.inJectCode("DCRS_Setup", "DCSR_useCoalitionMessages_var = false")
+								UTIL.inJectCode("DCSR_Setup", "DSMC_DCSR_useCoalitionMessages_var = false")
 							end
 
-							local t = io.open(DSMCdir .. "DCRS_inj.lua", "r")
+							local t = io.open(DSMCdir .. "DCSR_inj.lua", "r")
 							if t then
-								local DCRS_Embeddedcode = tostring(t:read("*all"))
+								local DCSR_Embeddedcode = tostring(t:read("*all"))
 								t:close()
-								UTIL.inJectCode("DCRS_Embeddedcode", DCRS_Embeddedcode)					
+								UTIL.inJectCode("DCSR_Embeddedcode", DCSR_Embeddedcode)					
 							else
-								writeDebugDetail(DSMC_ModuleName .. ": DCRS_inj.lua not found")	
+								writeDebugDetail(DSMC_ModuleName .. ": DCSR_inj.lua not found")	
 							end
 						else
-							writeDebugBase(DSMC_ModuleName .. ": DCRS not required")							
+							writeDebugBase(DSMC_ModuleName .. ": DCSR not required")							
 						end
 
 						-- code from SPWN module
