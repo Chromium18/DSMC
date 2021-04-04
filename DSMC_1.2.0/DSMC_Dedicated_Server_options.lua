@@ -17,7 +17,7 @@ DSMC_AutosaveProcess_min	= 2			-- minutes, number, from 2 to 480
 -- Save scenery enhancement
 DSMC_MapPersistence 		= true		-- true / false
 DSMC_StaticDeadUnits 		= true		-- true / false
-DSMC_UpdateStartTime		= true 		-- true / false
+DSMC_UpdateStartTime		= true 		-- true / false. Works only for mission with timeframe 1970-today, due to function limitation. For mission before 1970, i.e. WWII or Korea, it will be skipped.
 DSMC_UpdateStartTime_mode	= 1 		-- 1,2 or 3. Ignored if UpdateStartTime is false. 1 = keep continous scenery. 2 = start the next day, random hour. 3 = use current date, default mission time.
 DSMC_TrackWarehouses		= true	 	-- true / false
 DSMC_TrackSpawnedUnits		= true	 	-- true / false

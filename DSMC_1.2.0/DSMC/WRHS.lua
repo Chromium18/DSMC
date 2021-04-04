@@ -32,13 +32,21 @@ function createdbWeapon()
 	local wpnAddnum = 0
 	dbWeapon = {}
 	HOOK.writeDebugDetail(ModuleName .. ": createdbWeapon, launched")
-	
+	--UTIL.dumpTable("nightlyGb.lua", _G)
+	--HOOK.writeDebugDetail(ModuleName .. ": createdbWeapon, G exported")
 	for uniID, uniData in pairs(resource_by_unique_name) do
+		--HOOK.writeDebugDetail(ModuleName .. ": createdbWeapon, checking " .. tostring(uniID))
 		local wsTable = uniData.wsTypeOfWeapon or uniData.ws_type
 		if wsTable then
-			local wsString = wsTypeToString(wsTable)	
-			dbWeapon[#dbWeapon+1] = {unique = uniID, name = uniData.name, wsData = wsString}
-			wpnAddnum = wpnAddnum + 1
+			if type(wsTable) == "table" then
+				if #wsTable == 4 then
+					--HOOK.writeDebugDetail(ModuleName .. ": createdbWeapon, wsTable found for " .. tostring(uniID))
+					local wsString = wsTypeToString(wsTable)	
+					HOOK.writeDebugDetail(ModuleName .. ": createdbWeapon, wsString for  " .. tostring(uniID).. " is " .. tostring(wsString))
+					dbWeapon[#dbWeapon+1] = {unique = uniID, name = uniData.name, wsData = wsString}
+					wpnAddnum = wpnAddnum + 1
+				end
+			end
 		end
 	end
 	HOOK.writeDebugDetail(ModuleName .. ": createdbWeapon, added " .. tostring(wpnAddnum) .. " weapons")

@@ -520,7 +520,9 @@ end
 -- callback on start
 function startDSMCprocess()
 	if UTIL and SAVE then
-		
+
+		--UTIL.dumpTable("nightlyGa.lua", _G)
+
 		--## CHECKING MIZ FILENAME, IF NOT DMSCyourfilename THEN STOP
 		loadedMizFileName = DCS.getMissionName()
 		loadedMissionPath = DCS.getMissionFilename()		

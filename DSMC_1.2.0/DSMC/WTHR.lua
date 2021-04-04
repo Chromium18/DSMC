@@ -1167,14 +1167,79 @@ staticWeatherDb =  -- theatre, date.Month, probability data
 	},
 }
 
-newWeatherPresets =
-{
-	[1] = {id = 1, iprec = 2, oktThr = 3},
-	[2] = {id = 1, iprec = 2, oktThr = 3},
-	[3] = {id = 1, iprec = 2, oktThr = 3},
-	[4] = {id = 1, iprec = 2, oktThr = 3},
+newWeatherPresets = {}
 
-}
+-- new preset
+local cPath = lfs.currentdir() .. "Config/Effects/clouds.lua"
+local t = io.open(cPath, "r")
+local enableNewCloud = false
+if t then
+	local cString = nil
+	HOOK.writeDebugDetail(ModuleName .. ": c1")
+	cString = t:read("*all")
+	t:close()
+	if cString then
+		HOOK.writeDebugDetail(ModuleName .. ": c2")
+		local cFun, cErr = loadstring(cString);
+		HOOK.writeDebugDetail(ModuleName .. ": c2b, cErr = " .. tostring(cErr))
+		if cFun then
+			HOOK.writeDebugDetail(ModuleName .. ": c3")
+			--wthrEnv = {}
+			--setfenv(cFun, wthrEnv)
+			HOOK.writeDebugDetail(ModuleName .. ": c4")
+			cFun()
+			HOOK.writeDebugDetail(ModuleName .. ": c5")
+			enableNewCloud = true
+		end
+	end
+else
+	HOOK.writeDebugDetail(ModuleName .. ": clouds.lua not found")	
+end
+
+function round(num, idp)
+    local mult = 10^(idp or 0)
+	return math.floor(num * mult + 0.5) / mult
+end
+HOOK.writeDebugDetail(ModuleName .. ": c6")
+UTIL.dumpTable("clouds.lua", clouds)
+
+if clouds and enableNewCloud == true then
+
+	for cId, cData in pairs(clouds.presets) do
+		if cData.visibleInGUI == true then 
+			local cname = cData.readableName
+			HOOK.writeDebugDetail(ModuleName .. ": clouds: checing preset " .. tostring(cname))
+			local crain = false
+			if cData.precipitationPower > 0 then
+				crain = true
+			end
+			local coktasMax = 0
+			local coktasMin = 10
+			if cData.layers then
+				for _, lData in ipairs(cData.layers) do
+					if lData.coverage > coktasMax then
+						coktasMax = lData.coverage 
+					end
+				end
+
+				for _, lData in ipairs(cData.layers) do
+					if lData.coverage > 0 and lData.coverage < coktasMin then
+						coktasMin = lData.coverage
+					end
+				end
+			end		
+			coktasMax = round(coktasMax*10)+1
+			coktasMin = round(coktasMin*10)-1
+
+			newWeatherPresets[#newWeatherPresets+1] = {id = cId, rain = crain, oktasMin = coktasMin, oktasMax = coktasMax, name = cname}
+		end
+	end
+
+	if #newWeatherPresets == 0 then
+		enableNewCloud = false
+	end
+end
+UTIL.dumpTable("newWeatherPresets.lua", newWeatherPresets)
 
 --# FUNCTIONS
 
@@ -1439,8 +1504,79 @@ function getCloudDens(iprecptns, wthTable, rdnValue)
 			return math.random(4,6)
 		else
 			HOOK.writeDebugDetail(ModuleName .. ": getCloudDens clear")
-			return math.random(0,3)
+			if enableNewCloud then
+				return math.random(2,4)
+			else
+				return math.random(0,3)
+			end
 		end
+	end
+end
+
+function getCloudPreset(isRaining, coverageVal)
+	
+	if enableNewCloud == true then
+		--missionEnv, missionEnv.weather.clouds.iprecptns, clBase, missionEnv.weather.clouds.density
+		HOOK.writeDebugDetail(ModuleName .. ": getCloudPreset, values. isRaining = " .. tostring(isRaining) .. ", coverageVal = " .. tostring(coverageVal))
+		
+		-- conversion
+		local precipitation = false
+		if isRaining > 0 then
+			precipitation = true -- refine with power!
+		end
+		
+		local availPreset = {}
+		if precipitation == true then
+			for _, pData in pairs(newWeatherPresets) do
+				if pData.rain == precipitation  then
+					availPreset[#availPreset+1] = pData.id
+					HOOK.writeDebugDetail(ModuleName .. ": getCloudPreset, adding " .. tostring(pData.id))
+				end
+			end
+		else
+			local foundOne = false
+			for _, pData in pairs(newWeatherPresets) do
+				if pData.rain == precipitation  then
+					if coverageVal >= pData.oktasMin and coverageVal <= pData.oktasMax then			 
+						foundOne = true
+						availPreset[#availPreset+1] = pData.id
+						HOOK.writeDebugDetail(ModuleName .. ": getCloudPreset, found on first round, adding " .. tostring(pData.id))
+					end
+				end
+			end
+
+			if foundOne == false then
+				for _, pData in pairs(newWeatherPresets) do
+					if pData.rain == precipitation  then
+						if (coverageVal+2) >= pData.oktasMin and (coverageVal-2) <= pData.oktasMax then			 
+							foundOne = true
+							availPreset[#availPreset+1] = pData.id
+							HOOK.writeDebugDetail(ModuleName .. ": getCloudPreset, found on second round, adding " .. tostring(pData.id))
+						end
+					end
+				end
+			end
+			
+			if foundOne == false then
+				for _, pData in pairs(newWeatherPresets) do
+					if pData.rain == precipitation  then
+						availPreset[#availPreset+1] = pData.id
+						HOOK.writeDebugDetail(ModuleName .. ": getCloudPreset, found on third round, adding " .. tostring(pData.id))		
+					end
+				end
+			end
+		end
+
+		local rnVal = math.random(1, #availPreset)
+		for aId, aData in pairs(availPreset) do 
+			if rnVal == aId then
+				HOOK.writeDebugDetail(ModuleName .. ": getCloudPreset, preset choosen: " .. tostring(aData))
+				return aData
+			end
+		end
+	else
+		HOOK.writeDebugDetail(ModuleName .. ": getCloudPreset, enableNewCloud false, return false")
+		return false
 	end
 end
 
@@ -1495,35 +1631,35 @@ function getFog(wthTable, iprecptns, temperature, windSpeed, humidity, clDensity
 									if fogVis < 1000 then fogVis = math.random(1000,2000) end 
 									local fogThick = 500*fogIndex
 									HOOK.writeDebugDetail(ModuleName .. ": getFog, fog present with visibility " .. tostring(fogVis) .. " and thickness " .. tostring(fogThick))
-									return true, fogThick, fogVis
+									return true, fogThick, fogVis, 3000
 								else
 									HOOK.writeDebugDetail(ModuleName .. ": getFog, too many clouds with temperature more than freezing point, temperature inversion less probable")
-									return false, 0, 6000
+									return false, 0, 6000, 3000
 								end
 							else
 								HOOK.writeDebugDetail(ModuleName .. ": getFog, wind below 4 mps")
-								return false, 0, 6000
+								return false, 0, 6000, 3000
 							end
 						else
 							HOOK.writeDebugDetail(ModuleName .. ": getFog, temperature too high")
-							return false, 0, 6000
+							return false, 0, 6000, 3000
 						end
 					else
 						HOOK.writeDebugDetail(ModuleName .. ": getFog, humidity below 80 perc")
-						return false, 0, 6000
+						return false, 0, 6000, 3000
 					end
 				else
 					HOOK.writeDebugDetail(ModuleName .. ": getFog, rain or snow")
-					return false, 0, 6000						
+					return false, 0, 6000	, 3000					
 				end
 			else
 				HOOK.writeDebugDetail(ModuleName .. ": getFog variable missing")
-				return false, 0, 6000
+				return false, 0, 6000, 3000
 			end
 
 		else
 			HOOK.writeDebugDetail(ModuleName .. ": getFog fog not allowed")
-			return false, 0, 6000
+			return false, 0, 6000, 3000
 		end
 	end
 end
@@ -1647,14 +1783,29 @@ function elabWeather(missionEnv)
 		HOOK.writeDebugDetail(ModuleName .. ": elabWeather, done getCloudDens: " .. tostring(missionEnv.weather.clouds.density))
 		local clBase, clHumid, clDewPoint = getCloudBase(missionEnv, missionEnv.weather.season.temperature, missionEnv.weather.clouds.iprecptns, theatre)	
 		HOOK.writeDebugDetail(ModuleName .. ": elabWeather, done getCloudBase")
+		
+		
+		local clPreset = getCloudPreset(missionEnv.weather.clouds.iprecptns, missionEnv.weather.clouds.density)	
+		HOOK.writeDebugDetail(ModuleName .. ": elabWeather, done getCloudPreset")
+
 		if clBase and clHumid and clDewPoint then
+			
 			DewPointCalc = clDewPoint
-			missionEnv.weather.clouds.base = clBase + tbase
-			local newThickness = getCloudThks(wthTable, missionEnv.weather.clouds.iprecptns, missionEnv.weather.clouds.base)
-			if newThickness then
-				missionEnv.weather.clouds.thickness = newThickness
-			end	
-			HOOK.writeDebugDetail(ModuleName .. ": elabWeather, done getCloudThks: " .. tostring(missionEnv.weather.clouds.thickness))
+			missionEnv.weather.clouds.base = clBase + tbase			
+			
+			if clPreset then
+				missionEnv.weather.clouds.thickness = 200
+				missionEnv.weather.clouds.iprecptns = 0
+				missionEnv.weather.clouds.density = 0
+				missionEnv.weather.clouds.preset = clPreset
+				
+			else
+				local newThickness = getCloudThks(wthTable, missionEnv.weather.clouds.iprecptns, missionEnv.weather.clouds.base)
+				if newThickness then
+					missionEnv.weather.clouds.thickness = newThickness
+				end	
+				HOOK.writeDebugDetail(ModuleName .. ": elabWeather, done getCloudThks: " .. tostring(missionEnv.weather.clouds.thickness))
+			end
 
 			-- set wind
 			local windDir, windSpeed, windGusts = getWind(wthTable, hour)
@@ -1671,13 +1822,14 @@ function elabWeather(missionEnv)
 			HOOK.writeDebugDetail(ModuleName .. ": elabWeather, wind ok")
 
 			--	set fog
-			local fogEnable, fogThickness, fogDistance = getFog(wthTable, missionEnv.weather.clouds.iprecptns, missionEnv.weather.season.temperature, missionEnv.weather.wind.atGround.speed, clHumid, missionEnv.weather.clouds.density, clDewPoint)
+			local fogEnable, fogThickness, fogDistance, fogDensity = getFog(wthTable, missionEnv.weather.clouds.iprecptns, missionEnv.weather.season.temperature, missionEnv.weather.wind.atGround.speed, clHumid, missionEnv.weather.clouds.density, clDewPoint)
 			HOOK.writeDebugDetail(ModuleName .. ": elabWeather, done getFog")
 			
 			if fogThickness and fogDistance and hour < 9 then
 				missionEnv.weather.enable_fog = fogEnable
 				missionEnv.weather.fog.thickness = fogThickness
 				missionEnv.weather.fog.visibility = fogDistance
+				missionEnv.weather.fog.dust_density = fogDensity
 			end
 		
 			--	set dust
@@ -1696,12 +1848,15 @@ function elabWeather(missionEnv)
 			HOOK.writeDebugDetail(ModuleName .. ": elabWeather, done getPressure: " .. tostring(missionEnv.weather.qnh))
 
 			HOOK.writeDebugDetail(ModuleName .. ": elabWeather elaboration complete")
+			--
 			if UPAP then
 				if UPAP.weatherExport == true then
 					HOOK.writeDebugDetail(ModuleName .. ": elabWeather - UPAP.weatherExport: " .. tostring(UPAP.weatherExport ))
 					UPAP.expWthToText(missionEnv)
 				end
 			end
+			
+
 		else
 			HOOK.writeDebugDetail(ModuleName .. ": updateWeatherTable no wthTable")
 		end
