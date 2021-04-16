@@ -730,12 +730,14 @@ function createSlots(misEnv, whEnv, dictEnv)
 end
 HOOK.writeDebugDetail(ModuleName .. ": SLOT loaded")
 
+--[[
 function updateBriefing(missionEnv, dictionaryEnv)
 	if UPAP and UPAP.UPAPloaded == true then
 		UPAP.expWthToText(missionEnv)
 	end
 end
 HOOK.writeDebugDetail(ModuleName .. ": updateBriefing loaded")
+--]]--
 
 function updateResources(missionEnv, mapEnv, tblRes)
 	if ADTR and ADTR.ADTRloaded == true then
@@ -879,12 +881,14 @@ function save()
 			HOOK.writeDebugDetail(ModuleName .. " no external files available")
 		end			
 
+		--[[
 		--updateBases(env.mission, wrhs_env.warehouses)
 		HOOK.writeDebugDetail(ModuleName .. " d1")
 		if HOOK.UPAP_var == true then
 			updateBriefing(env.mission, dict_env.dictionary)
 		end	
 		HOOK.writeDebugDetail(ModuleName .. " d2")
+		--]]--
 
 		lfs.mkdir(HOOK.missionfilesdirectory .. "Temp/")
 		--mission
