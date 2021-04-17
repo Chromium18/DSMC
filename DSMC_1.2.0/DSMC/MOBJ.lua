@@ -98,6 +98,7 @@ function updateMapObject(missionEnv, tblDeadScenObj)
 							["x"] = ds_data.x,
 							["y"] = ds_data.y,
 							["radius"] = 5,
+							["type"] = 0,
 							["zoneId"] = currentZoneId,
 							["color"] = 
 							{

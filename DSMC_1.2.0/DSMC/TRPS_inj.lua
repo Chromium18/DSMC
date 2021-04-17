@@ -32355,7 +32355,7 @@ TRPS.unitLoadLimits = {
     ["SA342M"] = 4,
 	["SA342Minigun"] = 4,
 	["Ka-50"] = 0,
-
+    ["Mi-24P"] = 8, -- check if ok
 }
 
 -- ************** Allowable actions for UNIT TYPES ******************
