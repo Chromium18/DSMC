@@ -31575,7 +31575,10 @@ end
 
 function TRPS.dynAddStatic(newObj)
 
+    local newHunit = 0 
 	if newObj.units and newObj.units[1] then 
+        local u = newObj.units[1]
+        newHunit = u.heading
 		for entry, val in pairs(newObj.units[1]) do
 			if newObj[entry] and newObj[entry] ~= val or not newObj[entry] then
 				newObj[entry] = val
@@ -31630,7 +31633,7 @@ function TRPS.dynAddStatic(newObj)
 	end
 
 	if not newObj.heading then
-		newObj.heading = math.random(360)
+		newObj.heading = newHunit or 0 --math.random(360)
 	end
 	
 	if newObj.categoryStatic then
@@ -32813,7 +32816,9 @@ function updateClassCount()
                                     for _groupId, _group in pairs(_objectTypeData.group) do
                                         if _group and _group.units and type(_group.units) == 'table' then                                       
                                             for _unitNum, _unit in pairs(_group.units) do
-                                                local unitName = env.getValueDictByKey(_unit.name)
+                                                --DICTPROBLEM
+                                                --local unitName = env.getValueDictByKey(_unit.name)
+                                                local unitName = _unit.name
                                                 if unitName then
                                                     local unit = Unit.getByName(unitName)
                                                     if unit then
@@ -39995,7 +40000,7 @@ function TRPS.PlayerIsInside:onEvent(event)
                         if gId then
                             
                             local p = TRPS.getPlayerNameOrType(unit)
-                            local t = "Dear " .. tostring(p) .. ", the DSMC's 1.1 version of CTLD is active in this mission. To learn more about its features please go to the F10 Informations & signals menu and select the DSMC's CTLD instruction option."
+                            local t = "Dear " .. tostring(p) .. ", the DSMC's 1.2 version of CTLD is active in this mission. To learn more about its features please go to the F10 Informations & signals menu and select the DSMC's CTLD instruction option."
                             trigger.action.outTextForGroup(gId, t, 15)
 
 
@@ -40183,8 +40188,10 @@ function TRPS.updateCTLDTables()
 									for _groupId, _group in pairs(_objectTypeData.group) do
 										if _group and _group.units and type(_group.units) == 'table' then
 											local infantryCount = 0
-											local unitCount = 0										
-											local groupName = env.getValueDictByKey(_group.name)
+											local unitCount = 0		
+                                            -- DICTPROBLEM								
+											--local groupName = env.getValueDictByKey(_group.name) -- DICTPROBLEM
+                                            local groupName = _group.name
 											local Table_group = Group.getByName(groupName)
                                             local check_JTAC = false
                                             if Table_group then
@@ -40192,8 +40199,11 @@ function TRPS.updateCTLDTables()
 																			
 												for _unitNum, _unit in pairs(_group.units) do
 													--if _unitNum == 1 then
-														local unitName = env.getValueDictByKey(_unit.name)
-														if unitName then
+														-- DICTPROBLEM
+                                                        --local unitName = env.getValueDictByKey(_unit.name)
+														local unitName = _unit.name
+
+                                                        if unitName then
 															local unit = Unit.getByName(unitName)
 															if unit then
 																if unit:getLife() > 0 then
@@ -40349,8 +40359,9 @@ function TRPS.updateCTLDTables()
                                             if _group.dead == false then
                                                 for _unitNum, _unit in pairs(_group.units) do
                                                     --if _unitNum == 1 then		
-                                                        local unitName = env.getValueDictByKey(_unit.name)
-                                                        
+                                                        --DICTPROBLEM
+                                                        --local unitName = env.getValueDictByKey(_unit.name)
+                                                        local unitName = _unit.name
                                                         if unitName then		
                                                             local unitTable = Unit.getByName(unitName)
                                                             env.info(ModuleName .. " updateCTLDTables: unitName: " .. tostring(unitName))
@@ -40496,7 +40507,9 @@ function TRPS.updateCTLDTables()
 									for _groupId, _group in pairs(_objectTypeData.group) do
 										if _group and _group.units and type(_group.units) == 'table' then								
 											for _unitNum, _unit in pairs(_group.units) do
-                                                local unitName = env.getValueDictByKey(_unit.name)
+                                                --DICTPROBLEM
+                                                --local unitName = env.getValueDictByKey(_unit.name)
+                                                local unitName =_unit.name
                                                 if unitName then                                
                                                     local uTbl = Unit.getByName(unitName)
                                                     if uTbl then
@@ -40613,8 +40626,11 @@ for _coalitionName, _coalitionData in pairs(env.mission.coalition) do
                                 if _group and _group.units and type(_group.units) == 'table' then
                                     for _unitNum, _unit in pairs(_group.units) do
                                         if _unit.canCargo == true then
-                                            local _cargoName = env.getValueDictByKey(_unit.name)
-											local _weight = env.getValueDictByKey(_unit.mass)				--get the cargo mass
+                                            -- DICTPROBLEM
+                                            --local _cargoName = env.getValueDictByKey(_unit.name)
+                                            --local _weight = env.getValueDictByKey(_unit.mass)
+                                            local _cargoName = _unit.name
+											local _weight = _unit.mass				--get the cargo mass
 											local _crateType = TRPS.crateLookupTable[tostring(_weight)]		--compare cargi weight to the crate type table
 
                                             env.info(ModuleName .. " addeding cargo: " .. tostring(_cargoName) .. ", _coalitionName: " .. tostring(_coalitionName) .. ", _crateType: " .. tostring(_crateType))

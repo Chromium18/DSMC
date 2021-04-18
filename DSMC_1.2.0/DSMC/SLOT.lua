@@ -643,10 +643,11 @@ function createGroups(mission, dictionary)
 											wptData.y = sData.y
 							
 											-- set wptname to ""
-											MaxDict = MaxDict+1
-											local WptDictEntry = "DictKey_WptName_" .. MaxDict
-											dictionary[WptDictEntry] = ""
-											wptData.name = WptDictEntry
+											--DICTPROBLEM
+											--MaxDict = MaxDict+1
+											--local WptDictEntry = "DictKey_WptName_" .. MaxDict
+											--dictionary[WptDictEntry] = ""
+											wptData.name = "" -- WptDictEntry
 											HOOK.writeDebugDetail(ModuleName .. ": createGroups, wptData updated")
 
 											-- wp action
@@ -843,13 +844,14 @@ function createGroups(mission, dictionary)
 
 														
 														-- set unit name
-														MaxDict = MaxDict+1									
-														local UnitDictEntry = "DictKey_UnitName_" .. MaxDict
-														addedunits = addedunits + 1
-														dictionary[UnitDictEntry] = tostring(revCls["name"])
+														--DICTPROBLEM
+														--MaxDict = MaxDict+1									
+														--local UnitDictEntry = "DictKey_UnitName_" .. MaxDict
+														--addedunits = addedunits + 1
+														--dictionary[UnitDictEntry] = tostring(revCls["name"])
 
 														HOOK.writeDebugDetail(ModuleName .. ": createGroups adding unit, uname: " .. tostring(sData.acfType .. "_unit_" .. addedunits))
-														uTbl.name = UnitDictEntry
+														uTbl.name = tostring(revCls["name"]) -- UnitDictEntry
 
 														-- retrieve from standard
 														uTbl.alt = acfData.alt
@@ -870,14 +872,14 @@ function createGroups(mission, dictionary)
 											end
 
 											-- set name
-											MaxDict = MaxDict+1
-											local gDictEntry = "DictKey_GroupName_" .. MaxDict
-											--addedGroups = addedGroups + 1
+											--DICTPROBLEM
+											--MaxDict = MaxDict+1
+											--local gDictEntry = "DictKey_GroupName_" .. MaxDict
 											local gNameEntry = tostring(tostring(cls_group) .. "_" .. sData.acfType .. "_DSMC_" .. tostring(addedGroups))
-											dictionary[gDictEntry] = gNameEntry
+											--dictionary[gDictEntry] = gNameEntry
 											HOOK.writeDebugDetail(ModuleName .. ": createGroups, adding gNameEntry: " .. tostring(gNameEntry))
 
-											groupTable.name = gDictEntry
+											groupTable.name = gNameEntry -- gDictEntry
 											groupTable.units = unitData
 
 											attr.group[#attr.group+1] = groupTable

@@ -1,4 +1,4 @@
--- Dynamic Sequential Mission Campaign -- MAP OBJECT PERSISTENCE module
+-- Dynamic Sequential Mission Campaign -- ADDING FILES module
 
 local ModuleName  	= "ADTR"
 local MainVersion 	= HOOK.DSMC_MainVersion

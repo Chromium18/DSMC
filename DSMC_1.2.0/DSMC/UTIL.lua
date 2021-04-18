@@ -275,9 +275,35 @@ function inJectCode(Code_name, CodeString)
 	end
 end
 
-function filterNamingTables(dictionary)	
+function filterNamingTables(mission)	 -- DICTPROBLEM: dictionary
 
 	HOOK.writeDebugDetail(ModuleName .. ": tblFOBnames starting items: " .. tostring(#tblFOBnames))
+	
+	--DICTPROBLEM (added with new structure)
+	for coalitionID,coalition in pairs(mission["coalition"]) do
+		for countryID,country in pairs(coalition["country"]) do
+			for attrID,attr in pairs(country) do
+				if (type(attr)=="table") then
+					if attrID == "static" then
+						for groupID,group in pairs(attr["group"]) do
+							for unitID, unit in pairs(group["units"]) do	
+								for aId, aData in pairs(tblFOBnames) do
+									local dData = unit.name
+									if string.find(dData, aData) then
+										HOOK.writeDebugDetail(ModuleName .. ": tblFOBnames removing: " .. tostring(aData))
+										table.remove(tblFOBnames, aId)
+									end
+								end										
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+
+	--DICTPROBLEM (deleted with new structure)
+	--[[
 	for _, dData in pairs(dictionary) do
 		if dData ~= "" then
 		--filter FOB tables
@@ -290,6 +316,7 @@ function filterNamingTables(dictionary)
 			end
 		end
 	end
+	--]]--
 
 	HOOK.writeDebugDetail(ModuleName .. ": tblFOBnames items: " .. tostring(#tblFOBnames))
 	if #tblFOBnames > 30 then

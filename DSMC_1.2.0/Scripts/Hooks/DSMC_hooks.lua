@@ -207,7 +207,7 @@ function loadDSMCHooks()
 	DEBUG_var							= opt_DEBUG_var or DSMC_DebugMode
 	ATRL_var							= opt_ATRL_var or DSMC_AutosaveProcess 
 	ATRL_time_var						= opt_ATRL_time_var or DSMC_AutosaveProcess_min 
-	--UPAP_var							= DSMC_ExportDocuments or false -- opt_UPAP_var or    NOT USED NOW if true mission briefings will be updated from a mission to another
+	UPAP_var							= DSMC_ExportDocuments or false -- opt_UPAP_var or    NOT USED NOW if true mission briefings will be updated from a mission to another
 	--TAIR_var							= opt_TAIR_var or DSMC_SaveLastPlanePosition
 	SLOT_var							= opt_SLOT_var or DSMC_CreateClientSlot
 	SLOT_coa_var						= DSMC_CreateSlotCoalition or "all" -- to test, set this "blue" or "red"
@@ -252,7 +252,7 @@ function loadDSMCHooks()
 	--writeDebugBase(DSMC_ModuleName .. ": TAIR_var = " ..tostring(TAIR_var))
 	writeDebugBase(DSMC_ModuleName .. ": SLOT_var = " ..tostring(SLOT_var))
 	writeDebugBase(DSMC_ModuleName .. ": SLOT_coa_var = " ..tostring(SLOT_coa_var))
-	--writeDebugBase(DSMC_ModuleName .. ": UPAP_var = " ..tostring(UPAP_var))
+	writeDebugBase(DSMC_ModuleName .. ": UPAP_var = " ..tostring(UPAP_var))
 	writeDebugBase(DSMC_ModuleName .. ": STOP_var = " ..tostring(STOP_var))
 	writeDebugBase(DSMC_ModuleName .. ": STOP_var_time = " ..tostring(STOP_var_time))
 	writeDebugBase(DSMC_ModuleName .. ": STOP_var_safe = " ..tostring(STOP_var_safe))
@@ -388,12 +388,10 @@ function loadDSMCHooks()
 		SPWN 						= require("SPWN")
 		writeDebugBase(DSMC_ModuleName .. ": loaded in SPWN module")
 	end
-	--[[
 	if UTIL.fileExist(DSMCdirectory .. "UPAP" .. ".lua") == true and UPAP_var == true then
 		UPAP 						= require("UPAP")
 		writeDebugBase(DSMC_ModuleName .. ": loaded in UPAP module")
 	end
-	--]]--
 	if UTIL.fileExist(DSMCdirectory .. "SLOT" .. ".lua") == true and SLOT_var == true then
 		SLOT 						= require("SLOT")
 		writeDebugBase(DSMC_ModuleName .. ": loaded in SLOT module")
@@ -592,7 +590,8 @@ function startDSMCprocess()
 						baseUcounter = baseUcounter + 1
 
 						-- filter units table
-						UTIL.filterNamingTables(SAVE.tempEnv.dictionary)
+						--DICTPROBLEM
+						UTIL.filterNamingTables(SAVE.tempEnv.mission) --SAVE.tempEnv.dictionary
 
 						-- inject version
 						UTIL.inJectCode("DSMC_MainVersion", "DSMC_MainVersion = " .. tostring(DSMC_MainVersion))
@@ -1048,12 +1047,10 @@ function saveOnDisconnect()
 			num_clients = tonumber(#player_tbl) - 1
 			writeDebugDetail(DSMC_ModuleName .. ": there are " .. tostring(num_clients) .. " clients connected")
 			if num_clients == 0 then
-				--[[
 				if UPAP then
 					HOOK.writeDebugDetail(DSMC_ModuleName .. ": saveOnDisconnect disabled weather export")
 					UPAP.weatherExport = false
 				end	
-				--]]--
 				UTIL.inJectCode("DSCMsave", "EMBD.executeSAVE('recall')")
 				writeDebugDetail(DSMC_ModuleName .. ": autosave scheduled!")
 			end			

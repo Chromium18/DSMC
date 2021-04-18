@@ -40,9 +40,12 @@ function doSpawned(missionEnv, tblSpawned, dictEnv, whEnv)
 		HOOK.writeDebugDetail(ModuleName .. ": found maxDictId")
 		if tblSpawned then
 			HOOK.writeDebugDetail(ModuleName .. ": found tblSpawned")
+			--DICTPROBLEM -- added newMaxId
 			local MaxDict = missionEnv.maxDictId
+			local newMaxId = 1
 			HOOK.writeDebugDetail(ModuleName .. ": MaxDict = " .. tostring(MaxDict))
-			
+			HOOK.writeDebugDetail(ModuleName .. ": newMaxId = " .. tostring(newMaxId))
+
 			for _id, sgData in pairs(tblSpawned) do
 				local oneAlive = false
 				if sgData.gUnits then
@@ -109,16 +112,20 @@ function doSpawned(missionEnv, tblSpawned, dictEnv, whEnv)
 
 						for uId, uData in pairs(sgData.gUnits) do
 							if uData.uAlive == true then
-								MaxDict = MaxDict+1									
-								local UnitDictEntry = "DictKey_UnitName_" .. MaxDict
-								local name = nil
+								--DICTPROBLEM
+								--MaxDict = MaxDict+1									
+								--local UnitDictEntry = "DictKey_UnitName_" .. MaxDict
+								--local name = nil
+								newMaxId = newMaxId + 1
 								if uData.uName then
 									name = uData.uName
 								else
-									name = tostring(uData.uType) .. "_" .. tostring(MaxDict)
+									--DICTPROBLEM
+									--name = tostring(uData.uType) .. "_" .. tostring(MaxDict)
+									name = tostring(uData.uType) .. "_" .. tostring(newMaxId)
 								end
 								
-								tblDictEntries[UnitDictEntry] = name -- tostring(uData.uType) .. "_" .. tostring(MaxDict)
+								--tblDictEntries[UnitDictEntry] = name -- tostring(uData.uType) .. "_" .. tostring(MaxDict)
 								
 								local shape = nil
 								if not uData.shape_name then
@@ -148,7 +155,8 @@ function doSpawned(missionEnv, tblSpawned, dictEnv, whEnv)
 														["unitId"] = uData.uID,
 														["y"] = uData.uPos.z,
 														["x"] = uData.uPos.x,
-														["name"] = UnitDictEntry,
+														--DICTPROBLEM
+														["name"] = name, --UnitDictEntry,
 														["heading"] = 0, -- do it better next time
 														["category"] = "Fortifications",
 													}
@@ -161,7 +169,8 @@ function doSpawned(missionEnv, tblSpawned, dictEnv, whEnv)
 														["unitId"] = uData.uID,
 														["y"] = uData.uPos.z,
 														["x"] = uData.uPos.x,
-														["name"] = UnitDictEntry,
+														--DICTPROBLEM
+														["name"] = name, -- UnitDictEntry,
 														["heading"] = 0, -- do it better next time
 														["category"] = "Heliports",
 														["heliport_modulation"] = 0,
@@ -184,7 +193,8 @@ function doSpawned(missionEnv, tblSpawned, dictEnv, whEnv)
 														["unitId"] = uData.uID,
 														["y"] = uData.uPos.z,
 														["x"] = uData.uPos.x,
-														["name"] = UnitDictEntry,
+														--DICTPROBLEM
+														["name"] = name, -- UnitDictEntry,
 														["heading"] = 0, -- do it better next time
 														["mass"] = uData.uWeight,
 														["canCargo"] = true,
@@ -201,7 +211,8 @@ function doSpawned(missionEnv, tblSpawned, dictEnv, whEnv)
 														["skill"] = "Random",
 														["y"] = uData.uPos.z,
 														["x"] = uData.uPos.x,
-														["name"] = UnitDictEntry,
+														--DICTPROBLEM
+														["name"] = name, -- UnitDictEntry,
 														["playerCanDrive"] = true,
 														["heading"] = 0, -- do it better next time
 													}
@@ -210,24 +221,26 @@ function doSpawned(missionEnv, tblSpawned, dictEnv, whEnv)
 								
 								if uId < minU then
 									minU = uId
+									--DICTPROBLEM
+									--GrpNameAssigned = tostring(uData.uType) .. "_".. tostring(MaxDict)
 									GrpNameAssigned = tostring(uData.uType) .. "_".. tostring(MaxDict)
-									HOOK.writeDebugDetail(ModuleName .. ": GrpNameAssigned " .. tostring(uData.uName))
+									HOOK.writeDebugDetail(ModuleName .. ": GrpNameAssigned " .. tostring(GrpNameAssigned))
 								end
 							end
 						end
 						HOOK.writeDebugDetail(ModuleName .. ": units table set")				
 						
 						if table.getn(sgUnits) > 0 then
-						
-							MaxDict = MaxDict+1
-							local GrpDictEntry = "DictKey_GroupName_" .. MaxDict
+							--DICTPROBLEM
+							--MaxDict = MaxDict+1
+							--local GrpDictEntry = "DictKey_GroupName_" .. MaxDict
 							if KeepGroupName then
 								GrpNameAssigned = sgData.gName
 							end							
-							tblDictEntries[GrpDictEntry] = GrpNameAssigned -- this cause CTLD to overwrite the group if created again
-							MaxDict = MaxDict+1
-							local WptDictEntry = "DictKey_WptName_" .. MaxDict
-							tblDictEntries[WptDictEntry] = ""										
+							--tblDictEntries[GrpDictEntry] = GrpNameAssigned -- this cause CTLD to overwrite the group if created again
+							--MaxDict = MaxDict+1
+							--local WptDictEntry = "DictKey_WptName_" .. MaxDict
+							--tblDictEntries[WptDictEntry] = ""										
 				
 							local gPosX = sgUnits[1]["x"]
 							local gPosY = sgUnits[1]["y"]
@@ -257,7 +270,8 @@ function doSpawned(missionEnv, tblSpawned, dictEnv, whEnv)
 											["formation_template"] = "",
 											["y"] = gPosY,
 											["x"] = gPosX,
-											["name"] = WptDictEntry,
+											--DICTPROBLEM
+											["name"] = "", --WptDictEntry,
 											["ETA_locked"] = true,
 											["speed"] = 0,
 											["action"] = "Off Road",
@@ -280,7 +294,9 @@ function doSpawned(missionEnv, tblSpawned, dictEnv, whEnv)
 								["units"] = sgUnits,
 								["y"] = gPosY,
 								["x"] = gPosX,
-								["name"] = GrpDictEntry,
+								--DICTPROBLEM
+								["name"] = GrpNameAssigned, -- GrpDictEntry,
+								["heading"] = 0, -- this also in new structure!
 								["start_time"] = 0,
 							}	
 
