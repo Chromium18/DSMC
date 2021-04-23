@@ -54,7 +54,7 @@ TRPS.upscaleResupplyFactor  = 10 -- crate weight / warehouse resupply weight fac
 TRPS.repairCrateModel       = "container_cargo"
 TRPS.unpackCrateDistance    = 200 -- distance in meters between the heli and the nearest crate to allow an "unpack" action. It's also used to determinee if you moved the crate at least once after the crate creation.
 TRPS.unpackTemplateDistance = 750 -- distance in meters between the crates to be identified as ok for a template (else, you will need to group them more). This also apply for FOB crates
-
+TRPS.repairDelay            = 20 -- minutes since a repair is called to be completed.
 
 if _debugMode == true then
     TRPS.unpackRestriction = false -- if false, you can unpack in logistic zone
@@ -36145,7 +36145,11 @@ function TRPS.unpackCrates(_arguments)
                     
                     if _crate.details.obj_crate == TRPS.repairCrateModel and _crate.details.unit == "REPAIR-CRATE" then
                         env.info("TRPS unpackCrates: crate is for repair, starting repairGroup")
-                        TRPS.repairByCrate(_heli, _crate)
+                        TRPS.displayMessageToGroup(_heli, "Repair process has been planned, estimated time to complete: " .. tostring(TRPS.repairDelay) .. " minutes", 20)
+                        local function doRepair()
+                            TRPS.repairByCrate(_heli, _crate)
+                        end
+                        timer.scheduleFunction(doRepair, nil, timer.getTime() + (TRPS.repairDelay*60))
                         return  
                     end
                     
