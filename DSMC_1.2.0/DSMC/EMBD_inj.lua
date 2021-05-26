@@ -1787,6 +1787,29 @@ function EMBD.collectSpawned:onEvent(event)
 end
 world.addEventHandler(EMBD.collectSpawned)
 
+EMBD.sceneryDestroyRefresh = {}
+function EMBD.sceneryDestroyRefresh:onEvent(event) -- used for scenery destruction obj
+	if event.id == world.event.S_EVENT_BIRTH then 
+		env.info(("EMBD.sceneryDestroyRefresh event birth found"))
+		if event.initiator then
+			if Object.getCategory(event.initiator) == 1 then -- unit. if it's a unit, can have fuel
+				
+				local isClient = event.initiator:getPlayerName()
+				if isClient == true then
+					env.info(("EMBD.sceneryDestroyRefresh is a client, setting flag"))
+					trigger.action.setUserFlag("12345" , true )
+					local function resetFlag()
+						trigger.action.setUserFlag("12345" , false )
+						env.info(("EMBD.sceneryDestroyRefresh is a client, flag reset done"))
+					end
+					timer.scheduleFunction(resetFlag, {}, timer.getTime() + 1)
+				end
+			end
+		end
+	end
+end
+world.addEventHandler(EMBD.sceneryDestroyRefresh)
+
 --
 EMBD.airbaseFuelIndex = {}
 EMBD.fuelTest = {}

@@ -13,6 +13,7 @@ local require 		= base.require
 local io 			= require('io')
 local lfs 			= require('lfs')
 local os 			= require('os')
+local ME_DB   		= require('me_db_api')
 
 HOOK.writeDebugDetail(ModuleName .. ": local required loaded")
 
@@ -56,9 +57,121 @@ function createdbWeapon()
 	end
 end
 
+-- ## UTILS
+function checkAvailableParkings(a_listP, uType, uCat)
+
+	--HOOK.writeDebugDetail(ModuleName .. ": getRightParkingAirport, a1")
+	HOOK.writeDebugDetail(ModuleName .. ": checkAvailableParkings, a_listP pre: " .. tostring(#a_listP))
+	HOOK.writeDebugDetail(ModuleName .. ": checkAvailableParkings, uType pre: " .. tostring(uType))
+	HOOK.writeDebugDetail(ModuleName .. ": checkAvailableParkings, uCat pre: " .. tostring(uCat))
+    local unitDesc = ME_DB.unit_by_type[uType]
+    --HOOK.writeDebugDetail(ModuleName .. ": getRightParkingAirport, a2")
+    local HEIGHT = unitDesc.height
+    local WIDTH  = unitDesc.wing_span or unitDesc.rotor_diameter
+    local LENGTH = unitDesc.length
+    --HOOK.writeDebugDetail(ModuleName .. ": getRightParkingAirport, a3")
+	local found = false
+	if a_listP and #a_listP > 0 then
+		for k, v in pairs(a_listP) do
+			if found == false then
+				--print("------name---",v.name)
+				--print("---type=",group.units[1].type,"--WIDTH=",WIDTH,"--LENGTH=",LENGTH,"--HEIGHT",HEIGHT)
+				--print("---in terrain-----WIDTH=",v.params.WIDTH,"--LENGTH=",v.params.LENGTH,"--HEIGHT",v.params.HEIGHT,"---FOR_HELICOPTERS---",v.params.FOR_HELICOPTERS)
+				if (not((WIDTH < v.params.WIDTH) 
+						and (LENGTH < v.params.LENGTH)
+						and (HEIGHT < (v.params.HEIGHT or 1000)))) 
+					or ((uCat == 'helicopters') and (v.params.FOR_HELICOPTERS == 0))
+					or ((uCat == 'planes') and (v.params.FOR_AIRPLANES == 0))    then
+
+					found = true
+					HOOK.writeDebugDetail(ModuleName .. ": checkAvailableParkings, found and removed parking num: " .. tostring(v.name))
+					--table.remove(a_listP, k)
+					a_listP[k] = nil
+					return true, a_listP
+
+				end
+			end
+		end
+	end
+
+	HOOK.writeDebugDetail(ModuleName .. ": checkAvailableParkings, no found")
+	return false
+end
+
 -- ## ELAB FUNCTION
-function consolidateStandardLogistic(curr_tblLogistic)
+
+function checkLandingsLogistic(curr_tblLogistic, tblWarehouse)
+
 	local temp_tblLogistic ={}
+	local checkAbTbl = UTIL.deepCopy(tblAirbases)
+	UTIL.dumpTable("XX_curr_tblLogistic.lua", curr_tblLogistic)
+
+	HOOK.writeDebugDetail(ModuleName .. ": checkLandingsLogistic started")
+	for oId, oData in pairs(curr_tblLogistic) do	
+		if oData.action == "arrival" and oData.placeType == "airports" then
+			HOOK.writeDebugDetail(ModuleName .. ": checkLandingsLogistic checking entry: " .. tostring(oId))
+			HOOK.writeDebugDetail(ModuleName .. ": checkLandingsLogistic checking placeName: " .. tostring(oData.placeName))
+			HOOK.writeDebugDetail(ModuleName .. ": checkLandingsLogistic checking placeId: " .. tostring(oData.placeId))
+			HOOK.writeDebugDetail(ModuleName .. ": checkLandingsLogistic checking acf: " .. tostring(oData.acf))
+
+			local dataVerified = false
+			local category = nil
+			for afbType, afbIds in pairs(tblWarehouse) do
+				for afbId, afbData in pairs(afbIds) do
+					if afbId == tonumber(oData.placeId) then
+						HOOK.writeDebugDetail(ModuleName .. ": checkLandingsLogistic placeId found")
+						if afbData.unlimitedAircrafts == false then
+							HOOK.writeDebugDetail(ModuleName .. ": checkLandingsLogistic ab is unlimited")
+							for acCategory, acNames in pairs(afbData.aircrafts) do
+								for acName, acData in pairs(acNames) do			
+									if acName == oData.acf then
+										HOOK.writeDebugDetail(ModuleName .. ": checkLandingsLogistic acf found")
+										dataVerified = true
+										category = acCategory
+										HOOK.writeDebugDetail(ModuleName .. ": checkLandingsLogistic dataVerified true")
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+
+			if dataVerified == true and category then
+				for admId, admData in pairs(checkAbTbl) do
+					if admData.name == oData.placeName then				
+						HOOK.writeDebugDetail(ModuleName .. ": checkLandingsLogistic found airport parkings net. numPark: " .. tostring(#admData.parkings))
+						local check, newPark = checkAvailableParkings(admData.parkings, oData.acf, category)
+						if newPark then
+							HOOK.writeDebugDetail(ModuleName .. ": checkLandingsLogistic found airport parkings net. newPark: " .. tostring(#newPark))
+						end
+						if check == true then
+							HOOK.writeDebugDetail(ModuleName .. ": checkLandingsLogistic check is true")
+							admData.parkings = newPark
+						else
+							HOOK.writeDebugDetail(ModuleName .. ": checkLandingsLogistic check is false, killed entry")
+							curr_tblLogistic[oId] = nil
+						end
+					end
+				end
+			end
+		end
+	end
+
+	-- reBuild table
+	for _, xData in pairs(curr_tblLogistic) do
+		temp_tblLogistic[#temp_tblLogistic+1] = xData
+	end
+
+	UTIL.dumpTable("XX_temp_tblLogistic.lua", temp_tblLogistic)
+
+	return temp_tblLogistic
+end
+
+function consolidateStandardLogistic(curr_tblLogistic, tblWarehouse)
+	local temp_tblLogistic ={}
+	local checkAbTbl = UTIL.deepCopy(tblAirbases)
+
 	HOOK.writeDebugDetail(ModuleName .. ": consolidateStandardLogistic started")
 	for oId, oData in pairs(curr_tblLogistic) do
 		HOOK.writeDebugDetail(ModuleName .. ": consolidateStandardLogistic checking: " .. tostring(oId))
@@ -167,7 +280,6 @@ function consolidateStandardLogistic(curr_tblLogistic)
 				end
 				tempTbl.aircrafts = tmpAcf
 				tmpAcf = nil			
-
 			elseif oData.action == "arrival" then
 				local tmpAcf = tempTbl.aircrafts
 				local afound = false
@@ -188,6 +300,16 @@ function consolidateStandardLogistic(curr_tblLogistic)
 
 				tempTbl.aircrafts = tmpAcf
 				tmpAcf = nil	
+			end
+
+			if found == true then
+				for cId, cData in pairs(temp_tblLogistic) do
+					if oData.placeId == cData.placeId then			
+						cData = tempTbl
+					end
+				end
+			elseif found == false then
+				temp_tblLogistic[#temp_tblLogistic+1] = tempTbl
 			end
 
 			if found == true then
@@ -335,6 +457,40 @@ function elabStandardLogistic(inj_tblLogistic, inj_tempWarehouses)
 						else
 							HOOK.writeDebugDetail(ModuleName .. ": elabStandardLogistic no aircraft variable")	
 						end
+						--[[
+						if LogData.aircrafts then
+							for aName, aNumber in pairs(LogData.aircrafts) do
+								for acCategory, acNames in pairs(afbData.aircrafts) do
+									for acName, acData in pairs(acNames) do
+										if acName == aName then
+											HOOK.writeDebugDetail(ModuleName .. ": elabStandardLogistic identified movement for acf type: " .. tostring(aName) .. ", number: " .. tostring(aNumber))	
+											if afbType == "airports" then
+												HOOK.writeDebugDetail(ModuleName .. ": elabStandardLogistic base is an airport, check parkings")
+												for admId, admData in pairs(checkAbTbl) do
+													if tonumber(admData.index) == tonumber(afbId) then
+														HOOK.writeDebugDetail(ModuleName .. ": elabStandardLogistic found airbase in tblAirbase")
+
+														local check, newPark = checkAvailableParkings(admData.parkings, acName, acCategory)
+
+														if check then
+															admData.parkings = newPark
+															acData.initialAmount = acData.initialAmount + aNumber
+															HOOK.writeDebugDetail(ModuleName .. ": elabStandardLogistic adjusted acf type: " .. tostring(aName) .. ", qty: " .. tostring(aNumber) .. "\n")	
+														else
+															HOOK.writeDebugDetail(ModuleName .. ": elabStandardLogistic no available parking found, skipping")	
+														end
+													end
+												end
+											end
+										end
+									end
+								end
+
+							end
+						else
+							HOOK.writeDebugDetail(ModuleName .. ": elabStandardLogistic no aircraft variable")	
+						end
+						--]]--
 						
 						--ammo  
 						if afbData.unlimitedMunitions == false then
@@ -698,7 +854,8 @@ function warehouseUpdateCycle(tblLog, tblWh)
 	HOOK.writeDebugDetail(ModuleName .. ": warehouseUpdateCycle start!")
 	--local FARPadd = UTIL.addFARPwh(inj_tempWarehouses)
 	local tblWhWithCrates = elabCratesLogistic(tblLog, tblWh)
-	local tblLogConsolidated = consolidateStandardLogistic(tblLog)
+	local tblLogLanded = checkLandingsLogistic(tblLog, tblWh)
+	local tblLogConsolidated = consolidateStandardLogistic(tblLogLanded)
 	local updatedWh = elabStandardLogistic(tblLogConsolidated, tblWhWithCrates)
 	
 

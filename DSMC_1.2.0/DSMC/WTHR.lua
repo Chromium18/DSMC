@@ -1228,8 +1228,14 @@ if clouds and enableNewCloud == true then
 					end
 				end
 			end		
-			coktasMax = round(coktasMax*10)+1
-			coktasMin = round(coktasMin*10)-1
+
+			if crain == true then
+				coktasMax = 10
+				coktasMin = 7
+			else
+				coktasMax = round(coktasMax*10)+1
+				coktasMin = round(coktasMin*10)-1
+			end
 
 			newWeatherPresets[#newWeatherPresets+1] = {id = cId, rain = crain, oktasMin = coktasMin, oktasMax = coktasMax, name = cname}
 		end

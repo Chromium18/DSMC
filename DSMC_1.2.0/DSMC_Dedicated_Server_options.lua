@@ -23,7 +23,8 @@ DSMC_TrackWarehouses		= true	 	-- true / false
 DSMC_TrackSpawnedUnits		= true	 	-- true / false
 DSMC_WeatherUpdate          = true      -- true / false
 DSMC_ExportDocuments        = true      -- true / false
-DSMC_CreateClientSlot       = true      -- true / false
+DSMC_CreateSlotHeliports    = true      -- true / false. If true, helicopters slots will be automatically created on heliports. Check manual for details on how it works.
+DSMC_CreateSlotAirbases     = true      -- true / false. If true, slots will be created in airbase also and with fixed wing type. BEWARE: REQUIRE CONSISTENT SCENERY DESIGN! CHECK MANUAL
 
 -- CTLD & CSAR setup stuff
 DSMC_automated_CTLD			= true	 	-- true / false

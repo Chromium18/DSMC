@@ -53,6 +53,33 @@ function updateAirbaseTable(missionEnv)
 			local nearestAFB = ME_DB.getNearestAirdrome(admData.pos.x, admData.pos.z)
 			local parkList = getStandList(nearestAFB.roadnet)		-- ME_parking.
 			admData["parkings"] = parkList
+
+			-- count airplane slots
+			local fwPk = 0
+			for _, pData in pairs(parkList) do
+				for rId, rData in pairs(pData.params) do
+					if rId == "FOR_AIRPLANES" then
+						if rData == 1 then
+							fwPk = fwPk + 1
+						end
+					end
+				end
+			end
+			-- count heli slots
+			local rwPk = 0
+			for _, pData in pairs(parkList) do
+				for rId, rData in pairs(pData.params) do
+					if rId == "FOR_HELICOPTERS" then
+						if rData == 1 then
+							rwPk = rwPk + 1
+						end
+					end
+				end
+			end
+
+			admData["fw_parkNum"] = fwPk
+			admData["rw_parkNum"] = rwPk
+
 			HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: added parkings")
 
 		elseif admData.desc.category == 1 then
@@ -108,7 +135,7 @@ function updateAirbaseTable(missionEnv)
 			for countryID,country in pairs(coalition["country"]) do
 				for attrID,attr in pairs(country) do
 					if (type(attr)=="table") then
-						if attrID == "plane" then
+						if attrID == "plane" or attrID == "helicopter" then
 							for groupID,group in pairs(attr["group"]) do
 								if (group) then
 									local baseId = nil
@@ -127,14 +154,16 @@ function updateAirbaseTable(missionEnv)
 										if tonumber(baseId) == tonumber(admData.id) then
 											HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable, removing used parking: found admData")
 											for unitID,unit in pairs(group["units"]) do
-												if unit.parking_id then
-													for prId, prData in pairs(admData["parkings"]) do
-														if tonumber(prData.name) == tonumber(unit.parking_id) then
-															HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: removed parking " .. tostring(unit.parking))
-															table.remove(admData["parkings"], prId)
+												--if unit.skill ~= "Client" and unit.skill ~= "Player" then -- ADDED FOR P AIRBASE
+													if unit.parking_id then
+														for prId, prData in pairs(admData["parkings"]) do
+															if tonumber(prData.name) == tonumber(unit.parking_id) then
+																HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: removed parking " .. tostring(unit.parking))
+																table.remove(admData["parkings"], prId)
+															end
 														end
 													end
-												end
+												--end
 											end
 										end
 									end
@@ -148,7 +177,7 @@ function updateAirbaseTable(missionEnv)
 		--]]--
 
 	end
-	UTIL.dumpTable("tblAirbases.lua", tblAirbases)
+	UTIL.dumpTable("tblAirbases_updated.lua", tblAirbases)
 end
 
 function getStandList(roadnet)
@@ -178,9 +207,9 @@ function getStandListForShip(a_x, a_y, a_RunWays)
 	return listP
 end
 
-function IncludeSpawned(missionEnv, tbl, dictEnv, whEnv)
-	if SPWN and missionEnv and tbl and dictEnv and whEnv then
-		local lthStr, lthStrErr = SPWN.doSpawned(missionEnv, tbl, dictEnv, whEnv)		
+function IncludeSpawned(missionEnv, tbl, whEnv) -- , dictEnv
+	if SPWN and missionEnv and tbl and whEnv then -- and dictEnv
+		local lthStr, lthStrErr = SPWN.doSpawned(missionEnv, tbl, whEnv) -- , dictEnv
 		if not lthStrErr then
 			HOOK.writeDebugDetail(ModuleName .. ": SPWN.doSpawned, errors: " .. tostring(lthStr))
 		end	
@@ -222,6 +251,40 @@ end
 HOOK.writeDebugDetail(ModuleName .. ": MOBJ loaded")
 
 function killUnits(missionEnv)
+
+	-- check related units
+	for _, kData in pairs(tblToBeKilled) do	
+		for coalitionID,coalition in pairs(missionEnv["coalition"]) do
+			for countryID,country in pairs(coalition["country"]) do
+				for attrID,attr in pairs(country) do
+					if (type(attr)=="table") then
+						for groupID,group in pairs(attr["group"]) do
+							if (group) then
+							
+								local isKill = false
+								for rID,rData in pairs (group.route.points) do
+									if rData.linkUnit == kData.uId then
+										isKill = true
+										HOOK.writeDebugDetail(ModuleName .. ": killUnits found related groups of unit, base object: " .. tostring(kData.uId))
+									end
+								end
+								
+								if isKill == true then
+									for unitID,unit in pairs(group["units"]) do	
+										HOOK.writeDebugDetail(ModuleName .. ": killUnits found added to be killed, unit id: " .. tostring(unit.unitId))
+										tblToBeKilled[#tblToBeKilled+1] = {uId = unit.unitId, gId = group.groupId}
+									end
+								end
+								
+							end
+						end
+					end
+				end
+			end	
+		end
+	end
+	
+	-- kill units
 	for _, kData in pairs(tblToBeKilled) do	
 		for coalitionID,coalition in pairs(missionEnv["coalition"]) do
 			for countryID,country in pairs(coalition["country"]) do
@@ -247,7 +310,8 @@ function killUnits(missionEnv)
 												end
 												HOOK.writeDebugDetail(ModuleName .. ": killUnits killed static")
 											else										
-												HOOK.writeDebugDetail(ModuleName .. ": killUnits unit is not alive, removing unit table")									
+												HOOK.writeDebugDetail(ModuleName .. ": killUnits unit " .. tostring(unitID) .. " is not alive, removing unit table")									
+
 												table.remove(group.units, unitID);
 												HOOK.writeDebugDetail(ModuleName .. ": killUnits killed unit. table.getn(group.units): " .. tostring(table.getn(group.units)))
 												if table.getn(group.units) < 1 then -- next(group.units) == nil
@@ -272,6 +336,7 @@ function killUnits(missionEnv)
 			end
 		end	
 	end
+
 	HOOK.writeDebugDetail(ModuleName .. ": killUnits ok")
 end	
 HOOK.writeDebugDetail(ModuleName .. ": killUnits loaded")
@@ -718,9 +783,9 @@ function updateWeather(missionEnv)
 end
 HOOK.writeDebugDetail(ModuleName .. ": WTHR loaded")
 
-function createSlots(misEnv, whEnv, dictEnv)
+function createSlots(misEnv, whEnv) -- , dictEnv
 	if SLOT and SLOT.SLOTloaded == true then
-		local lthStr, lthStrErr = SLOT.addSlot(misEnv, whEnv, dictEnv)	
+		local lthStr, lthStrErr = SLOT.addSlot(misEnv, whEnv)	-- , dictEnv
 		if not lthStrErr then
 			HOOK.writeDebugDetail(ModuleName .. ": slotUpdate, createSlots errors: " .. tostring(lthStr))
 		end
@@ -732,7 +797,7 @@ HOOK.writeDebugDetail(ModuleName .. ": SLOT loaded")
 
 function updateBriefing(missionEnv, dictionaryEnv)
 	if UPAP and UPAP.UPAPloaded == true then
-		UPAP.expWthToText(missionEnv)
+		UPAP.expWthToText(missionEnv, dictionaryEnv)
 	end
 end
 HOOK.writeDebugDetail(ModuleName .. ": updateBriefing loaded")
@@ -787,16 +852,16 @@ function save()
 		mResFun()	
 		HOOK.writeDebugDetail(ModuleName .. ": save mixFun, dictFun, wrhsFun & mResFun available")
 		
-		if HOOK.SLOT_var == true then -- and HOOK.DSMC_ServerMode == false 
-			updateAirbaseTable(env.mission)
-		end
+		--if HOOK.SLOT_var == true or HOOK.SLOT_ab_var == true then -- and HOOK.DSMC_ServerMode == false 
+		updateAirbaseTable(env.mission)
+		--end
 		
 		updateUnits(env.mission)	
 		updateStaticCoa(env.mission)
 		killUnits(env.mission)		
 
 		if HOOK.SPWN_var == true then
-			IncludeSpawned(env.mission, tblSpawned, dict_env.dictionary, wrhs_env.warehouses)
+			IncludeSpawned(env.mission, tblSpawned, wrhs_env.warehouses) -- , dict_env.dictionary
 			HOOK.writeDebugDetail(ModuleName .. ": env.mission maxDictId: " .. tostring(env.mission.maxDictId))
 			local tempWh = wrhs_env.warehouses
 			wrhs_env.warehouses = UTIL.addFARPwh(tempWh)
@@ -853,20 +918,20 @@ function save()
 			end
 		end		
 
-		if HOOK.SLOT_var == true then
-			createSlots(env.mission, wrhs_env.warehouses, dict_env.dictionary)
+		if HOOK.SLOT_var == true or HOOK.SLOT_ab_var == true then
+			createSlots(env.mission, wrhs_env.warehouses) -- , dict_env.dictionary
 		end		
 		
 		if HOOK.GOAP_var == true then
 			GOAP.loadtables()
 			
 			--test
-			GOAP.TEST_planGround(env.mission, dict_env.dictionary)
+			GOAP.TEST_planGround(env.mission) -- , dict_env.dictionary
 			--GOAP.planGroundGroup(6, "CHERKESSK", true, 600)
 			--planAirGroup(id, missionEnv, task, pos, delay)
-			GOAP.planAirGroup(14, env.mission, dict_env.dictionary, "Strike", {x = 6466, y = 0, z = 383469}, 600)
-			GOAP.planAirGroup(15, env.mission, dict_env.dictionary, "CAP", {x = 0, y = 6096, z = 0}, 900)
-			GOAP.planAirGroup(16, env.mission, dict_env.dictionary, "CAS", {x = 6466, y = 0, z = 383469}, 300)
+			GOAP.planAirGroup(14, env.mission, "Strike", {x = 6466, y = 0, z = 383469}, 600) -- , dict_env.dictionary
+			GOAP.planAirGroup(15, env.mission, "CAP", {x = 0, y = 6096, z = 0}, 900) -- , dict_env.dictionary
+			GOAP.planAirGroup(16, env.mission, "CAS", {x = 6466, y = 0, z = 383469}, 300) -- , dict_env.dictionary
 
 			GOAP.createColourZones(env.mission, tblTerrainDb)
 		end	

@@ -28,7 +28,7 @@ local tblShapes = {
 }
 
 -- ## ELAB FUNCTION
-function doSpawned(missionEnv, tblSpawned, dictEnv, whEnv)
+function doSpawned(missionEnv, tblSpawned, whEnv) -- , dictEnv
 	HOOK.writeDebugDetail(ModuleName .. ": starting doSpawned")
 	
 	--if HOOK.debugProcessDetail then
@@ -101,7 +101,7 @@ function doSpawned(missionEnv, tblSpawned, dictEnv, whEnv)
 					end
 					HOOK.writeDebugDetail(ModuleName .. ": groupTable set")
 					
-					local tblDictEntries = dictEnv
+					--local tblDictEntries = dictEnv
 					HOOK.writeDebugDetail(ModuleName .. ": tblDictEntries set")
 					
 					if groupTable and correctCoalition and correctCountry then

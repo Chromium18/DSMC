@@ -35,8 +35,8 @@ package.path =
 DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "2"
-DSMC_Build 			= "1270"
-DSMC_Date			= "17/04/2021"
+DSMC_Build 			= "1275"
+DSMC_Date			= "21/04/2021"
 
 -- ## DEBUG TO TEXT FUNCTION
 debugProcess	= true -- this should be left on for testers normal ops and test missions
@@ -184,6 +184,7 @@ function loadDSMCHooks()
 							opt_ATRL_time_var	= pl_data.ATRL_time
 							--opt_UPAP_var		= pl_data.UPAP			
 							opt_SLOT_var		= pl_data.SLOT
+							opt_SLOT_ab_var		= pl_data.SLOT_ab
 							opt_GOAP_var		= pl_data.GOAP
 							--opt_SBEO			= pl_data.SBEO
 
@@ -209,8 +210,9 @@ function loadDSMCHooks()
 	ATRL_time_var						= opt_ATRL_time_var or DSMC_AutosaveProcess_min 
 	UPAP_var							= DSMC_ExportDocuments or false -- opt_UPAP_var or    NOT USED NOW if true mission briefings will be updated from a mission to another
 	--TAIR_var							= opt_TAIR_var or DSMC_SaveLastPlanePosition
-	SLOT_var							= opt_SLOT_var or DSMC_CreateClientSlot
+	SLOT_var							= opt_SLOT_var or DSMC_CreateSlotHeliports
 	SLOT_coa_var						= DSMC_CreateSlotCoalition or "all" -- to test, set this "blue" or "red"
+	SLOT_add_ab							= opt_SLOT_ab_var or DSMC_CreateSlotAirbases -- to test, set this "blue" or "red"
 	STOP_var							= DSMC_AutosaveExit_hours
 	STOP_var_time						= DSMC_AutosaveExit_time
 	STOP_var_safe						= DSMC_AutosaveExit_safe
@@ -252,6 +254,7 @@ function loadDSMCHooks()
 	--writeDebugBase(DSMC_ModuleName .. ": TAIR_var = " ..tostring(TAIR_var))
 	writeDebugBase(DSMC_ModuleName .. ": SLOT_var = " ..tostring(SLOT_var))
 	writeDebugBase(DSMC_ModuleName .. ": SLOT_coa_var = " ..tostring(SLOT_coa_var))
+	writeDebugBase(DSMC_ModuleName .. ": SLOT_add_ab = " ..tostring(SLOT_add_ab))	
 	writeDebugBase(DSMC_ModuleName .. ": UPAP_var = " ..tostring(UPAP_var))
 	writeDebugBase(DSMC_ModuleName .. ": STOP_var = " ..tostring(STOP_var))
 	writeDebugBase(DSMC_ModuleName .. ": STOP_var_time = " ..tostring(STOP_var_time))
@@ -392,9 +395,11 @@ function loadDSMCHooks()
 		UPAP 						= require("UPAP")
 		writeDebugBase(DSMC_ModuleName .. ": loaded in UPAP module")
 	end
-	if UTIL.fileExist(DSMCdirectory .. "SLOT" .. ".lua") == true and SLOT_var == true then
-		SLOT 						= require("SLOT")
-		writeDebugBase(DSMC_ModuleName .. ": loaded in SLOT module")
+	if UTIL.fileExist(DSMCdirectory .. "SLOT" .. ".lua") == true then
+		if SLOT_var == true or SLOT_ab_var == true then
+			SLOT 						= require("SLOT")
+			writeDebugBase(DSMC_ModuleName .. ": loaded in SLOT module")
+		end
 	end
 	if UTIL.fileExist(DSMCdirectory .. "GOAP" .. ".lua") == true and GOAP_var == true then
 		GOAP 						= require("GOAP")

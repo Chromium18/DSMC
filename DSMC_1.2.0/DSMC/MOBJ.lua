@@ -20,6 +20,7 @@ HOOK.writeDebugDetail(ModuleName .. ": local required loaded")
 MOBJloaded						= false
 local BugFixed					= true -- TILL ED DOESN'T SOLVE THE SCENERY DESTRUCTION BUG, MP SIDE
 local BaseExplosionPower		= 1000
+local DSMC_reserved_flag		= 12345
 
 -- ## MANUAL TABLES
 
@@ -34,6 +35,7 @@ function updateMapObject(missionEnv, tblDeadScenObj)
 
 		local currentTrigNum = nil
 		local actionStr = ""
+
 		-- check Sdes trigger existence?
 		for tgId, tgData in pairs (missionEnv.trigrules) do
 			if tgData.comment == "DSMC_Scenery_Persistence" then
@@ -41,26 +43,36 @@ function updateMapObject(missionEnv, tblDeadScenObj)
 				HOOK.writeDebugDetail(ModuleName .. ": scenery base trigger already existant. id: " .. tostring(currentTrigNum))
 				actionsId = table.getn(missionEnv.trigrules[currentTrigNum].actions) + 1
 				actionsStr = missionEnv.trig.actions[currentTrigNum]
+
 			end
 		end
 		
 		if not currentTrigNum then 
 			currentTrigNum	= table.getn(missionEnv.trig.flag) + 1 
 			missionEnv.trigrules[currentTrigNum] = {
-				["rules"] = {},
+				["rules"] = {
+					[1] = 
+					{
+						["flag"] = DSMC_reserved_flag,
+						["coalitionlist"] = "red",
+						["predicate"] = "c_flag_is_true",
+						["zone"] = "",
+					}, -- end of [1]
+				}, --   era {},
 				["eventlist"] = "",
 				["comment"] = "DSMC_Scenery_Persistence",
 				["actions"] = {},			
-				["predicate"] = "triggerStart",
+				["predicate"] = "triggerFront", -- triggerStart
 			}
 		end
 		
 		-- trigrules + actions + conditions
 		missionEnv.trig.flag[currentTrigNum] = true
-		missionEnv.trig.conditions[currentTrigNum] = "return(true)"
+		missionEnv.trig.conditions[currentTrigNum] = "return(c_flag_is_true(12345) )" --"return(true)"
+
 		missionEnv.trig.actions[currentTrigNum] = actionStr  -- NEEDS TO BE CHANGED?!?!  was ""
 		
-		missionEnv.trig.funcStartup[currentTrigNum] = "if mission.trig.conditions[" .. currentTrigNum .. "]() then mission.trig.actions[" .. currentTrigNum .. "]() end"
+		missionEnv.trig.func[currentTrigNum] = "if mission.trig.conditions[" .. currentTrigNum .. "]() then if not mission.trig.flag[" .. currentTrigNum .. "] then mission.trig.actions[" .. currentTrigNum .. "](); mission.trig.flag[" .. currentTrigNum .. "] = true;end; else mission.trig.flag[" .. currentTrigNum .. "] = false; end;" --ERA funcStartup -- "if mission.trig.conditions[" .. currentTrigNum .. "]() then mission.trig.actions[" .. currentTrigNum .. "]() end"
 
 		HOOK.writeDebugDetail(ModuleName .. ": c1")
 

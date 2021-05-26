@@ -1663,13 +1663,13 @@ DCSR.addBeaconToGroup = function(_woundedGroupName, _freq)
         end
 
         return
+    else
+        local _sound = "l10n/DEFAULT/" .. DCSR.radioSound
+
+        trigger.action.radioTransmission(_sound, _group:getUnit(1):getPoint(), 0, false, _freq, 1000)
+    
+        timer.scheduleFunction(DCSR.refreshRadioBeacon, { _woundedGroupName, _freq }, timer.getTime() + 30)
     end
-
-    local _sound = "l10n/DEFAULT/" .. DCSR.radioSound
-
-    trigger.action.radioTransmission(_sound, _group:getUnit(1):getPoint(), 0, false, _freq, 1000)
-
-    timer.scheduleFunction(DCSR.refreshRadioBeacon, { _woundedGroupName, _freq }, timer.getTime() + 30)
 end
 
 DCSR.refreshRadioBeacon = function(_args)
