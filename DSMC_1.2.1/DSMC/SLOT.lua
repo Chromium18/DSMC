@@ -1773,10 +1773,10 @@ function cleanSlots(missionEnv, warehouseEnv)
 								for groupID, group in pairs(toFix) do
 									if (group) then	
 										local isUser = false
-										for unitID, unit in pairs(group["units"]) do
+										for _, unit in pairs(group["units"]) do
 											if unit.skill == "Client" or unit.skill == "Player" then
 												isUser = true
-												HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is a client or player. type: " .. tostring(unit.type))	
+												HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is a client or player. type: " .. tostring(unit.type))
 
 
 											end
@@ -1784,7 +1784,7 @@ function cleanSlots(missionEnv, warehouseEnv)
 
 										if isUser == true then
 											for _, rData in pairs(group["route"]) do
-												for pId, pData in pairs(rData) do
+												for pId, pData in pairs(rData["points"]) do
 													if pId == 1 then
 														if pData.helipadId then
 															HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is on helipad. Killing type: " .. tostring(unit.type))
@@ -1800,10 +1800,11 @@ function cleanSlots(missionEnv, warehouseEnv)
 								end
 
 								if table.getn(toFix) < 1 then -- next(attr.group) == nil
+									HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killing country no more groups")
 									--table.remove(country, attrID)											
 									country[attrID] = nil;
 									toFix = nil
-									HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killed country (no more groups)")
+									HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killed country no more groups")
 								else
 									attr["group"] = {}
 									for _, gData in pairs(toFix) do
