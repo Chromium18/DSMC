@@ -1753,149 +1753,116 @@ end
 
 -- MAIN FUNCTION TO LAUNCH
 
-function cleanSlots(missionEnv, warehouseEnv)
+function cleanSlots(missionEnv, warehouseEnv, arbTbl)
 
 	-- add here separation between helos with the options active or airbase with options & unlimited.
 
 	-- remove helos
-	if heloSlot == true then
-		HOOK.writeDebugDetail(ModuleName .. ": cleanSlots. heloSlot is true, removing slots from heliports. Check: " .. tostring(heloSlot))	
-		for coalitionID,coalition in pairs(missionEnv["coalition"]) do
-			for countryID,country in pairs(coalition["country"]) do
-				HOOK.writeDebugDetail(ModuleName .. ": cleanSlots, removing heli slots for: " .. tostring(country.name))
-				for attrID,attr in pairs(country) do
-					if (type(attr)=="table") then
+		
+	for coalitionID,coalition in pairs(missionEnv["coalition"]) do
+		for countryID,country in pairs(coalition["country"]) do
+			HOOK.writeDebugDetail(ModuleName .. ": cleanSlots, removing slots for: " .. tostring(country.name))
+			for attrID,attr in pairs(country) do
+				if (type(attr)=="table") then
 
-						if attrID == "helicopter" or attrID == "plane" then
-							if attr["group"] and type(attr["group"]) == "table" then
-								local toFix = UTIL.deepCopy(attr["group"])
+					if attrID == "helicopter" or attrID == "plane" then
+						if attr["group"] and type(attr["group"]) == "table" then
+							local toFix = UTIL.deepCopy(attr["group"])
 
-								for groupID, group in pairs(toFix) do
-									if (group) then	
-										HOOK.writeDebugDetail(ModuleName .. ": cleanSlots checking group id: " .. tostring(group.groupId))
-										local isUser = false
-										for _, unit in pairs(group["units"]) do
-											if unit.skill == "Client" or unit.skill == "Player" then
-												isUser = true
-												HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is a client or player. type: " .. tostring(unit.type))
+							for groupID, group in pairs(toFix) do
+								if (group) then	
+									HOOK.writeDebugDetail(ModuleName .. ": cleanSlots checking group id: " .. tostring(group.groupId))
+									local isUser = false
+									for _, unit in pairs(group["units"]) do
+										if unit.skill == "Client" or unit.skill == "Player" then
+											isUser = true
+											HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is a client or player. type: " .. tostring(unit.type))
 
 
-											end
 										end
+									end
 
-										if isUser == true then
-											HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is on helipad. a")
-											for pId, pData in pairs(group["route"]["points"]) do
-												if pId == 1 then
-													HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is on helipad. b")
+									if isUser == true then
+										for pId, pData in pairs(group["route"]["points"]) do
+											if pId == 1 then
+
+												if heloSlot == true then
+													HOOK.writeDebugDetail(ModuleName .. ": cleanSlots. heloSlot is true, removing slots. Check: " .. tostring(heloSlot))
 													if pData.helipadId then
-														HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is on helipad. Killing unit")
-														toFix[groupID] = nil
-														HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killed group: " .. tostring(groupID))	
-													else
-														HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is on helipad. c")
+
+														local isShip = true
+														for _, aData in pairs(arbTbl) do
+															if tonumber(aData.index) == tonumber(pData.helipadId) then
+																if aData.desc then
+																	if aData.desc.attributes then
+																		for atrName, atrVal in pairs(aData.desc) do
+																			if atrName == "Helipad" then
+																				isShip = false
+																				HOOK.writeDebugDetail(ModuleName .. ": found attributes about being an helipad")
+																			end
+																		end
+																	end
+																end
+
+															end
+														end
+
+														if isShip == false then
+															HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is on helipad. Killing unit")
+															toFix[groupID] = nil
+															HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killed group: " .. tostring(groupID))	
+														else
+															HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is a ship, skipping kill")
+														end
 													end
 												end
-											end
-										end
-									end
-								end
-								HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is on helipad. d")
-								if table.getn(toFix) < 1 then -- next(attr.group) == nil
-									HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killing country no more groups")
-									--table.remove(country, attrID)											
-									country[attrID] = nil;
-									toFix = nil
-									HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killed country no more groups")
-								else
-									attr["group"] = {}
-									for _, gData in pairs(toFix) do
-										attr["group"][#attr["group"]+1] = gData
-									end
-								end	
-								
-								--attr["group"] = toFix
 
-							end
-							--table.remove(country, attrID) -- won't work on "non arrays" things
-						end
-					end
-				end
-			end
-		end
-	end
-
-	if airbaseSlot == true then
-		HOOK.writeDebugDetail(ModuleName .. ": cleanSlots. airbaseSlot is true, removing from airbase. Check: " .. tostring(airbaseSlot))
-		for coalitionID,coalition in pairs(missionEnv["coalition"]) do
-			for countryID,country in pairs(coalition["country"]) do
-				HOOK.writeDebugDetail(ModuleName .. ": cleanSlots, removing heli slots for: " .. tostring(country.name))
-				for attrID,attr in pairs(country) do
-					if (type(attr)=="table") then
-
-						if attrID == "helicopter" or attrID == "plane" then
-							if attr["group"] and type(attr["group"]) == "table" then
-								local toFix = UTIL.deepCopy(attr["group"])
-
-								for groupID, group in pairs(toFix) do
-									if (group) then	
-										local isUser = false
-										for unitID, unit in pairs(group["units"]) do
-											if unit.skill == "Client" or unit.skill == "Player" then
-												isUser = true
-												HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is a client or player. type: " .. tostring(unit.type))	
-
-
-											end
-										end
-
-										if isUser == true then
-											for _, rData in pairs(group["route"]) do
-												for pId, pData in pairs(rData) do
-													if pId == 1 then
-														if pData.airdromeId then
-															HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is on airbase. checking warehouse for pData.airdromeId: " .. tostring(pData.airdromeId))
-															
-															for afbType, afbIds in pairs(warehouseEnv) do
-																if afbType == "airports" then
-																	for afbId, afbData in pairs(afbIds) do
-																		if tonumber(afbId) == tonumber(pData.airdromeId) then
-																			HOOK.writeDebugDetail(ModuleName .. ": cleanSlots found airbase, afbId: " .. tostring(afbId))
-																			if afbData.unlimitedAircrafts == false then
-																				toFix[groupID] = nil
-																				HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killed group: " .. tostring(groupID))
-																			else
-																				HOOK.writeDebugDetail(ModuleName .. ": ab is unlimited, skipping kill for: " .. tostring(groupID))
-																			end
+												if airbaseSlot == true then
+													HOOK.writeDebugDetail(ModuleName .. ": cleanSlots. airbaseSlot is true, removing slots. Check: " .. tostring(airbaseSlot))
+													if pData.airdromeId then
+														HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is on airbase. checking warehouse for pData.airdromeId: " .. tostring(pData.airdromeId))
+														
+														for afbType, afbIds in pairs(warehouseEnv) do
+															if afbType == "airports" then
+																for afbId, afbData in pairs(afbIds) do
+																	if tonumber(afbId) == tonumber(pData.airdromeId) then
+																		HOOK.writeDebugDetail(ModuleName .. ": cleanSlots found airbase, afbId: " .. tostring(afbId))
+																		if afbData.unlimitedAircrafts == false then
+																			toFix[groupID] = nil
+																			HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killed group: " .. tostring(groupID))
+																		else
+																			HOOK.writeDebugDetail(ModuleName .. ": ab is unlimited, skipping kill for: " .. tostring(groupID))
 																		end
 																	end
 																end
 															end
 														end
 													end
+
 												end
 											end
 										end
 									end
 								end
-
-								if table.getn(toFix) < 1 then -- next(attr.group) == nil
-									--table.remove(country, attrID)											
-									country[attrID] = nil;
-									toFix = nil
-									HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killed country (no more groups)")
-								else
-									attr["group"] = {}
-									for _, gData in pairs(toFix) do
-										attr["group"][#attr["group"]+1] = gData
-									end
-								end	
-								
-								--attr["group"] = toFix
-
 							end
-							--table.remove(country, attrID) -- won't work on "non arrays" things
+							HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is on helipad. d")
+							if table.getn(toFix) < 1 then -- next(attr.group) == nil
+								HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killing country no more groups")
+								--table.remove(country, attrID)											
+								country[attrID] = nil;
+								toFix = nil
+								HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killed country no more groups")
+							else
+								attr["group"] = {}
+								for _, gData in pairs(toFix) do
+									attr["group"][#attr["group"]+1] = gData
+								end
+							end	
+							
+							--attr["group"] = toFix
+
 						end
+						--table.remove(country, attrID) -- won't work on "non arrays" things
 					end
 				end
 			end
@@ -2364,17 +2331,19 @@ function buildAirbaseSlot(missionEnv, warehouseEnv, airbaseTbl, tblSlots)
 															local choose_coa = nil
 															local choose_ctry = nil
 															for coalitionID, coalition in pairs(missionEnv["coalition"]) do
-																if string.lower(coa) == string.lower(coalitionID) then
-																	choose_coa = coalitionID
-																	
-																	local minCx = 100000
-																	for _,country in pairs(coalition["country"]) do																		
-																		if country.id < minCx then
-																			minCx = country.id
-																			choose_ctry = country.id
+																if coalitionID == HOOK.SLOT_coa_var or permitAll == true then
+																	if string.lower(coa) == string.lower(coalitionID) then
+																		choose_coa = coalitionID
+																		
+																		local minCx = 100000
+																		for _,country in pairs(coalition["country"]) do																		
+																			if country.id < minCx then
+																				minCx = country.id
+																				choose_ctry = country.id
+																			end
 																		end
-																	end
 
+																	end
 																end
 															end	
 
@@ -2415,8 +2384,8 @@ end
 function addSlot(m, w) --, dictEnv
 
 	-- clean all helos slot!
-	local m = cleanSlots(m, w)
 	local a = UTIL.deepCopy(tblAirbases)
+	local m = cleanSlots(m, w, a)
 	local a = checkParkings(m, a)
 
 	addedGroups = 0
