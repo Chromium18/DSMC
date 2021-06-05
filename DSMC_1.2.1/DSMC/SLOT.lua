@@ -32,6 +32,204 @@ local spareSlots				= 0 -- number of slots that MUST be left free in any airbase
 
 -- ## MANUAL TABLES
 local standardPlaneTypes = {
+	["Bf-109K-4"] = {
+		["type"] = "Bf-109K-4",
+		["payload"] = 
+		{
+			["pylons"] = 
+			{
+			}, -- end of ["pylons"]
+			["fuel"] = 296,
+			["flare"] = 0,
+			["ammo_type"] = 1,
+			["chaff"] = 0,
+			["gun"] = 100,
+		}, -- end of ["payload"]
+		["AddPropAircraft"] = 
+		{
+			["MW50TankContents"] = 1,
+			["Flare_Gun"] = 1,
+		}, -- end of ["AddPropAircraft"]
+	},	
+	
+	["FW-190A8"] = {
+		["type"] = "FW-190A8",
+		["payload"] = 
+		{
+			["pylons"] = 
+			{
+			}, -- end of ["pylons"]
+			["fuel"] = 409,
+			["flare"] = 0,
+			["ammo_type"] = 1,
+			["chaff"] = 0,
+			["gun"] = 100,
+		}, -- end of ["payload"]
+		["AddPropAircraft"] = 
+		{
+			["FW_MW50TankContents"] = 0,
+		}, -- end of ["AddPropAircraft"]
+	},		
+	
+	["FW-190D9"] = {
+		["type"] = "FW-190D9",
+		["payload"] = 
+		{
+			["pylons"] = 
+			{
+			}, -- end of ["pylons"]
+			["fuel"] = 409,
+			["flare"] = 0,
+			["ammo_type"] = 1,
+			["chaff"] = 0,
+			["gun"] = 100,
+		}, -- end of ["payload"]
+		["AddPropAircraft"] = 
+		{
+			["FW_MW50TankContents"] = 0,
+		}, -- end of ["AddPropAircraft"]
+	},		
+	
+	
+	["I-16"] = {
+		["type"] = "I-16",
+		["payload"] = 
+		{
+			["pylons"] = 
+			{
+			}, -- end of ["pylons"]
+			["fuel"] = 191,
+			["flare"] = 0,
+			["chaff"] = 0,
+			["gun"] = 100,
+		}, -- end of ["payload"]
+		["AddPropAircraft"] = 
+		{
+			["landingTorch"] = false,
+		}, -- end of ["AddPropAircraft"]
+	},			
+	
+	
+	["P-47D-30"] = {
+		["type"] = "P-47D-30",
+		["payload"] = 
+		{
+			["pylons"] = 
+			{
+			}, -- end of ["pylons"]
+			["fuel"] = 676.704,
+			["flare"] = 0,
+			["ammo_type"] = 1,
+			["chaff"] = 0,
+			["gun"] = 100,
+		}, -- end of ["payload"]
+		["AddPropAircraft"] = 
+		{
+			["WaterTankContents"] = 1,
+		}, -- end of ["AddPropAircraft"]
+	},			
+	
+	["P-47D-30bl1"] = {
+		["type"] = "P-47D-30bl1",
+		["payload"] = 
+		{
+			["pylons"] = 
+			{
+			}, -- end of ["pylons"]
+			["fuel"] = 676.704,
+			["flare"] = 0,
+			["ammo_type"] = 1,
+			["chaff"] = 0,
+			["gun"] = 100,
+		}, -- end of ["payload"]
+		["AddPropAircraft"] = 
+		{
+			["WaterTankContents"] = 1,
+		}, -- end of ["AddPropAircraft"]
+	},
+	
+	["P-47D-40"] = {
+		["type"] = "P-47D-40",
+		["payload"] = 
+		{
+			["pylons"] = 
+			{
+			}, -- end of ["pylons"]
+			["fuel"] = 676.704,
+			["flare"] = 0,
+			["ammo_type"] = 1,
+			["chaff"] = 0,
+			["gun"] = 100,
+		}, -- end of ["payload"]
+		["AddPropAircraft"] = 
+		{
+			["WaterTankContents"] = 1,
+		}, -- end of ["AddPropAircraft"]
+	},	
+	
+	["P-51D"] = {
+		["type"] = "P-51D",
+		["payload"] = 
+		{
+			["pylons"] = 
+			{
+			}, -- end of ["pylons"]
+			["fuel"] = 497.76,
+			["flare"] = 0,
+			["ammo_type"] = 1,
+			["chaff"] = 0,
+			["gun"] = 100,
+		}, -- end of ["payload"]
+	},	
+	
+	["P-51D-30-NA"] = {
+		["type"] = "P-51D-30-NA",
+		["payload"] = 
+		{
+			["pylons"] = 
+			{
+			}, -- end of ["pylons"]
+			["fuel"] = 497.76,
+			["flare"] = 0,
+			["ammo_type"] = 1,
+			["chaff"] = 0,
+			["gun"] = 100,
+		}, -- end of ["payload"]
+	},	
+
+	
+	["SpitfireLFMkIX"] = {
+		["type"] = "SpitfireLFMkIX",
+		["payload"] = 
+		{
+			["pylons"] = 
+			{
+			}, -- end of ["pylons"]
+			["fuel"] = 247,
+			["flare"] = 0,
+			["ammo_type"] = 1,
+			["chaff"] = 0,
+			["gun"] = 100,
+		}, -- end of ["payload"]
+	},
+	
+	["SpitfireLFMkIXCW"] = {
+		["type"] = "SpitfireLFMkIXCW",
+		["payload"] = 
+		{
+			["pylons"] = 
+			{
+			}, -- end of ["pylons"]
+			["fuel"] = 247,
+			["flare"] = 0,
+			["ammo_type"] = 1,
+			["chaff"] = 0,
+			["gun"] = 100,
+		}, -- end of ["payload"]
+	},
+
+
+
 	["A-10A"] = {
 		["type"] = "A-10A",
 		["payload"] = 
