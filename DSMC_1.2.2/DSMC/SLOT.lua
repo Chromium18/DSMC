@@ -1034,72 +1034,19 @@ local standardHeloTypes = {
 		["ropeLength"] = 15,
 		["AddPropAircraft"] = 
 		{
-			["LeftEngineResource"] = 90,
-			["RightEngineResource"] = 90,
 			["SimplifiedAI"] = false,
-			["ExhaustScreen"] = false,
+			["ExhaustScreen"] = true,
 			["GunnersAISkill"] = 90,
-			["NetCrewControlPriority"] = 0,
+			["HideAngleBoxes"] = false,
 			["NS430allow"] = true,
 		}, -- end of ["AddPropAircraft"]
-		["type"] = "Mi-8MT",
-		["Radio"] = 
-		{
-			[1] = 
-			{
-				["modulations"] = 
-				{
-				}, -- end of ["modulations"]
-				["channels"] = 
-				{
-					[1] = 127.5,
-					[2] = 135,
-					[3] = 136,
-					[4] = 127,
-					[5] = 125,
-					[6] = 121,
-					[7] = 141,
-					[8] = 128,
-					[9] = 126,
-					[10] = 133,
-					[11] = 130,
-					[12] = 129,
-					[13] = 123,
-					[14] = 131,
-					[15] = 134,
-					[16] = 132,
-					[17] = 138,
-					[18] = 122,
-					[19] = 124,
-					[20] = 137,
-				}, -- end of ["channels"]
-			}, -- end of [1]
-			[2] = 
-			{
-				["modulations"] = 
-				{
-				}, -- end of ["modulations"]
-				["channels"] = 
-				{
-					[1] = 21.5,
-					[2] = 25.7,
-					[3] = 27,
-					[4] = 28,
-					[5] = 30,
-					[6] = 32,
-					[7] = 40,
-					[8] = 50,
-					[9] = 55.5,
-					[10] = 59.9,
-				}, -- end of ["channels"]
-			}, -- end of [2]
-		}, -- end of ["Radio"]
+		["type"] = "Mi-24P",
 		["payload"] = 
 		{
 			["pylons"] = 
 			{
 			}, -- end of ["pylons"]
-			["fuel"] = "0",
+			["fuel"] = 1701,
 			["flare"] = 192,
 			["chaff"] = 0,
 			["gun"] = 100,
@@ -2028,38 +1975,37 @@ end
 function cleanSlots(missionEnv, warehouseEnv)
 
 	-- add here separation between helos with the options active or airbase with options & unlimited.
-	for afbType, afbIds in pairs(warehouseEnv) do
-		if afbType == "airports" then
-			for afbId, afbData in pairs(afbIds) do
-				if afbData.unlimitedAircrafts == false then
-					HOOK.writeDebugDetail(ModuleName .. ": cleanSlots, airports: " .. tostring(afbId) .. " is limited")
+	for coalitionID,coalition in pairs(missionEnv["coalition"]) do
+		for countryID,country in pairs(coalition["country"]) do
+			HOOK.writeDebugDetail(ModuleName .. ": cleanSlots, removing slots for: " .. tostring(country.name))
+			for attrID,attr in pairs(country) do
+				if (type(attr)=="table") then
 
-					for coalitionID,coalition in pairs(missionEnv["coalition"]) do
-						for countryID,country in pairs(coalition["country"]) do
-							HOOK.writeDebugDetail(ModuleName .. ": cleanSlots, removing slots for: " .. tostring(country.name))
-							for attrID,attr in pairs(country) do
-								if (type(attr)=="table") then
+					if attrID == "helicopter" or attrID == "plane" then
+						if attr["group"] and type(attr["group"]) == "table" then
+							for groupID, group in pairs(attr["group"]) do
+								if (group) then	
 
-									if attrID == "helicopter" or attrID == "plane" then
-										if attr["group"] and type(attr["group"]) == "table" then
-											for groupID, group in pairs(attr["group"]) do
-												if (group) then	
+									--HOOK.writeDebugDetail(ModuleName .. ": cleanSlots. checking groupId: " .. tostring(group.groupId))
 
-													HOOK.writeDebugDetail(ModuleName .. ": cleanSlots. checking groupId: " .. tostring(group.groupId))
+									local isUser = false
+									for _, unit in pairs(group["units"]) do
+										if unit.skill == "Client" or unit.skill == "Player" then
+											isUser = true
+											HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is a client or player. type: " .. tostring(unit.type))
+										end
+									end
 
-													local isUser = false
-													for _, unit in pairs(group["units"]) do
-														if unit.skill == "Client" or unit.skill == "Player" then
-															isUser = true
-															HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is a client or player. type: " .. tostring(unit.type))
-														end
-													end
-
-													if isUser == true then
-														for pId, pData in pairs(group["route"]["points"]) do
-															if pId == 1 then
-																if airbaseSlot == true then
-																	if pData.airdromeId then
+									if isUser == true then
+										for pId, pData in pairs(group["route"]["points"]) do
+											if pId == 1 then
+												if pData.airdromeId then
+													if airbaseSlot == true then
+														for afbType, afbIds in pairs(warehouseEnv) do
+															if afbType == "airports" then
+																for afbId, afbData in pairs(afbIds) do
+																	if afbData.unlimitedAircrafts == false then
+																		--HOOK.writeDebugDetail(ModuleName .. ": cleanSlots, airports: " .. tostring(afbId) .. " is limited")
 																		if tonumber(pData.airdromeId) == tonumber(afbId) then	
 																			HOOK.writeDebugDetail(ModuleName .. ": cleanSlots. airbaseSlot is true, removing slots. Check: " .. tostring(airbaseSlot))				
 																			attr["group"][groupID]= nil
@@ -2070,116 +2016,73 @@ function cleanSlots(missionEnv, warehouseEnv)
 															end
 														end
 													end
-												end
-											end
-										end
+												elseif pData.helipadId then
+													if heloSlot == true then
+														for afbType, afbIds in pairs(warehouseEnv) do
+															if afbType == "warehouses" then
+																for afbId, afbData in pairs(afbIds) do
+																	if afbData.unlimitedAircrafts == false then
+																		--HOOK.writeDebugDetail(ModuleName .. ": cleanSlots, warehouses: " .. tostring(afbId) .. " is limited")
+																		if tonumber(pData.helipadId) == tonumber(afbId) then	
 
-										-- check void groups
-										if table.getn(attr["group"]) < 1 then -- next(attr.group) == nil
-											HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killing category no more groups")
-											--table.remove(country, attrID)											
-											country[attrID] = nil
-											attr["group"] = nil
-											HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killed category no more groups")
-										end
+																			--check is static
+																			local isStatic = false
+																			for cID,c in pairs(missionEnv["coalition"]) do
+																				for crId,cr in pairs(c["country"]) do
+																					HOOK.writeDebugDetail(ModuleName .. ": cleanSlots, removing slots for: " .. tostring(cr.name))
+																					for aID,a in pairs(cr) do
+																						if (type(a)=="table") then
+																							if aID == "static" then
+																								for gID, g in pairs(a["group"]) do
+																									if (g) then	
+																										if a["group"] and type(a["group"]) == "table" then
+																											for _, u in pairs(g["units"]) do
+																												if tonumber(u.unitId) == tonumber(afbId) then
+																													isStatic = true
+																													HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is a static. type: " .. tostring(u.type))
+																												end
+																											end
+																										end
+																									end
+																								end
+																							end
+																						end
+																					end
+																				end
+																			end
 
-									end
-								end
-							end
-						end
-					end
-				else
-					HOOK.writeDebugDetail(ModuleName .. ": cleanSlots, airports: " .. tostring(afbId) .. " is unlimited")
-				end
-			end
-		else
-			for afbId, afbData in pairs(afbIds) do
-				if afbData.unlimitedAircrafts == false then
-					HOOK.writeDebugDetail(ModuleName .. ": cleanSlots, warehouse: " .. tostring(afbId) .. " is unlimited")
-
-					-- check ship
-					local isStatic = false
-					for coalitionID,coalition in pairs(missionEnv["coalition"]) do
-						for countryID,country in pairs(coalition["country"]) do
-							HOOK.writeDebugDetail(ModuleName .. ": cleanSlots, removing slots for: " .. tostring(country.name))
-							for attrID,attr in pairs(country) do
-								if (type(attr)=="table") then
-									if attrID == "static" then
-										for groupID, group in pairs(attr["group"]) do
-											if (group) then	
-												if attr["group"] and type(attr["group"]) == "table" then
-													for _, unit in pairs(group["units"]) do
-														if tonumber(unit.unitId) == tonumber(afbId) then
-															isStatic = true
-															HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is a static. type: " .. tostring(unit.type))
-														end
-													end
-												end
-											end
-										end
-									end
-								end
-							end
-						end
-					end
-					
-					if isStatic == true then
-						for coalitionID,coalition in pairs(missionEnv["coalition"]) do
-							for countryID,country in pairs(coalition["country"]) do
-								HOOK.writeDebugDetail(ModuleName .. ": cleanSlots, removing slots for: " .. tostring(country.name))
-								for attrID,attr in pairs(country) do
-									if (type(attr)=="table") then
-
-
-										if attrID == "helicopter" or attrID == "plane" then
-											if attr["group"] and type(attr["group"]) == "table" then
-												for groupID, group in pairs(attr["group"]) do
-													if (group) then	
-
-														HOOK.writeDebugDetail(ModuleName .. ": cleanSlots. checking groupId: " .. tostring(group.groupId))
-
-														local isUser = false
-														for _, unit in pairs(group["units"]) do
-															if unit.skill == "Client" or unit.skill == "Player" then
-																isUser = true
-																HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is a client or player. type: " .. tostring(unit.type))
-															end
-														end
-
-														if isUser == true then
-															for pId, pData in pairs(group["route"]["points"]) do
-																if pId == 1 then
-																	if heloSlot == true then
-																		if pData.helipadId then
-																			if tonumber(pData.helipadId) == tonumber(afbId) then	
-																				HOOK.writeDebugDetail(ModuleName .. ": cleanSlots. heloSlot is true, removing slots. Check: " .. tostring(heloSlot))				
+																			if isStatic == true then
+																				HOOK.writeDebugDetail(ModuleName .. ": cleanSlots. isStatic is true, removing slots. Check: " .. tostring(heloSlot))				
 																				attr["group"][groupID]= nil
-																				HOOK.writeDebugDetail(ModuleName .. ": cleanSlots. it's linked to helipad, static removing, pData.helipadId: " .. tostring(pData.helipadId))
+																				HOOK.writeDebugDetail(ModuleName .. ": cleanSlots. it's linked to helipad, removing, pData.helipadId: " .. tostring(pData.helipadId))
+																			else
+																				HOOK.writeDebugDetail(ModuleName .. ": cleanSlots. isStatic is false, skipping")		
 																			end
 																		end
 																	end
 																end
 															end
-														end
+														end														
 													end
 												end
 											end
-
-											-- check void groups
-											if table.getn(attr["group"]) < 1 then -- next(attr.group) == nil
-												HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killing category no more groups")
-												--table.remove(country, attrID)											
-												country[attrID] = nil
-												attr["group"] = nil
-												HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killed category no more groups")
-											end
-
 										end
 									end
 								end
 							end
 						end
+
+						-- check void groups
+						if table.getn(attr["group"]) < 1 then -- next(attr.group) == nil
+							HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killing category no more groups")
+							--table.remove(country, attrID)											
+							attr["group"] = nil
+							country[attrID] = nil
+							HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killed category no more groups")
+						end
 					end
+				else
+					HOOK.writeDebugDetail(ModuleName .. ": cleanSlots, airports: " .. tostring(afbId) .. " is unlimited")
 				end
 			end
 		end
@@ -2490,7 +2393,7 @@ function buildAirbaseSlot(missionEnv, warehouseEnv, airbaseTbl, tblSlots, usedPa
 								for acfCat, acfTbl in pairs(afbData.aircrafts) do
 									--if acfCat == "planes" then
 										for acfName, acfData in pairs(acfTbl) do
-											HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, new plane check for : " .. tostring(acfName) .. ", parkings: " .. tostring(#parking_tbl))
+											--HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, new plane check for : " .. tostring(acfName) .. ", parkings: " .. tostring(#parking_tbl))
 											if #parking_tbl > 0 then
 												if acfData.initialAmount > 1 then -- filtering at least 2 acf for 1 flight
 													
