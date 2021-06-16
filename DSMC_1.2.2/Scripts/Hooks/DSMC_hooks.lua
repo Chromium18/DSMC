@@ -35,8 +35,8 @@ package.path =
 DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "2"
-DSMC_Build 			= "1275"
-DSMC_Date			= "21/04/2021"
+DSMC_Build 			= "1355"
+DSMC_Date			= "27/05/2021"
 
 -- ## DEBUG TO TEXT FUNCTION
 debugProcess	= true -- this should be left on for testers normal ops and test missions
@@ -233,6 +233,7 @@ function loadDSMCHooks()
 	TRPS_setup12_var					= DSMC_CTLD_JTACenable or false
 	DCSR_var							= opt_DCSR_var or DSMC_automated_CSAR
 	DCSR_setup_var						= DSMC_DCSR_useCoalitionMessages
+	DCSR_setup2_var						= DSMC_DCSR_clientPilotOnly
 	GOAP_var							= false -- opt_GOAP_var or DSMC_AutomaticAI
 
 	-- debug call
@@ -739,6 +740,12 @@ function startDSMCprocess()
 								UTIL.inJectCode("DCSR_Setup", "DSMC_DCSR_useCoalitionMessages_var = true")
 							else
 								UTIL.inJectCode("DCSR_Setup", "DSMC_DCSR_useCoalitionMessages_var = false")
+							end
+
+							if DCSR_setup2_var == true then
+								UTIL.inJectCode("DCSR_Setup2", "DCSR_clientPilotOnly_var = true")
+							else
+								UTIL.inJectCode("DCSR_Setup2", "DCSR_clientPilotOnly_var = false")
 							end
 
 							local t = io.open(DSMCdir .. "DCSR_inj.lua", "r")

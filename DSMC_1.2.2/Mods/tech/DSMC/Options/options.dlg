@@ -465,6 +465,7 @@ dialog = {
 					["skin"] = CheckBoxSkin,
 					["type"] = "CheckBox",
 				},
+				--[[
 				["TRPS_setupCheckbox"] = {
 					["params"] = {
 						["bounds"] = {
@@ -483,14 +484,15 @@ dialog = {
 					},
 					["skin"] = CheckBoxSkin,
 					["type"] = "CheckBox",
-				},							
+				},	
+				--]]--						
 				["DCSRCheckbox"] = {
 					["params"] = {
 						["bounds"] = {
 							["h"] = verticalBound,
 							["w"] = width, 
 							["x"] = leftMargin2,
-							["y"] = verticalStack*5.5,
+							["y"] = verticalStack*4.75, -- 5.5 with slingloadoption checkbox
 						},
 						["enabled"] = true,
 						["state"] = false,

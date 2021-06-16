@@ -3,8 +3,6 @@
 
 -- ORIGINAL VERSION:
 -- CSAR Script for DCS Ciribob - 2015
--- Version 1.9.2 - 23/04/2018
--- DCS 1.5 Compatible - Needs Mist 4.0.55 or higher!
 --
 -- 4 Options:
 --      0 - No Limit - NO Aircraft disabling or pilot lives
@@ -784,6 +782,7 @@ end
 
 -- DSMC added variables
 DCSR.useCoalitionMessages = DCSR_useCoalitionMessages_var or true -- if false, no coalition messages will be shown when a pilot is downed (this is for who has a dedicated human in coordination role). Modify line 528
+DCSR.clientPilotOnly = DCSR_clientPilotOnly_var or false -- if true, only client pilot generates csar mission
 env.info(ModuleName .. ": DCSR.useCoalitionMessages " .. tostring(DCSR.useCoalitionMessages))
 
 -- Fixed Unit Name. -- DSMC left here to ensure retro-compatibility
@@ -1170,7 +1169,7 @@ function DCSR.eventHandler:onEvent(_event)
         elseif (_event.id == 9 ) then -- and DCSR.csarOncrash == false
             -- Pilot dead
 
-            env.info("Event unit - Pilot Dead")
+            env.info(ModuleName .. " Event unit - Pilot Dead")
 
             local _unit = _event.initiator
 
@@ -1198,7 +1197,7 @@ function DCSR.eventHandler:onEvent(_event)
                 --trigger.action.outTextForCoalition(_unit:getCoalition(), "MAYDAY MAYDAY! " .. _unit:getTypeName() .. " shot down. No Chute!", 10)
                 --DCSR.handleEjectOrCrash(_unit, true)
             else
-                env.info("Pilot Hasnt taken off, ignore")
+                env.info(ModuleName .. " Pilot Hasnt taken off, ignore")
             end
 
             return
@@ -1207,11 +1206,19 @@ function DCSR.eventHandler:onEvent(_event)
             --if _event.id == 9  then  -- and DCSR.csarOncrash == false
             --    return     
             --end
-            env.info("Event unit - Pilot Ejected")
+            env.info(ModuleName .. " Event unit - Pilot Ejected")
 
 
 
             local _unit = _event.initiator
+
+            if DCSR.clientPilotOnly == true then
+                if _unit:getPlayerName() == nil then
+                    env.info(ModuleName .. " Event unit - Pilot is not client, skipping")
+                    return
+                end
+            end
+
 
             if _unit == nil then
                 return -- error!
@@ -1248,7 +1255,7 @@ function DCSR.eventHandler:onEvent(_event)
             end
 
             if DCSR.takenOff[_event.initiator:getName()] ~= true and not _unit:inAir() then
-                env.info("Pilot Hasnt taken off, ignore")
+                env.info(ModuleName .. " Pilot Hasnt taken off, ignore")
                 return -- give up, pilot hasnt taken off
             end
 
@@ -1276,7 +1283,7 @@ function DCSR.eventHandler:onEvent(_event)
                 local _unit = _event.initiator
 
                 if _unit == nil then
-                    env.info("Unit Nil on Landing")
+                    env.info(ModuleName .. " Unit Nil on Landing")
                     return -- error!
                 end
 
@@ -1285,7 +1292,7 @@ function DCSR.eventHandler:onEvent(_event)
                 local _place = _event.place
 
                 if _place == nil then
-                    env.info("Landing Place Nil")
+                    env.info(ModuleName .. " Landing Place Nil")
                     return -- error!
                 end
                 -- Coalition == 3 seems to be a bug... unless it means contested?!
@@ -1297,7 +1304,7 @@ function DCSR.eventHandler:onEvent(_event)
                 else
                     --    env.info("Cant Rescue ")
 
-                    env.info(string.format("airfield %d, unit %d", _place:getCoalition(), _unit:getCoalition()))
+                    env.info(ModuleName .. " " .. string.format("airfield %d, unit %d", _place:getCoalition(), _unit:getCoalition()))
                 end
             end
 
@@ -1305,7 +1312,7 @@ function DCSR.eventHandler:onEvent(_event)
         end
     end, _event)
     if (not status) then
-        env.error(string.format("Error while handling event %s", err), false)
+        env.error(ModuleName .. " " .. string.format("Error while handling event %s", err), false)
     end
 end
 
@@ -1317,7 +1324,7 @@ function DCSR.doubleEjection(_unit)
         local _time = DCSR.lastCrash[_unit:getName()]
 
         if timer.getTime() - _time < 10 then
-            env.info("Caught double ejection!")
+            env.info(ModuleName .. " Caught double ejection!")
             return true
         end
     end
@@ -1873,7 +1880,7 @@ function DCSR.checkWoundedGroupStatus(_argument)
 
     if not _status then
 
-        env.error(string.format("error checkWoundedGroupStatus %s", _err))
+        env.error(ModuleName .. " " .. string.format("error checkWoundedGroupStatus %s", _err))
     end
 end
 
@@ -2193,7 +2200,7 @@ function DCSR.scheduledSARFlight(_args)
             timer.getTime() + 1)
     end, _args)
     if (not _status) then
-        env.error(string.format("Error in scheduledSARFlight\n\n%s", _err))
+        env.error(ModuleName .. " " .. string.format("Error in scheduledSARFlight\n\n%s", _err))
     end
 end
 
@@ -2254,12 +2261,12 @@ function DCSR.delayedHelpMessage(_args)
             end
 
         else
-            env.info("No Active Heli or Group DEAD")
+            env.info(ModuleName .. " No Active Heli or Group DEAD")
         end
     end, _args)
 
     if (not status) then
-        env.error(string.format("Error in delayedHelpMessage "))
+        env.error(ModuleName .. " " .. string.format(ModuleName .. " Error in delayedHelpMessage "))
     end
 
     return nil
@@ -2938,7 +2945,7 @@ end
 DCSR.playerRemovalLoop()
 
 
-env.info("CSAR event handler added")
+env.info(ModuleName .. " CSAR event handler added")
 
 --save CSAR MODE
 trigger.action.setUserFlag("CSAR_MODE", DCSR.csarMode)

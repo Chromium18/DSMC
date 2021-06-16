@@ -926,7 +926,7 @@ function save()
 			GOAP.loadtables()
 			
 			--test
-			GOAP.TEST_planGround(env.mission) -- , dict_env.dictionary
+			GOAP.Gtest() -- , dict_env.dictionary
 			--GOAP.planGroundGroup(6, "CHERKESSK", true, 600)
 			--planAirGroup(id, missionEnv, task, pos, delay)
 			GOAP.planAirGroup(14, env.mission, "Strike", {x = 6466, y = 0, z = 383469}, 600) -- , dict_env.dictionary

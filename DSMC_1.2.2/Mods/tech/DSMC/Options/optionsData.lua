@@ -1,7 +1,7 @@
 cdata =
 {
 	DSMC_Title_MAIN			= _("DSMC CUSTOMIZATION PANEL - ALL CHANGES TAKE EFFECT AFTER DCS RESTART!"),
-	DSMC_Help_MAIN			= _("To work DSMC require ALWAYS that the mission has the tag 'DSMC' inside its file name"),	
+	DSMC_Help_MAIN			= _("To work DSMC require ALWAYS that the mission has the tag 'DSMC' in the first 4 letters of the .miz file name"),	
 	DSMC_Title_SAVE			= _("Saved scenery file (.miz) preferences"),
 	MOBJ_txt				= _("Keeps demolished briges, building and scenery object"),
 	CRST_txt				= _("Keeps destroyed vehicles & aircraft wreckage"),
@@ -25,7 +25,7 @@ cdata =
 	DSMC_Title_AIE			= _("Real time simulation enhancement options"),
 	TRPS_txt				= _("Enable troops transport & crate logistic with CTLD by Ciribob"),
 	DCSR_txt				= _("Enable integrated CSAR script by Ciribob"),
-	TRPS_setup				= _("CTLD is set with real slingload setup: crates must be slingloaded"),	
+	--TRPS_setup				= _("CTLD is set with real slingload setup: crates must be slingloaded"),	
 	DSMC_Help_AIE_1			= _("This option enable a modified version of CTLD & CSAR script by Ciribob inside DSMC\n"),	
 	DSMC_Help_AIE_2			= _("- it doesn't require setup: logistic, troops and helos are automatically recognized"),
 	DSMC_Help_AIE_3			= _("- any FARP or warehouse is set as logistic unit"),

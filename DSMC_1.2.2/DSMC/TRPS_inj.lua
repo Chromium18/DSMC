@@ -2,10 +2,10 @@
 
 
 local ModuleName  	= "TRPS_inj"
-local MainVersion 	= DSMC_MainVersion or "missing, loaded without DSMC"
-local SubVersion 	= DSMC_SubVersion or "missing, loaded without DSMC"
-local Build 		= DSMC_Build or "missing, loaded without DSMC"
-local Date			= DSMC_Date or "missing, loaded without DSMC"
+local MainVersion 	= DSMC_MainVersion
+local SubVersion 	= DSMC_SubVersion
+local Build 		= DSMC_Build
+local Date			= DSMC_Date
 
 --[[
     Combat Troop and Logistics Drop
@@ -31196,6 +31196,10 @@ TRPS.JTAC_lock = "all" -- "vehicle" OR "troop" OR "all" forces JTAC to only lock
 if not DSMC_multy then
     TRPS.JTAC_dropEnabled = true
     TRPS.JTAC_jtacStatusF10 = true
+end
+
+if not DSMC_MainVersion then
+    return
 end
 
 --------------- CUSTOM DSMC Code // MIST DEPENDANCIES ---------------

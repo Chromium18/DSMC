@@ -27,7 +27,7 @@ local tblSlots					= {}
 --local MaxSlotsPerHeliport		= 4 -- maximum number of created slots per heliport that could be generated. Not related to airport/airbase
 --local MaxFlightPerAirport		= 2
 --local slotOnAirbasePerType		= 2
-local spareSlots				= 0 -- number of slots that MUST be left free in any airbase
+local maxFlights				= 4 
 
 
 -- ## MANUAL TABLES
@@ -1029,7 +1029,6 @@ local standardHeloTypes = {
 		}, -- end of ["payload"]
 	}, -- end of [1]
 
-	--[[ 
 	["Mi-24P"] = 
 	{
 		["ropeLength"] = 15,
@@ -1106,7 +1105,6 @@ local standardHeloTypes = {
 			["gun"] = 100,
 		}, -- end of ["payload"]
 	}, -- end of [1]
-	]]--
 
 }
 
@@ -1128,6 +1126,7 @@ if HOOK.SLOT_add_ab == true then
 	HOOK.writeDebugDetail(ModuleName .. ": DSMC will create slots on airbases")
 end
 
+--[[
 function getCategoryParkingAirport(a_listP, uCat)
 	local keepList = {}
 	--HOOK.writeDebugDetail(ModuleName .. ": getRightParkingAirport, a1")
@@ -1192,6 +1191,7 @@ function getRightParkingAirport(a_listP, uType, uCat)
 	return a_listP
 end
 
+
 function getFirstFreeParkingSpot(availParkList, parkListComplete)
 	--HOOK.writeDebugDetail(ModuleName .. ": getFirstFreeParkingSpot started")	
 	HOOK.writeDebugDetail(ModuleName .. ": getFirstFreeParkingSpot, parkListComplete pre:" .. tostring(#parkListComplete))
@@ -1229,6 +1229,80 @@ function getFirstFreeParkingSpot(availParkList, parkListComplete)
 			return usedPname, usedPx, usedPy, parkListComplete
 		else
 			--HOOK.writeDebugDetail(ModuleName .. ": getFirstFreeParkingSpot no parking available")	
+			return false
+		end
+	else
+		return false
+	end
+end
+--]]--
+
+function getParkingForAircraftType(a_listP, uType, uCat)
+	local keepList = {}
+
+	HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType starting, a_listP pre:" .. tostring(#a_listP))
+    local unitDesc = ME_DB.unit_by_type[uType]
+
+    local HEIGHT = unitDesc.height
+    local WIDTH  = unitDesc.wing_span or unitDesc.rotor_diameter
+    local LENGTH = unitDesc.length
+
+    for k, v in pairs(a_listP) do
+		if (not((WIDTH < v.params.WIDTH) 
+                and (LENGTH < v.params.LENGTH)
+                and (HEIGHT < (v.params.HEIGHT or 1000)))) 
+			or ((uCat == 'helicopters') and (v.params.FOR_HELICOPTERS == 0)) -- MODIFICATO PER LEGGERE WH
+            or ((uCat == 'planes') and (v.params.FOR_AIRPLANES == 0))    then -- MODIFICATO PER LEGGERE WH
+			table.insert(keepList, k)
+
+		end
+	end
+	
+	for k,v in pairs(keepList) do
+		a_listP[tonumber(v)] = nil
+	end
+
+	HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType, a_listP post type filter:" .. tostring(#a_listP))
+
+	if #a_listP > 0 then
+		-- get latest park position
+		local usedPname = nil
+		local usedPx = nil
+		local usedPy = nil
+		local max_pId = 0
+		--UTIL.dumpTable("availParkList.lua", availParkList)
+		for pId, pData in pairs(a_listP) do
+			--HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType c5")
+			if pId > max_pId then
+				--HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType c6")
+				max_pId		= pId
+				usedPname 	= pData.name
+				usedPx	 	= pData.x
+				usedPy	  	= pData.y
+			end
+		end
+		
+		HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType, max_pId: " .. tostring(max_pId) .. ", usedPname: " .. tostring(usedPname) .. ", usedPx: " .. tostring(usedPx) .. ", usedPy: " .. tostring(usedPy))
+		if usedPname and usedPx and usedPy then
+			for pkId, pkData in pairs(a_listP) do		
+				if pkData.name == usedPname then
+					HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType deleting park: " .. tostring(usedPname))
+					--table.insert(remList, pkId)
+					--table.remove(a_listP, pkId)
+					a_listP[pkId] = nil
+				end
+			end
+
+			local revList = {}
+			for k,v in pairs(a_listP) do
+				revList[#revList+1] = v
+			end
+
+			--HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType added used parking spot to " ..tostring(airportID) .. ", park num = " ..tostring(usedPname))
+			HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType, a_listP post:" .. tostring(#revList))
+			return usedPname, usedPx, usedPy, revList
+		else
+			--HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType no parking available")	
 			return false
 		end
 	else
@@ -1951,122 +2025,165 @@ end
 
 -- MAIN FUNCTION TO LAUNCH
 
-function cleanSlots(missionEnv, warehouseEnv, arbTbl)
+function cleanSlots(missionEnv, warehouseEnv)
 
 	-- add here separation between helos with the options active or airbase with options & unlimited.
+	for afbType, afbIds in pairs(warehouseEnv) do
+		if afbType == "airports" then
+			for afbId, afbData in pairs(afbIds) do
+				if afbData.unlimitedAircrafts == false then
+					HOOK.writeDebugDetail(ModuleName .. ": cleanSlots, airports: " .. tostring(afbId) .. " is limited")
 
-	-- remove helos
-		
-	for coalitionID,coalition in pairs(missionEnv["coalition"]) do
-		for countryID,country in pairs(coalition["country"]) do
-			HOOK.writeDebugDetail(ModuleName .. ": cleanSlots, removing slots for: " .. tostring(country.name))
-			for attrID,attr in pairs(country) do
-				if (type(attr)=="table") then
+					for coalitionID,coalition in pairs(missionEnv["coalition"]) do
+						for countryID,country in pairs(coalition["country"]) do
+							HOOK.writeDebugDetail(ModuleName .. ": cleanSlots, removing slots for: " .. tostring(country.name))
+							for attrID,attr in pairs(country) do
+								if (type(attr)=="table") then
 
-					if attrID == "helicopter" or attrID == "plane" then
-						if attr["group"] and type(attr["group"]) == "table" then
-							local toFix = UTIL.deepCopy(attr["group"])
+									if attrID == "helicopter" or attrID == "plane" then
+										if attr["group"] and type(attr["group"]) == "table" then
+											for groupID, group in pairs(attr["group"]) do
+												if (group) then	
 
-							for groupID, group in pairs(toFix) do
-								if (group) then	
-									HOOK.writeDebugDetail(ModuleName .. ": cleanSlots checking group id: " .. tostring(group.groupId))
-									local isUser = false
-									for _, unit in pairs(group["units"]) do
-										if unit.skill == "Client" or unit.skill == "Player" then
-											isUser = true
-											HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is a client or player. type: " .. tostring(unit.type))
+													HOOK.writeDebugDetail(ModuleName .. ": cleanSlots. checking groupId: " .. tostring(group.groupId))
 
+													local isUser = false
+													for _, unit in pairs(group["units"]) do
+														if unit.skill == "Client" or unit.skill == "Player" then
+															isUser = true
+															HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is a client or player. type: " .. tostring(unit.type))
+														end
+													end
 
-										end
-									end
-
-									if isUser == true then
-										for pId, pData in pairs(group["route"]["points"]) do
-											if pId == 1 then
-
-												if heloSlot == true then
-													HOOK.writeDebugDetail(ModuleName .. ": cleanSlots. heloSlot is true, removing slots. Check: " .. tostring(heloSlot))
-													if pData.helipadId then
-
-														local isShip = true
-														for _, aData in pairs(arbTbl) do
-															if tonumber(aData.index) == tonumber(pData.helipadId) then
-																if aData.desc then
-																	if aData.desc.attributes then
-																		for atrName, atrVal in pairs(aData.desc) do
-																			if atrName == "Helipad" then
-																				isShip = false
-																				HOOK.writeDebugDetail(ModuleName .. ": found attributes about being an helipad")
-																			end
+													if isUser == true then
+														for pId, pData in pairs(group["route"]["points"]) do
+															if pId == 1 then
+																if airbaseSlot == true then
+																	if pData.airdromeId then
+																		if tonumber(pData.airdromeId) == tonumber(afbId) then	
+																			HOOK.writeDebugDetail(ModuleName .. ": cleanSlots. airbaseSlot is true, removing slots. Check: " .. tostring(airbaseSlot))				
+																			attr["group"][groupID]= nil
+																			HOOK.writeDebugDetail(ModuleName .. ": cleanSlots. it's linked to helipad, static removing, pData.airdromeId: " .. tostring(pData.airdromeId))
 																		end
 																	end
 																end
-
 															end
-														end
-
-														if isShip == false then
-															HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is on helipad. Killing unit")
-															toFix[groupID] = nil
-															HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killed group: " .. tostring(groupID))	
-														else
-															HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is a ship, skipping kill")
 														end
 													end
 												end
+											end
+										end
 
-												if airbaseSlot == true then
-													HOOK.writeDebugDetail(ModuleName .. ": cleanSlots. airbaseSlot is true, removing slots. Check: " .. tostring(airbaseSlot))
-													if pData.airdromeId then
-														HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is on airbase. checking warehouse for pData.airdromeId: " .. tostring(pData.airdromeId))
-														
-														for afbType, afbIds in pairs(warehouseEnv) do
-															if afbType == "airports" then
-																for afbId, afbData in pairs(afbIds) do
-																	if tonumber(afbId) == tonumber(pData.airdromeId) then
-																		HOOK.writeDebugDetail(ModuleName .. ": cleanSlots found airbase, afbId: " .. tostring(afbId))
-																		if afbData.unlimitedAircrafts == false then
-																			toFix[groupID] = nil
-																			HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killed group: " .. tostring(groupID))
-																		else
-																			HOOK.writeDebugDetail(ModuleName .. ": ab is unlimited, skipping kill for: " .. tostring(groupID))
-																		end
-																	end
-																end
-															end
+										-- check void groups
+										if table.getn(attr["group"]) < 1 then -- next(attr.group) == nil
+											HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killing category no more groups")
+											--table.remove(country, attrID)											
+											country[attrID] = nil
+											attr["group"] = nil
+											HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killed category no more groups")
+										end
+
+									end
+								end
+							end
+						end
+					end
+				else
+					HOOK.writeDebugDetail(ModuleName .. ": cleanSlots, airports: " .. tostring(afbId) .. " is unlimited")
+				end
+			end
+		else
+			for afbId, afbData in pairs(afbIds) do
+				if afbData.unlimitedAircrafts == false then
+					HOOK.writeDebugDetail(ModuleName .. ": cleanSlots, warehouse: " .. tostring(afbId) .. " is unlimited")
+
+					-- check ship
+					local isStatic = false
+					for coalitionID,coalition in pairs(missionEnv["coalition"]) do
+						for countryID,country in pairs(coalition["country"]) do
+							HOOK.writeDebugDetail(ModuleName .. ": cleanSlots, removing slots for: " .. tostring(country.name))
+							for attrID,attr in pairs(country) do
+								if (type(attr)=="table") then
+									if attrID == "static" then
+										for groupID, group in pairs(attr["group"]) do
+											if (group) then	
+												if attr["group"] and type(attr["group"]) == "table" then
+													for _, unit in pairs(group["units"]) do
+														if tonumber(unit.unitId) == tonumber(afbId) then
+															isStatic = true
+															HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is a static. type: " .. tostring(unit.type))
 														end
 													end
-
 												end
 											end
 										end
 									end
 								end
 							end
-							HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is on helipad. d")
-							if table.getn(toFix) < 1 then -- next(attr.group) == nil
-								HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killing country no more groups")
-								--table.remove(country, attrID)											
-								country[attrID] = nil;
-								toFix = nil
-								HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killed country no more groups")
-							else
-								attr["group"] = {}
-								for _, gData in pairs(toFix) do
-									attr["group"][#attr["group"]+1] = gData
-								end
-							end	
-							
-							--attr["group"] = toFix
-
 						end
-						--table.remove(country, attrID) -- won't work on "non arrays" things
+					end
+					
+					if isStatic == true then
+						for coalitionID,coalition in pairs(missionEnv["coalition"]) do
+							for countryID,country in pairs(coalition["country"]) do
+								HOOK.writeDebugDetail(ModuleName .. ": cleanSlots, removing slots for: " .. tostring(country.name))
+								for attrID,attr in pairs(country) do
+									if (type(attr)=="table") then
+
+
+										if attrID == "helicopter" or attrID == "plane" then
+											if attr["group"] and type(attr["group"]) == "table" then
+												for groupID, group in pairs(attr["group"]) do
+													if (group) then	
+
+														HOOK.writeDebugDetail(ModuleName .. ": cleanSlots. checking groupId: " .. tostring(group.groupId))
+
+														local isUser = false
+														for _, unit in pairs(group["units"]) do
+															if unit.skill == "Client" or unit.skill == "Player" then
+																isUser = true
+																HOOK.writeDebugDetail(ModuleName .. ": cleanSlots is a client or player. type: " .. tostring(unit.type))
+															end
+														end
+
+														if isUser == true then
+															for pId, pData in pairs(group["route"]["points"]) do
+																if pId == 1 then
+																	if heloSlot == true then
+																		if pData.helipadId then
+																			if tonumber(pData.helipadId) == tonumber(afbId) then	
+																				HOOK.writeDebugDetail(ModuleName .. ": cleanSlots. heloSlot is true, removing slots. Check: " .. tostring(heloSlot))				
+																				attr["group"][groupID]= nil
+																				HOOK.writeDebugDetail(ModuleName .. ": cleanSlots. it's linked to helipad, static removing, pData.helipadId: " .. tostring(pData.helipadId))
+																			end
+																		end
+																	end
+																end
+															end
+														end
+													end
+												end
+											end
+
+											-- check void groups
+											if table.getn(attr["group"]) < 1 then -- next(attr.group) == nil
+												HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killing category no more groups")
+												--table.remove(country, attrID)											
+												country[attrID] = nil
+												attr["group"] = nil
+												HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killed category no more groups")
+											end
+
+										end
+									end
+								end
+							end
+						end
 					end
 				end
 			end
 		end
 	end
-
 
 	HOOK.writeDebugDetail(ModuleName .. ": cleanSlots cycle done")
 	return missionEnv
@@ -2074,6 +2191,7 @@ end
 
 function checkParkings(missionEnv, airbaseTbl)
 	local tblPrksRemove = {}
+	local AIslots = {}
 
 	-- collect parkings
 	for coalitionID,coalition in pairs(missionEnv["coalition"]) do
@@ -2098,7 +2216,7 @@ function checkParkings(missionEnv, airbaseTbl)
 									for _, unit in pairs(group["units"]) do
 										if unit.parking and unit.parking_id then
 											HOOK.writeDebugDetail(ModuleName .. ": checkParkings removing park. Airport: " .. tostring(afbId) .. ", park: " .. tostring(unit.parking_id))
-											tblPrksRemove[#tblPrksRemove+1] = {abId = afbId, prId = tostring(unit.parking_id), parDef = tostring(unit.parking)}
+											tblPrksRemove[#tblPrksRemove+1] = {abId = afbId, prId = tostring(unit.parking_id), parDef = tostring(unit.parking), uType = unit.type}
 										end
 									end
 								end
@@ -2130,14 +2248,25 @@ function checkParkings(missionEnv, airbaseTbl)
 							afData.parkings[pkId] = nil
 						end
 					end
+
+					local revTbl = {}
+					for _, data in pairs(afData.parkings) do
+						revTbl[#revTbl+1] = data
+					end
+
+					afData.parkings = revTbl
+
 				end
 			end
 		end
+
+
+
 	else
 		HOOK.writeDebugDetail(ModuleName .. ": checkParkings tblPrksRemove is void, skip & close")
 	end
 
-	return airbaseTbl
+	return airbaseTbl, tblPrksRemove
 end
 
 function buildHelipadSlot(missionEnv, warehouseEnv, tblSlots)
@@ -2146,92 +2275,60 @@ function buildHelipadSlot(missionEnv, warehouseEnv, tblSlots)
 			for afbId, afbData in pairs(afbIds) do
 				HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, checking heliport: " .. tostring(afbId))
 
-				--local alt_val = 0
-				local heading_val = nil
-				local x_val = nil
-				local y_val = nil
-				local link_val = nil
-				local link_type_val = nil
-				local coa = afbData.coalition
-				--HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, heliport: " .. tostring(afbId) .. ", coa:" ..tostring(coa))
+				if afbData.unlimitedAircrafts == false then
+					HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, heliport is limited, adding slots")
 
-				for coalitionID,coalition in pairs(missionEnv["coalition"]) do
-					if coalitionID == HOOK.SLOT_coa_var or permitAll == true then
-						--if string.lower(coa) == string.lower(coalitionID) then
-							--HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, heliport: " .. tostring(afbId) .. ", c1")
-							for countryID,country in pairs(coalition["country"]) do
-								for attrID,attr in pairs(country) do
-									if (type(attr)=="table") then		
-										if attrID == "static" then
-											for groupID,group in pairs(attr["group"]) do
-												if (group) then
-													for unitID,unit in pairs(group["units"]) do
-														--HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, heliport: " .. tostring(afbId) .. ", c2 unit id: " .. tostring(unit.unitId))
-														if tonumber(unit.unitId) == tonumber(afbId) then
-															-- correct coalition
-															if string.lower(coa) ~= string.lower(coalitionID) then
-																afbData.coalition = string.lower(coalitionID)
-																coa = string.lower(coalitionID)
-																HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, coalition has been fixed: " .. tostring(unit.unitId))
-															end
+					--local alt_val = 0
+					local heading_val = nil
+					local x_val = nil
+					local y_val = nil
+					local link_val = nil
+					local link_type_val = nil
+					local coa = afbData.coalition
+					--HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, heliport: " .. tostring(afbId) .. ", coa:" ..tostring(coa))
 
-															if coa ~= "NEUTRAL" and coa ~= "neutrals" then
-																-- proceed
-																HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, found unit.unitId-heliport: " .. tostring(unit.unitId))
-																
-																heading_val = unit.heading
-																x_val = unit.x
-																y_val = unit.y
-																link_val = unit.unitId
-																if unit.category == "Heliports" then
-																	link_type_val = "Heliport"
+					for coalitionID,coalition in pairs(missionEnv["coalition"]) do
+						if coalitionID == HOOK.SLOT_coa_var or permitAll == true then
+							--if string.lower(coa) == string.lower(coalitionID) then
+								--HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, heliport: " .. tostring(afbId) .. ", c1")
+								for countryID,country in pairs(coalition["country"]) do
+									for attrID,attr in pairs(country) do
+										if (type(attr)=="table") then		
+											if attrID == "static" then
+												for groupID,group in pairs(attr["group"]) do
+													if (group) then
+														for unitID,unit in pairs(group["units"]) do
+															--HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, heliport: " .. tostring(afbId) .. ", c2 unit id: " .. tostring(unit.unitId))
+															if tonumber(unit.unitId) == tonumber(afbId) then
+																-- correct coalition
+																if string.lower(coa) ~= string.lower(coalitionID) then
+																	afbData.coalition = string.lower(coalitionID)
+																	coa = string.lower(coalitionID)
+																	HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, coalition has been fixed: " .. tostring(unit.unitId))
 																end
 
-																local grNum = #group["units"]
-																local posTbl = {}
-																if grNum > 1 then
-																	for _, uData in pairs(group["units"]) do
-																		posTbl[#posTbl+1] = {x = uData.x, y = uData.x, l = uData.unitId, t = link_type_val}
+																if coa ~= "NEUTRAL" and coa ~= "neutrals" then
+																	-- proceed
+																	HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, found unit.unitId-heliport: " .. tostring(unit.unitId))
+																	
+																	heading_val = unit.heading
+																	x_val = unit.x
+																	y_val = unit.y
+																	link_val = unit.unitId
+																	if unit.category == "Heliports" then
+																		link_type_val = "Heliport"
 																	end
-																end
 
-																if heading_val and x_val and y_val and link_val and coa and link_type_val then
-																	if afbData.unlimitedAircrafts then
-																		HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, heliport is unlimited, adding all helo types")
-																		
-																		if #posTbl > 1 then
-
-																			HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, heliport is multi unit, adding all helo types on different helipad")
-																			local currId = 1
-
-																			for kType, kData in pairs(standardHeloTypes) do
-
-																				if kType ~= "SA342Minigun" then
-																					for yId, yData in pairs(posTbl) do
-																						if yId == currId then
-																							HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, adding " .. tostring(kType) .. " on helipad " .. tostring(yId))
-																							tblSlots[#tblSlots+1] = {h= heading_val, x= yData.x, y = yData.y, link = yData.l, linkType = yData.t, cntyID = country.id, coaID = coa, acfType = kType, numUnits = 2}
-																							currId = currId + 1
-																							if currId > #posTbl then
-																								currId = 1
-																							end
-																						end
-																					end																			
-
-																				end
-
-																			end
-																		else
-																			HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, heliport is sigle unit, adding all helo types on same helipad")
-																			for kType, kData in pairs(standardHeloTypes) do
-																				if kType ~= "SA342Minigun" then
-																					HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, adding " .. tostring(kType) .. " on helipad " .. tostring(link_val))
-																					tblSlots[#tblSlots+1] = {h= heading_val, x=x_val, y = y_val, link = link_val, linkType = link_type_val, cntyID = country.id, coaID = coa, acfType = kType, numUnits = 2}
-																				end
-																			end
+																	local grNum = #group["units"]
+																	local posTbl = {}
+																	if grNum > 1 then
+																		for _, uData in pairs(group["units"]) do
+																			posTbl[#posTbl+1] = {x = uData.x, y = uData.x, l = uData.unitId, t = link_type_val}
 																		end
-																	else
-																		HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, heliport limited, checking availability")
+																	end
+
+																	if heading_val and x_val and y_val and link_val and coa and link_type_val then
+																		HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, heliport check values is ok")
 																		for catId, catData in pairs(afbData.aircrafts) do
 																			if catId == "helicopters" then
 																				for acfId, acfData in pairs(catData) do
@@ -2263,21 +2360,17 @@ function buildHelipadSlot(missionEnv, warehouseEnv, tblSlots)
 																								--tblSlots[#tblSlots+1] = {h= heading_val, x=x_val, y = y_val, link = link_val, linkType = link_type_val, cntyID = country.id, coaID = coa, acfType = acfId, numUnits = 3}
 																								HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, creating 1 group, 3ship")
 																							elseif numberFlights >= 2 then -- 2x two ship
+																								if numberFlights > maxFlights then
+																									HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, numberFlights " .. tostring(numberFlights) .. " exceeded maxFlights, reducing to " .. tostring(maxFlights))
+																									numberFlights = maxFlights
+																								end
+																						
+																								nGroups = math.floor(numberFlights)
 																								nUnits = 2
-																								nGroups = 2
-																								
-																								--local flights = math.floor(numberFlights)
-																								--if flights > MaxSlotsPerHeliport/2 then
-																								--	flights = MaxSlotsPerHeliport/2
-																								--end
-																								HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, creating " .. tostring(nGroups) .. " groups , 2 ships each")
 
-																								--for i=1, flights do
-																								--	HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, creating group i: " .. tostring(i) .. ", 2 ships")
-																								--	tblSlots[#tblSlots+1] = {h= heading_val, x=x_val, y = y_val, link = link_val, linkType = link_type_val, cntyID = country.id, coaID = coa, acfType = acfId, numUnits = 2}
-																								--end
+																								HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, creating " .. tostring(nGroups) .. " groups , 2 ships each")
 																							else
-																								HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, no availability for " .. tostring(acfId))
+																								HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, numberFlights is " .. tostring(numberFlights)  .. ": no availability for " .. tostring(acfId))
 																							end
 
 																							if #posTbl > 1 and nGroups > 0 then
@@ -2309,8 +2402,8 @@ function buildHelipadSlot(missionEnv, warehouseEnv, tblSlots)
 																			end
 																		end
 																	end
-																end
 
+																end
 															end
 														end
 													end
@@ -2319,9 +2412,11 @@ function buildHelipadSlot(missionEnv, warehouseEnv, tblSlots)
 										end
 									end
 								end
-							end
-						--end
+							--end
+						end
 					end
+				else
+					HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, heliport is unlimited, skip")
 				end
 			end
 		end
@@ -2330,8 +2425,37 @@ function buildHelipadSlot(missionEnv, warehouseEnv, tblSlots)
 	HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, loop done")
 end
 
-function buildAirbaseSlot(missionEnv, warehouseEnv, airbaseTbl, tblSlots)
-	for afbType, afbIds in pairs(warehouseEnv) do
+function buildAirbaseSlot(missionEnv, warehouseEnv, airbaseTbl, tblSlots, usedParkTbl)
+	
+	--check used parkings, removing items used by AI
+	local whTbl = UTIL.deepCopy(warehouseEnv)
+	--tblPrksRemove[#tblPrksRemove+1] = {abId = afbId, prId = tostring(unit.parking_id), parDef = tostring(unit.parking), uType = unit.type}
+	for jId, jData in pairs(usedParkTbl) do
+		for afbType, afbIds in pairs(whTbl) do
+			if afbType == "airports" then
+				for afbId, afbData in pairs(afbIds) do	
+					if tonumber(afbId) == tonumber(jData.abId) then
+						if afbData.unlimitedAircrafts == false then
+							for acfCat, acfTbl in pairs(afbData.aircrafts) do
+								for acfName, acfData in pairs(acfTbl) do					
+									if acfName == jData.uType then
+										HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, AI used item, removing 1 " .. tostring(acfName) .. ", cur num = " .. tostring(acfData.initialAmount))
+										acfData.initialAmount = acfData.initialAmount - 1
+										if acfData.initialAmount < 0 then
+											acfData.initialAmount = 0
+										end
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+	
+	-- built slot
+	for afbType, afbIds in pairs(whTbl) do
 		if afbType == "airports" then
 			for afbId, afbData in pairs(afbIds) do
 				if string.lower(afbData.coalition) == string.lower(HOOK.SLOT_coa_var) or permitAll == true then
@@ -2341,239 +2465,128 @@ function buildAirbaseSlot(missionEnv, warehouseEnv, airbaseTbl, tblSlots)
 
 						if afbData.unlimitedAircrafts == false then
 							HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, unlimitedAircrafts: " .. tostring(afbData.unlimitedAircrafts))
-							local parking_tbl = nil
+							
+							-- rebuilt parking Table with categories
+							local slotsToBuilt = {}
+
+							-- reIndex parking
+							local parking_tbl = {}
 							for _, aData in pairs(airbaseTbl) do 
 								if tonumber(aData.index) == tonumber(afbId) then
-									HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, found entry in airbaseTbl")
 									if aData.parkings then
-										local prk = aData.parkings
-										if #prk > 0 then
-											local rebuiltPrk = {}
+										if #aData.parkings > 0 then
+											-- reindex parking to make an array
 											for _, pData in pairs(aData.parkings) do
-												rebuiltPrk[#rebuiltPrk+1] = pData
-											end
-
-											parking_tbl = rebuiltPrk
-											HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, found parking_tbl")
-										else
-											HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, aData.parkings is void")
-											--return false									
+												parking_tbl[#parking_tbl+1] = pData
+											end																
+											HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, identified: " .. tostring(#parking_tbl) .. " free parkings")
 										end
-									else
-										HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, aData.parkings is missing")
-										--return false
 									end
 								end
 							end
-							
-							HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, parking_tbl: " .. tostring(parking_tbl))
-							if parking_tbl then
-								HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, num park: " .. tostring(#parking_tbl))
-							end
+							UTIL.dumpTable("parking_tbl.lua", parking_tbl)
 
-							if parking_tbl then
-								if #parking_tbl > 0 then
-								
-									local fw_prkTbl = getCategoryParkingAirport(parking_tbl, "plane")
-									HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, fw_prkTbl: " .. tostring(#fw_prkTbl))
-
-									local fwCount = 0
-									for acfCat, acfTbl in pairs(afbData.aircrafts) do
-										if acfCat == "planes" then
-											for _, acfData in pairs(acfTbl) do
-												if acfData.initialAmount > 0 then
-													fwCount = fwCount + acfData.initialAmount
-												end
-											end
-										end
-									end
-
-									HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, fwCount: " .. tostring(fwCount))
-									if fwCount <= (#fw_prkTbl-spareSlots) then
-
-										for catId, catData in pairs(afbData.aircrafts) do
-											if catId == "planes" then
-												for acfId, acfData in pairs(catData) do
-													for aId, aData in pairs(standardPlaneTypes) do
-														if acfId == aId then
-															if acfData.initialAmount > 0 then
-																--local x_parking = parking_tbl
-																local park_avail = getRightParkingAirport(parking_tbl, acfId, "plane")
-																HOOK.writeDebugDetail(ModuleName .. ": addSlot, park_avail " .. tostring(#park_avail) .. ", for : " .. tostring(acfId))
-																
-																if #park_avail >= 2 then
-
-																	local numGroups = math.floor(acfData.initialAmount/2)
-																	HOOK.writeDebugDetail(ModuleName .. ": addSlot, numGroups " .. tostring(numGroups) .. ", for : " .. tostring(acfId))
-																	if numGroups > #park_avail then
-																		numGroups = #park_avail
-																		HOOK.writeDebugDetail(ModuleName .. ": addSlot, numGroups lowered to " .. tostring(numGroups) .. ", for : " .. tostring(acfId))
-																	end
-
-																	for i=1, numGroups do
-																			-- clona da sotto
-																		local x_val = nil
-																		local y_val = nil
-																		local coa = string.lower(afbData.coalition)
-
-																		local assignedParkings = {}
-																		for i=1, 2 do
-
-																			local usedPname, usedPx, usedPy, revPark_tbl = getFirstFreeParkingSpot(park_avail, parking_tbl)
-																			if usedPname and usedPx and usedPy then
-																				if i == 1 then
-																					x_val = usedPx
-																					y_val = usedPy
-																				end
-																				assignedParkings[#assignedParkings+1] = {pname = usedPname, px = usedPx, py = usedPy}
-																				parking_tbl = revPark_tbl
-																			end
-																		end
-
-																		local choose_coa = nil
-																		local choose_ctry = nil
-																		for coalitionID, coalition in pairs(missionEnv["coalition"]) do
-																			
-																			if string.lower(coa) == string.lower(coalitionID) then
-																				choose_coa = coalitionID
-																				
-																				local minCx = 100000
-																				for _,country in pairs(coalition["country"]) do																		
-																					if country.id < minCx then
-																						minCx = country.id
-																						choose_ctry = country.id
-																					end
-																				end
-
-																			end
-
-																		end	
-
-																		if x_val and y_val and choose_coa then
-																			if #assignedParkings > 1 then
-																				tblSlots[#tblSlots+1] = {h= 0, x=x_val, y = y_val, airdrome = afbId, linkType = "Airport", parkings = assignedParkings, cntyID = choose_ctry, coaID = choose_coa, acfType = acfId, numUnits = 2}
-																			else
-																				HOOK.writeDebugDetail(ModuleName .. ": addSlot, assignedParkings is less than 2")
-																			end
-																		else
-																			HOOK.writeDebugDetail(ModuleName .. ": addSlot, missed x_val and y_val")
-																		end
-																	end
-																else
-																	HOOK.writeDebugDetail(ModuleName .. ": addSlot, park_avail is less than 2")
-																end
-															end
-														end
-													end
-												end
-											end
-										end
-									else
-										HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, not sufficient plane parkings")
-									end
-								else
-									HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, parking_tbl is nil")
-								end
-								-- now helos										
-								local rw_prkTbl = getCategoryParkingAirport(parking_tbl, "helicopter")
-								HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, rw_prkTbl: " .. tostring(#rw_prkTbl))
-
-								local rwCount = 0
+							if #parking_tbl > 0 then				
 								for acfCat, acfTbl in pairs(afbData.aircrafts) do
-									if acfCat == "helicopters" then
-										for _, acfData in pairs(acfTbl) do
-											if acfData.initialAmount > 0 then
-												rwCount = rwCount + acfData.initialAmount
-											end
-										end
-									end
-								end
-								HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, rwCount: " .. tostring(rwCount))
-								
-								if (rwCount + spareSlots) <= #rw_prkTbl then
+									--if acfCat == "planes" then
+										for acfName, acfData in pairs(acfTbl) do
+											HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, new plane check for : " .. tostring(acfName) .. ", parkings: " .. tostring(#parking_tbl))
+											if #parking_tbl > 0 then
+												if acfData.initialAmount > 1 then -- filtering at least 2 acf for 1 flight
+													
+													local isFlyable = false
+													for pName, pData in pairs(standardPlaneTypes) do
+														if pName == acfName	then
+															HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, found plane: " .. tostring(acfName))
+															isFlyable = true
+														end				
+													end
 
-									for catId, catData in pairs(afbData.aircrafts) do
-										if catId == "helicopters" then
-											for acfId, acfData in pairs(catData) do
-												for aId, aData in pairs(standardHeloTypes) do
-													if acfId == aId then
-														if acfData.initialAmount > 0 then
-															--local x_parking = parking_tbl
-															local park_avail = getRightParkingAirport(parking_tbl, acfId, "helicopter")
-															HOOK.writeDebugDetail(ModuleName .. ": addSlot, park_avail " .. tostring(#park_avail) .. ", for : " .. tostring(acfId))
-															
-															if #park_avail >= 2 then
+													for pName, pData in pairs(standardHeloTypes) do
+														if pName == acfName	then
+															HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, found helicopter: " .. tostring(acfName))
+															isFlyable = true
+														end				
+													end
 
-																local numGroups = math.floor(acfData.initialAmount/2)
-																HOOK.writeDebugDetail(ModuleName .. ": addSlot, numGroups " .. tostring(numGroups) .. ", for : " .. tostring(acfId))
-																if numGroups > #park_avail then
-																	numGroups = #park_avail
-																	HOOK.writeDebugDetail(ModuleName .. ": addSlot, numGroups lowered to " .. tostring(numGroups) .. ", for : " .. tostring(acfId))
+													if isFlyable then
+														HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, found flyable: " .. tostring(acfData.initialAmount) .. " " .. tostring(acfName))
+														
+														local numGroups = math.floor(acfData.initialAmount/2)
+														if numGroups > maxFlights then
+															HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, reducing numGroups from: " .. tostring(numGroups) .. " to " .. tostring(maxFlights))
+															numGroups = maxFlights
+														end													
+														
+														-- update slotsToBuilt
+														for r=1, numGroups do
+															local assignedParkings = {}
+															for i=1, 2 do
+																local usedPname, usedPx, usedPy, revPark_tbl = getParkingForAircraftType(parking_tbl, acfName, acfCat)
+																if usedPname and usedPx and usedPy then
+																	assignedParkings[#assignedParkings+1] = {pname = usedPname, px = usedPx, py = usedPy}
+																	parking_tbl = revPark_tbl
 																end
+															end
 
-																for i=1, numGroups do
-																		-- clona da sotto
-																	local x_val = nil
-																	local y_val = nil
-																	local coa = string.lower(afbData.coalition)
-
-																	local assignedParkings = {}
-																	for i=1, 2 do
-
-																		local usedPname, usedPx, usedPy, revPark_tbl = getFirstFreeParkingSpot(park_avail, parking_tbl)
-																		if usedPname and usedPx and usedPy then
-																			if i == 1 then
-																				x_val = usedPx
-																				y_val = usedPy
-																			end
-																			assignedParkings[#assignedParkings+1] = {pname = usedPname, px = usedPx, py = usedPy}
-																			parking_tbl = revPark_tbl
-																		end
-																	end
-
-																	local choose_coa = nil
-																	local choose_ctry = nil
-																	for coalitionID, coalition in pairs(missionEnv["coalition"]) do
-																		if string.lower(coa) == string.lower(coalitionID) then
-																			choose_coa = coalitionID
-																			
-																			local minCx = 100000
-																			for _,country in pairs(coalition["country"]) do																		
-																				if country.id < minCx then
-																					minCx = country.id
-																					choose_ctry = country.id
-																				end
-																			end
-
-																		end
-																	end	
-
-																	if x_val and y_val and choose_coa then
-																		if #assignedParkings > 1 then
-																			tblSlots[#tblSlots+1] = {h= 0, x=x_val, y = y_val, airdrome = afbId, linkType = "Airport", parkings = assignedParkings, cntyID = choose_ctry, coaID = choose_coa, acfType = acfId, numUnits = 2}
-																		else
-																			HOOK.writeDebugDetail(ModuleName .. ": addSlot, assignedParkings is less than 2")
-																		end
-																	else
-																		HOOK.writeDebugDetail(ModuleName .. ": addSlot, missed x_val and y_val")
-																	end
-																end
+															if #assignedParkings > 1 then
+																HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, found 2 parkings for " .. tostring(acfName) .. ", parking left: " .. tostring(#parking_tbl))
+																slotsToBuilt[#slotsToBuilt+1] = {acf = acfName, prk = assignedParkings}
 															else
-																HOOK.writeDebugDetail(ModuleName .. ": addSlot, park_avail is less than 2")
+																HOOK.writeDebugDetail(ModuleName .. ": no sufficient parkings assigned: " .. tostring(#assignedParkings)) 
 															end
 														end
 													end
 												end
+											else
+
+											end
+										end
+									--end
+								end
+							end
+
+							if #slotsToBuilt > 0 then
+								UTIL.dumpTable("slotsToBuilt.lua", slotsToBuilt)
+								
+								-- define base data
+								local choose_coa = nil
+								local choose_ctry = nil
+								local coa = string.lower(afbData.coalition)
+								for coalitionID, coalition in pairs(missionEnv["coalition"]) do
+									if string.lower(coa) == string.lower(coalitionID) then
+										choose_coa = coalitionID
+										local minCx = 100000
+										for _,country in pairs(coalition["country"]) do																		
+											if country.id < minCx then
+												minCx = country.id
+												choose_ctry = country.id
 											end
 										end
 									end
-								else
-									HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, not sufficient helo parkings")
-								end						
+								end	
 
 
-							else
-								HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, park table is nil")
+								for sId, sData in pairs(slotsToBuilt) do
+									local x_val = nil
+									local y_val = nil
+
+									for pId, pData in pairs(sData.prk) do
+										x_val = pData.px
+										y_val = pData.py
+									end
+
+									if x_val and y_val and choose_coa then
+										if #sData.prk > 1 then
+											HOOK.writeDebugDetail(ModuleName .. ": addSlot, adding 2 slots of " .. tostring(sData.acf))
+											tblSlots[#tblSlots+1] = {h= 0, x=x_val, y = y_val, airdrome = afbId, linkType = "Airport", parkings = sData.prk, cntyID = choose_ctry, coaID = choose_coa, acfType = sData.acf, numUnits = 2}
+										else
+											HOOK.writeDebugDetail(ModuleName .. ": addSlot, prk is less than 2")
+										end
+									else
+										HOOK.writeDebugDetail(ModuleName .. ": addSlot, missed x_val and y_val")
+									end
+								end
 							end
 						end
 					end
@@ -2588,8 +2601,8 @@ function addSlot(m, w) --, dictEnv
 
 	-- clean all helos slot!
 	local a = UTIL.deepCopy(tblAirbases)
-	local m = cleanSlots(m, w, a)
-	local a = checkParkings(m, a)
+	local m = cleanSlots(m, w)
+	local a, p = checkParkings(m, a)
 
 	addedGroups = 0
 	addedunits = 0
@@ -2598,12 +2611,12 @@ function addSlot(m, w) --, dictEnv
 	-- function buildHelipadSlot(missionEnv, warehouseEnv, tblSlots)
 	if heloSlot then
 		buildHelipadSlot(m, w, tblSlots)
-		UTIL.dumpTable("tblSlots_helo.lua", tblSlots)
+		UTIL.dumpTable("tblSlots_heliport.lua", tblSlots)
 	end
 
 	if airbaseSlot then
-		buildAirbaseSlot(m, w, a, tblSlots)
-		UTIL.dumpTable("tblSlots_planes.lua", tblSlots)
+		buildAirbaseSlot(m, w, a, tblSlots, p)
+		UTIL.dumpTable("tblSlots_airbase.lua", tblSlots)
 	end
 
 	if tblSlots then
