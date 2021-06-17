@@ -168,10 +168,8 @@ function checkLandingsLogistic(curr_tblLogistic, tblWarehouse)
 	return temp_tblLogistic
 end
 
-function consolidateStandardLogistic(curr_tblLogistic, tblWarehouse)
+function consolidateStandardLogistic(curr_tblLogistic)
 	local temp_tblLogistic ={}
-	local checkAbTbl = UTIL.deepCopy(tblAirbases)
-
 	HOOK.writeDebugDetail(ModuleName .. ": consolidateStandardLogistic started")
 	for oId, oData in pairs(curr_tblLogistic) do
 		HOOK.writeDebugDetail(ModuleName .. ": consolidateStandardLogistic checking: " .. tostring(oId))
@@ -280,6 +278,7 @@ function consolidateStandardLogistic(curr_tblLogistic, tblWarehouse)
 				end
 				tempTbl.aircrafts = tmpAcf
 				tmpAcf = nil			
+
 			elseif oData.action == "arrival" then
 				local tmpAcf = tempTbl.aircrafts
 				local afound = false
@@ -300,16 +299,6 @@ function consolidateStandardLogistic(curr_tblLogistic, tblWarehouse)
 
 				tempTbl.aircrafts = tmpAcf
 				tmpAcf = nil	
-			end
-
-			if found == true then
-				for cId, cData in pairs(temp_tblLogistic) do
-					if oData.placeId == cData.placeId then			
-						cData = tempTbl
-					end
-				end
-			elseif found == false then
-				temp_tblLogistic[#temp_tblLogistic+1] = tempTbl
 			end
 
 			if found == true then
