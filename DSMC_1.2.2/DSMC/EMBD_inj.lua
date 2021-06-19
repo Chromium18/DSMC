@@ -895,7 +895,10 @@ EMBD.collectLogCrates = function()
 									local posOnAirbase = false
 									if c_Pos then
 										local lType = land.getSurfaceType({x = c_Pos.x, y = c_Pos.z})
-										if lType == 4 then
+										if lType == 5 then
+											if DSMC_debugProcessDetail == true then
+												env.info(("EMBD.collectLogCrates found crate, lType: " .. tostring(lType)))
+											end		
 											posOnAirbase = true
 										end
 									end
