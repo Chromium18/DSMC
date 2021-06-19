@@ -890,7 +890,7 @@ EMBD.collectLogCrates = function()
 									local c_Id = cargo:getID()
 									local c_Coa = cargo:getCoalition()
 									local c_Country = cargo:getCountry()
-									local c_Pos = cargo:getPosition().playerShutEngine
+									local c_Pos = cargo:getPosition().p
 
 									local posOnAirbase = false
 									if c_Pos then
@@ -900,6 +900,10 @@ EMBD.collectLogCrates = function()
 												env.info(("EMBD.collectLogCrates found crate, lType: " .. tostring(lType)))
 											end		
 											posOnAirbase = true
+										else
+											if DSMC_debugProcessDetail == true then
+												env.info(("EMBD.collectLogCrates found crate, lType: " .. tostring(lType)))
+											end		
 										end
 									end
 									
