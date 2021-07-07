@@ -177,7 +177,7 @@ function updateAirbaseTable(missionEnv)
 		--]]--
 
 	end
-	UTIL.dumpTable("tblAirbases_updated.lua", tblAirbases)
+	--UTIL.dumpTable("tblAirbases_updated.lua", tblAirbases)
 end
 
 function getStandList(roadnet)

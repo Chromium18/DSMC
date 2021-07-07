@@ -35,8 +35,8 @@ package.path =
 DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "2"
-DSMC_Build 			= "1505"
-DSMC_Date			= "16/06/2021"
+DSMC_Build 			= "1560"
+DSMC_Date			= "30/06/2021"
 
 -- ## DEBUG TO TEXT FUNCTION
 debugProcess	= true -- this should be left on for testers normal ops and test missions
@@ -228,7 +228,7 @@ function loadDSMCHooks()
 	TRPS_setup7_var						= DSMC_CTLD_Limit_Tanks or 10000
 	TRPS_setup8_var						= DSMC_CTLD_Limit_ads or 10000
 	TRPS_setup9_var						= DSMC_CTLD_Limit_Arty or 10000	
-	TRPS_setup10_var					= DSMC_CTLD_UseYearFilter or true
+	TRPS_setup10_var					= DSMC_CTLD_longRangeSamCrates or true
 	TRPS_setup11_var					= DSMC_CTLD_crateReductionFactor or false
 	TRPS_setup12_var					= DSMC_CTLD_JTACenable or false
 	DCSR_var							= opt_DCSR_var or DSMC_automated_CSAR
@@ -615,6 +615,12 @@ function startDSMCprocess()
 						UTIL.inJectCode("baseGcounter", "DSMC_baseGcounter = " .. tostring(baseGcounter))
 						UTIL.inJectCode("baseUcounter", "DSMC_baseUcounter = " .. tostring(baseUcounter))
 						
+						-- inject tables
+						if UTIL.ctryList then
+							writeDebugBase(DSMC_ModuleName .. ": injecting ctryList")
+							UTIL.inJectTable("ctryList", UTIL.ctryList)
+						end
+
 						--## EXPORT IN SSE ENVIRONMENT THE SAVE MODULE
 						if STOP_var then
 							UTIL.inJectCode("autoexitvar", "DSMC_AutosaveExit_timer = " .. tostring(STOP_var*3600))
@@ -667,6 +673,8 @@ function startDSMCprocess()
 						-- code from TRPS module
 						if TRPS_var then
 							
+							UTIL.inJectTable("TRPSdbYears", _G.dbYears)
+
 							if TRPS_setup_var == true then
 								UTIL.inJectCode("TRPS_Setup", "TRPSslingLoad_main = true")
 							end
@@ -708,8 +716,7 @@ function startDSMCprocess()
 								end
 
 								if TRPS_setup10_var == true then
-									UTIL.inJectCode("TRPS_Setup10", "TRPSuseYearFilter = true")
-									UTIL.inJectTable("TRPSdbYears", _G.dbYears)
+									UTIL.inJectCode("TRPS_Setup10", "TRPSlongRangeSamCrates = true")									
 								end
 
 								if TRPS_setup11_var then

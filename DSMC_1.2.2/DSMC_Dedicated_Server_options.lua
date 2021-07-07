@@ -18,7 +18,7 @@ DSMC_CreateSlotHeliports    	= true      -- true / false. If true, helicopters s
 DSMC_CreateSlotAirbases     	= true      -- true / false. If true, slots will be created in airbase also and with fixed wing type. BEWARE: REQUIRE CONSISTENT SCENERY DESIGN! CHECK MANUAL
 
 DSMC_UpdateStartTime			= true 		-- true / false. Works only for mission with timeframe 1970-today, due to function limitation. For mission before 1970, i.e. WWII or Korea, it will be skipped.
-DSMC_UpdateStartTime_mode		= 1 		-- 1,2 or 3. Ignored if UpdateStartTime is false. 1 = keep continous scenery. 2 = start the next day, random hour. 3 = use current date, default mission time.
+DSMC_UpdateStartTime_mode		= 2 		-- 1,2 or 3. Ignored if UpdateStartTime is false. 1 = keep continous scenery. 2 = start the next day, random hour. 3 = use current date, default mission time.
 
 DSMC_TrackWarehouses			= true	 	-- true / false
 
@@ -40,8 +40,8 @@ DSMC_DebugMode					= false		-- true / false
 
 -- these additional configuration has effect ONLY when DSMC_UpdateStartTime = true and DSMC_UpdateStartTime_mode = 2
 -- min & max is used to define the minimum and maximum hours used to randomize mission start time.
-DSMC_StarTimeHourMin        	= 4         -- 1-> 14. hour 0-24 that will be used as minimum in the start mission time randomization, valid only with DSMC_UpdateStartTime set to true and DSMC_UpdateStartTime_mode set to "2". Out of the defined range, the value will be set as "4"
-DSMC_StarTimeHourMax        	= 18        -- 15-> 23. hour 0-24 that will be used as maximum in the start mission time randomization, valid only with DSMC_UpdateStartTime set to true and DSMC_UpdateStartTime_mode set to "2". Out of the defined range, the value will be set as "16"
+DSMC_StarTimeHourMin        	= 5         -- 1-> 14. hour 0-24 that will be used as minimum in the start mission time randomization, valid only with DSMC_UpdateStartTime set to true and DSMC_UpdateStartTime_mode set to "2". Out of the defined range, the value will be set as "4"
+DSMC_StarTimeHourMax        	= 16        -- 15-> 23. hour 0-24 that will be used as maximum in the start mission time randomization, valid only with DSMC_UpdateStartTime set to true and DSMC_UpdateStartTime_mode set to "2". Out of the defined range, the value will be set as "16"
 
 
 DSMC_WarehouseAutoSetup     	= true      -- true / false. If true, at each mission end the supply net will be automatically rebuilt. Check manual!
@@ -71,7 +71,7 @@ DSMC_CTLD_JTACenable            = true      -- true / false. If set false, you w
 DSMC_CTLD_AllowCrates           = true      -- true / false
 DSMC_CTLD_AllowPlatoon		    = true	 	-- true / false     BEWARE: using platoons mode will require you to set up some factories around. Check manual!
 DSMC_CTLD_crateReductionFactor  = 1.5       -- number, from 1 to 4 with fraction allowed. This is the required crate reduction factor number for platoons. 1 means about 8-12 crates/platoon, 1.5 means 5-8 crates/platoon, 2 means 2-6 crates/platoon, and so on.
-DSMC_CTLD_UseYearFilter         = true      -- true / false  
+DSMC_CTLD_longRangeSamCrates    = true      -- true / false  
 DSMC_CTLD_UnitNumLimits         = false      -- true / false
 DSMC_CTLD_Limit_APC             = 200       -- number
 DSMC_CTLD_Limit_IFV             = 150       -- number
@@ -80,7 +80,7 @@ DSMC_CTLD_Limit_ads             = 50        -- number
 DSMC_CTLD_Limit_Arty            = 60        -- number
 
 -- Save scenery enhancement
-DSMC_BuilderToolsBeta 		        = false		-- true / false -- // NOT WORKING YET Leave FALSE ALWAYS
+DSMC_BuilderToolsBeta 		    = false		-- true / false -- // NOT WORKING YET Leave FALSE ALWAYS
 
 -- additional feature (not working leave as it is)
-DSMC_ExportDocuments        	= true      -- true / false
+DSMC_ExportDocuments        	= false      -- true / false
