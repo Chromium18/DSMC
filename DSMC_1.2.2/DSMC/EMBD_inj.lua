@@ -1738,13 +1738,14 @@ function EMBD.assetHit:onEvent(event)
 		local unit 			= event.target
 		if unit then
 			local unitCategory	= unit:getCategory()
-			local unitTypeName	= unit:getTypeName()		
-			if DSMC_debugProcessDetail == true then
-				env.info(("EMBD.assetHit ha registrato un colpo, unità: " .. tostring(unitTypeName) .. ", category: " .. tostring(unitCategory)))
-				--trigger.action.outText("EMBD.assetHit ha registrato un colpo, unità: " .. tostring(unitTypeName) .. ", category: " .. tostring(unitCategory), 10)
-			end			
-			
+		
 			if unitCategory == 1 then
+				local unitTypeName	= unit:getTypeName()	
+				if DSMC_debugProcessDetail == true then
+					env.info(("EMBD.assetHit ha registrato un colpo, unità: " .. tostring(unitTypeName) .. ", category: " .. tostring(unitCategory)))
+					--trigger.action.outText("EMBD.assetHit ha registrato un colpo, unità: " .. tostring(unitTypeName) .. ", category: " .. tostring(unitCategory), 10)
+				end	
+
 				local unitId		= unit:getID()
 				local unitair  	= unit:hasAttribute("Air")
 				if unitair == true then
@@ -1762,7 +1763,7 @@ function EMBD.assetHit:onEvent(event)
 		end
 	end
 end
-world.addEventHandler(EMBD.assetHit)	
+--world.addEventHandler(EMBD.assetHit)	
 
 EMBD.baseCapture = {}
 function EMBD.baseCapture:onEvent(event)	

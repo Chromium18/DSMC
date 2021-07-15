@@ -74,6 +74,7 @@ if not DCSR.aircraftType then
     DCSR.aircraftType["SA342M"] = 2
     DCSR.aircraftType["UH-1H"] = 8
     DCSR.aircraftType["Mi-8MT"] = 16
+    DCSR.aircraftType["Mi-24P"] = 8
 end
 
 
