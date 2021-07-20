@@ -69,9 +69,17 @@ TRPS.enableCrates           = TRPSallowCrates_main or false -- if false, Helis w
 TRPS.slingLoad              = TRPSslingLoad_main or false -- if false, crates can be used WITHOUT slingloading, by hovering above the crate, simulating slingloading but not the weight...
 TRPS.UnitNumLimits          = TRPSUnitNumLimits or false
 TRPS.allowPlatoons          = TRPSallowPlatoons_main or false -- true, added by Chromium. If set, allow platoon of vehicles creation
-TRPS.useYearFilter          = TRPSuseYearFilter or false -- if true, in mission you will have only allowed units for country used in ED database
 TRPS.dbYears                = TRPSdbYears
+TRPS.longRangeSamCrates     = TRPSlongRangeSamCrates or false
 TRPS.factoryok              = {}
+TRPS.ctryList               = ctryList or nil
+TRPS.soldierModelRed        = "Infantry AK"
+TRPS.soldierModelBlue       = "Soldier M4 GRG"
+TRPS.soldierModelInsurg     = "Infantry AK Ins"
+TRPS.soldierModelRedWWII    = "soldier_mauser98"
+TRPS.soldierModelBlueWWII   = "soldier_wwii_us"
+TRPS.soldierModelBlueWWIIUK = "soldier_wwii_br_01"
+
 
 -- if SP, then platoons are on!
 if not DSMC_multy then
@@ -31143,6 +31151,7 @@ TRPS.cratesRequiredForFOB = 1
 TRPS.SAM_site_limit       = 50
 
 
+
 -- The amount of crates required to build a FOB. Once built, helis can spawn crates at this outpost to be carried and deployed in another area.  -- MOD LTOD TEST
 -- The large crates can only be loaded and dropped by large aircraft, like the C-130 and listed in TRPS.vehicleTransportEnabled
 -- Small FOB crates can be moved by helicopter. The FOB will require TRPS.cratesRequiredForFOB larges crates and small crates are 1/3 of a large fob crate
@@ -31192,6 +31201,17 @@ TRPS.JTAC_location = true -- shows location of target in JTAC message
 
 TRPS.JTAC_lock = "all" -- "vehicle" OR "troop" OR "all" forces JTAC to only lock vehicles or troops or all ground units
 
+
+TRPS.modernSet              = true
+if env.mission.date.year then
+    local val = tonumber(env.mission.date.year)
+    if val < 1960 then
+        env.info(ModuleName .. " CTLD setting: mission is set before 1960s, removing deliverable crate, airlift crate & jtac (only trucks can move crates for platoons)")
+        TRPS.modernSet = false
+        TRPS.JTAC_dropEnabled = false
+    end
+end
+
 -- if SP, then JTAC are on!
 if not DSMC_multy then
     TRPS.JTAC_dropEnabled = true
@@ -31220,6 +31240,18 @@ local trpsDynAddIndex 		= {[' air '] = 0, [' hel '] = 0, [' gnd '] = 0, [' bld '
 local trpsAddedObjects 		= {}  -- da mist
 local trpsAddedGroups 		= {}  -- da mist
 
+if TRPS.ctryList then
+    env.info(ModuleName .. " TRPS.ctryList found")
+    --ctryList[#ctryList+1] = {n = cName, i = cData.WorldID}
+    for _, cData in pairs(TRPS.ctryList) do
+        local side = coalition.getCountryCoalition(cData.i)
+        env.info(ModuleName .. " TRPS.ctryList country " .. tostring(cData.n)  .. ", side:" .. tostring(side))
+        if side then
+            cData.s = side
+        end
+    end
+    --ctryList = nil
+end
 
 TRPS.tblObjectshapeNames = {
     ["Landmine"] = "landmine",
@@ -32430,6 +32462,22 @@ TRPS.loadableGroups = {
 -- when we unpack
 --
 
+-- Weights data for crates, check this for quick reference about what is going to be in with DSMC
+-- 260, 460, 760, 1060, 1560, 2060 used for airlift/fuel
+
+-- 601 / 602 used for JTACs, red & blue
+-- 701 / 704 used for Recon vehicles, red & blue
+-- 801 -> 808 used for FARP support vehicles (even for blue, odd for red)
+-- 901 -> 999 (reserved) used for Medium & Short range fixed SAM system (even for blue, odd for red)
+-- 1001 -> 1007 used for airlift/weapons
+-- 1099 used for generic repair template crate
+-- 1100 -> 1500 used for platoons
+-- 1200 -> FOB crate
+-- 1800 -> Long Range SAM System (even for blue, odd for red)
+
+-- 1300 -> WWII anti air
+
+
 TRPS.cargoShapes = {
     ["uh1h_cargo"] =  "ab-212_cargo", 
     ["ammo_cargo"] =  "ammo_box_cargo", 
@@ -32450,79 +32498,251 @@ TRPS.cargoShapes = {
 TRPS.spawnableCrates = {
     -- name of the sub menu on F10 for spawning crates
     ["Airlift supplies"] = {  -- BEWARE: always crosscheck content of EMBD.collectLogCrates
-        ["Fuel resupplies"] = {  -- BEWARE: always crosscheck content of EMBD.collectLogCrates
-            { weight = 260, desc = "Fuel: 200 kg crate - " .. tostring(200*TRPS.upscaleResupplyFactor/1000)  .. " tons", unit = "LOG-CRATE", obj_crate = "fueltank_cargo", cantUnpack = true},
-            { weight = 460, desc = "Fuel: 400 kg crate - " .. tostring(400*TRPS.upscaleResupplyFactor/1000)  .. " tons", unit = "LOG-CRATE", obj_crate = "fueltank_cargo", cantUnpack = true},
-            { weight = 760, desc = "Fuel: 700 kg crate - " .. tostring(700*TRPS.upscaleResupplyFactor/1000)  .. " tons", unit = "LOG-CRATE", obj_crate = "fueltank_cargo", cantUnpack = true},
-            { weight = 1060, desc = "Fuel: 1000 kg crate - " .. tostring(1000*TRPS.upscaleResupplyFactor/1000)  .. " tons", unit = "LOG-CRATE", obj_crate = "fueltank_cargo", cantUnpack = true},
-            { weight = 1560, desc = "Fuel: 1500 kg crate - " .. tostring(1500*TRPS.upscaleResupplyFactor/1000)  .. " tons", unit = "LOG-CRATE", obj_crate = "fueltank_cargo", cantUnpack = true},
-            { weight = 2060, desc = "Fuel: 2000 kg crate - " .. tostring(2000*TRPS.upscaleResupplyFactor/1000)  .. " tons", unit = "LOG-CRATE", obj_crate = "fueltank_cargo", cantUnpack = true},
-        }, 
-        ["Ammo resupplies"] = { -- BEWARE: always crosscheck content of EMBD.collectLogCrates
-            { weight = 1020, desc = "Rockets (100 each)", unit = "LOG-CRATE", obj_crate = "ammo_cargo", cantUnpack = true, dirAmmo = 33, dirAmmoQty = 100},
-            { weight = 1025, desc = "Dumb bombs (50 each)", unit = "LOG-CRATE", obj_crate = "ammo_cargo", cantUnpack = true, dirAmmo = 9, dirAmmoQty = 50},
-            { weight = 1030, desc = "Cluster bombs (20 each)", unit = "LOG-CRATE", obj_crate = "ammo_cargo", cantUnpack = true, dirAmmo = 38, dirAmmoQty = 20},
-            { weight = 1035, desc = "Guided bombs (10 each)", unit = "LOG-CRATE", obj_crate = "ammo_cargo", cantUnpack = true, dirAmmo = 36, dirAmmoQty = 10},
-            { weight = 1040, desc = "Guided AG missiles (20 each)", unit = "LOG-CRATE", obj_crate = "ammo_cargo", cantUnpack = true, dirAmmo = 8, dirAmmoQty = 20},
-            { weight = 1045, desc = "Guided AA missiles (10 each)", unit = "LOG-CRATE", obj_crate = "ammo_cargo", cantUnpack = true, dirAmmo = 7, dirAmmoQty = 10},
-            { weight = 1050, desc = "Anti-runway bombs (5 each)", unit = "LOG-CRATE", obj_crate = "ammo_cargo", cantUnpack = true, dirAmmo = 37, dirAmmoQty = 5},
-        },
-        ["Repair"] = {  -- BEWARE: always crosscheck content of EMBD.collectLogCrates
-            { weight = 1099, desc = "Repair & rearm crate", unit = "REPAIR-CRATE", obj_crate = TRPS.repairCrateModel},
+        ["Supply crates"] = {
+            ["Fuel resupplies"] = {  -- BEWARE: always crosscheck content of EMBD.collectLogCrates
+                { weight = 260, desc = "Fuel: 200 kg crate - " .. tostring(200*TRPS.upscaleResupplyFactor/1000)  .. " tons", unit = "LOG-CRATE", obj_crate = "fueltank_cargo", cantUnpack = true},
+                { weight = 460, desc = "Fuel: 400 kg crate - " .. tostring(400*TRPS.upscaleResupplyFactor/1000)  .. " tons", unit = "LOG-CRATE", obj_crate = "fueltank_cargo", cantUnpack = true},
+                { weight = 760, desc = "Fuel: 700 kg crate - " .. tostring(700*TRPS.upscaleResupplyFactor/1000)  .. " tons", unit = "LOG-CRATE", obj_crate = "fueltank_cargo", cantUnpack = true},
+                { weight = 1060, desc = "Fuel: 1000 kg crate - " .. tostring(1000*TRPS.upscaleResupplyFactor/1000)  .. " tons", unit = "LOG-CRATE", obj_crate = "fueltank_cargo", cantUnpack = true},
+                { weight = 1560, desc = "Fuel: 1500 kg crate - " .. tostring(1500*TRPS.upscaleResupplyFactor/1000)  .. " tons", unit = "LOG-CRATE", obj_crate = "fueltank_cargo", cantUnpack = true},
+                { weight = 2060, desc = "Fuel: 2000 kg crate - " .. tostring(2000*TRPS.upscaleResupplyFactor/1000)  .. " tons", unit = "LOG-CRATE", obj_crate = "fueltank_cargo", cantUnpack = true},
+            }, 
+            ["Ammo resupplies"] = { -- BEWARE: always crosscheck content of EMBD.collectLogCrates
+                { weight = 1001, desc = "Rockets (100 each)", unit = "LOG-CRATE", obj_crate = "ammo_cargo", cantUnpack = true, dirAmmo = 33, dirAmmoQty = 100},
+                { weight = 1002, desc = "Dumb bombs (50 each)", unit = "LOG-CRATE", obj_crate = "ammo_cargo", cantUnpack = true, dirAmmo = 9, dirAmmoQty = 50},
+                { weight = 1003, desc = "Cluster bombs (20 each)", unit = "LOG-CRATE", obj_crate = "ammo_cargo", cantUnpack = true, dirAmmo = 38, dirAmmoQty = 20},
+                { weight = 1004, desc = "Guided bombs (10 each)", unit = "LOG-CRATE", obj_crate = "ammo_cargo", cantUnpack = true, dirAmmo = 36, dirAmmoQty = 10},
+                { weight = 1005, desc = "Guided AG missiles (20 each)", unit = "LOG-CRATE", obj_crate = "ammo_cargo", cantUnpack = true, dirAmmo = 8, dirAmmoQty = 20},
+                { weight = 1006, desc = "Guided AA missiles (10 each)", unit = "LOG-CRATE", obj_crate = "ammo_cargo", cantUnpack = true, dirAmmo = 7, dirAmmoQty = 10},
+                { weight = 1007, desc = "Anti-runway bombs (5 each)", unit = "LOG-CRATE", obj_crate = "ammo_cargo", cantUnpack = true, dirAmmo = 37, dirAmmoQty = 5},
+            },
+        },      
+        ["Utility & repair crates"] = {
+            ["Repair"] = {  -- BEWARE: always crosscheck content of EMBD.collectLogCrates
+                { weight = 1099, desc = "Repair & rearm crate", unit = "REPAIR-CRATE", obj_crate = TRPS.repairCrateModel},
+            },
         },
     },
     ["Deliverable"] = {
         
         ["JTAC"] = {
-            { weight = 801, desc = "JTAC Infantry-manpad", unit = "Igla manpad INS", side = 1}, -- used as jtac and unarmed, not on the crate list if JTAC is disabled
-            { weight = 802, desc = "JTAC Soldier-manpad", unit = "Soldier stinger", side = 2},
+            ["JTAC infantry"] = {
+                { weight = 601, desc = "JTAC Infantry-manpad", unit = "Igla manpad INS", side = 1}, -- used as jtac and unarmed, not on the crate list if JTAC is disabled
+                { weight = 602, desc = "JTAC Soldier-manpad", unit = "Soldier stinger", side = 2},
+            },                
         },  
-
         ["Recon vehicle"] = {
-            { weight = 880, desc = "HMMWV - TOW", unit = "M1045 HMMWV TOW", side = 2, cratesRequired = 2 },
-            { weight = 890, desc = "BTR-D", unit = "BTR_D", side = 1, cratesRequired = 2 },
+            ["Light utility vehicle"] = {            
+                { weight = 702, desc = "HMMWV", unit = "Hummer", side = 2, cratesRequired = 2 },
+                { weight = 701, desc = "Tigr", unit = "Tigr_233036", side = 1, cratesRequired = 2 },
+            },
+            ["Armored vehicle"] = {  
+                { weight = 703, desc = "M1126 Stryker", unit = "M1126 Stryker ICV", side = 2, cratesRequired = 4 },
+                { weight = 704, desc = "BRDM-2 armored vehicle", unit = "BRDM-2", side = 1, cratesRequired = 4 },
+            },
         },
-        ["FARP support group"] = {
-            { weight = 800, desc = "FARP SKP Command", unit = "SKP-11", side = 1},
-            { weight = 810, desc = "FARP Ural Ammo", unit = "Ural-375", side = 1},
-            { weight = 820, desc = "FARP Zil Electricity", unit = "ZiL-131 APA-80", side = 1},
-            { weight = 830, desc = "FARP ATZ Fuel", unit = "ATZ-10", side = 1},
+        ["Support group"] = {
+            ["FARP support units"] = {  
+                { weight = 801, desc = "FARP SKP Command", unit = "SKP-11", side = 1},
+                { weight = 803, desc = "FARP Ural Ammo", unit = "Ural-375", side = 1},
+                { weight = 805, desc = "FARP Zil Electricity", unit = "ZiL-131 APA-80", side = 1},
+                { weight = 807, desc = "FARP ATZ Fuel", unit = "ATZ-10", side = 1},
 
-            { weight = 805, desc = "FARP HMMWV Command", unit = "Hummer", side = 2},
-            { weight = 815, desc = "FARP M818 Ammo", unit = "M 818", side = 2},
-            { weight = 825, desc = "FARP HEMTT TFFT", unit = "HEMTT TFFT", side = 2},
-            { weight = 835, desc = "FARP HEMTT Fuel", unit = "M978 HEMTT Tanker", side = 2},
+                { weight = 802, desc = "FARP HMMWV Command", unit = "Hummer", side = 2},
+                { weight = 804, desc = "FARP M939 Ammo", unit = "M 818", side = 2},
+                { weight = 806, desc = "FARP HEMTT TFFT", unit = "HEMTT TFFT", side = 2},
+                { weight = 808, desc = "FARP HEMTT Fuel", unit = "M978 HEMTT Tanker", side = 2},
+            },                
         },
-        ["FOB structure"] = {
-            { weight = 1200, desc = "FOB Crate - Small", unit = "FOB-SMALL"}, -- Builds a FOB! - requires 3 * TRPS.cratesRequiredForFOB
+        ["Structure"] = {
+            ["FOB crates"] = {              
+                { weight = 1200, desc = "FOB Crate - Small", unit = "FOB-SMALL"}, -- Builds a FOB! - requires 3 * TRPS.cratesRequiredForFOB
+            },       
         },
-        ["SAM system"] = {
-
-            -- HAWK System
-            { weight = 814, desc = "HAWK Launcher", unit = "Hawk ln", side = 2, isLauncher = true},
-            { weight = 811, desc = "HAWK Search Radar", unit = "Hawk sr", side = 2},
-            { weight = 812, desc = "HAWK Track Radar", unit = "Hawk tr", side = 2},
-            { weight = 813, desc = "HAWK PCP", unit = "Hawk pcp" , side = 2}, -- Remove this if on 1.2
-            --{ weight = 552, desc = "HAWK Repair", unit = "HAWK Repair" , side = 2 },
-            -- End of HAWK
-
-            -- KUB SYSTEM
-            { weight = 607, desc = "KUB Launcher", unit = "Kub 2P25 ln", side = 1, isLauncher = true},
-            { weight = 606, desc = "KUB Radar", unit = "Kub 1S91 str", side = 1},
-            --{ weight = 570, desc = "KUB Repair", unit = "KUB Repair", side = 1},
-            -- End of KUB
-
-            -- BUK System -- CHECK THIS!
-            { weight = 609, desc = "BUK Launcher", unit = "SA-11 Buk LN 9A310M1", side = 1, isLauncher = true},
-            { weight = 608, desc = "BUK Search Radar", unit = "SA-11 Buk SR 9S18M1", side = 1},
-            { weight = 611, desc = "BUK CC Radar", unit = "SA-11 Buk CC 9S470M1", side = 1},
-            --{ weight = 590, desc = "BUK Repair", unit = "BUK Repair"},
-            -- END of BUK
-
-            { weight = 610, desc = "Early Warning Radar", unit = "1L13 EWR", side = 1}, -- cant be used by BLUE coalition
-        },
+        ["SAM system"] = {},
     },
 }
+
+TRPS.samSystems = {
+    --[[ NASAMS System
+    { weight = 916, desc = "NASAMS Launcher", unit = "NASAMS_LN_C", side = 2, isLauncher = true},
+    { weight = 918, desc = "NASAMS Radar", unit = "NASAMS_Radar_MPQ64F1", side = 2},
+    { weight = 920, desc = "NASAMS C2", unit = "NASAMS_Command_Post", side = 2},
+     End of NASAMS
+    --]]--
+
+    -- RAPIER System
+    ["Rapier System"] = {
+        { weight = 902, desc = "Rapier Launcher", unit = "rapier_fsa_launcher", isLauncher = true},
+        { weight = 904, desc = "Rapier Tracker", unit = "rapier_fsa_optical_tracker_unit"},
+        { weight = 906, desc = "Rapier Radar", unit = "rapier_fsa_blindfire_radar"},
+    },
+
+    -- HAWK System
+    ["Hawk System"] = {
+        { weight = 908, desc = "HAWK Launcher", unit = "Hawk ln", isLauncher = true},
+        { weight = 910, desc = "HAWK Search Radar", unit = "Hawk sr"},
+        { weight = 912, desc = "HAWK Track Radar", unit = "Hawk tr"},
+        { weight = 914, desc = "HAWK PCP", unit = "Hawk pcp"},
+    },
+
+    -- ROLAND SYSTEM
+    ["Roland System"] = {
+        { weight = 916, desc = "Roland Launcher", unit = "Roland ADS", isLauncher = true},
+        { weight = 918, desc = "Roland Radar unit", unit = "Roland Radar"},
+    },
+
+    -- KUB SYSTEM
+    ["KUB System"] = {
+        { weight = 901, desc = "KUB Launcher", unit = "Kub 2P25 ln", isLauncher = true},
+        { weight = 903, desc = "KUB Radar", unit = "Kub 1S91 str"},
+    },
+
+    -- BUK System -- CHECK THIS!
+    ["BUK System"] = {
+        { weight = 905, desc = "BUK Launcher", unit = "SA-11 Buk LN 9A310M1", isLauncher = true},
+        { weight = 907, desc = "BUK Search Radar", unit = "SA-11 Buk SR 9S18M1"},
+        { weight = 909, desc = "BUK CC Radar", unit = "SA-11 Buk CC 9S470M1"},
+    },
+
+    -- EWR
+    ["EWR Radar"] = {
+        { weight = 911, desc = "Early Warning Radar 1L13", unit = "1L13 EWR"}, 
+        { weight = 913, desc = "Early Warning Radar 55G6", unit = "55G6 EWR"}, 
+    },        
+    
+    -- SA3 SYSTEM
+    ["SA-3 System"] = {    
+        { weight = 915, desc = "P19 Radar", unit = "p-19 s-125 sr"},
+        { weight = 917, desc = "SA3 Radar Low Blow", unit = "snr s-125 tr"},
+        { weight = 919, desc = "SA3 launcher", unit = "5p73 s-125 ln", isLauncher = true},
+    },           
+    
+    -- SA2 SYSTEM
+    ["SA-2 System"] = {  
+        { weight = 921, desc = "P19 Radar", unit = "p-19 s-125 sr"},
+        { weight = 923, desc = "SA2 Radar Fan Song", unit = "SNR_75V"},
+        { weight = 925, desc = "SA2 launcher", unit = "S_75M_Volhov", isLauncher = true},
+    },      
+
+    -- WWII
+    ["Radar System"] = {  
+        { weight = 1301, desc = "Early Warning Radar Freya", unit = "FuMG-401"}, 
+        { weight = 1302, desc = "Early Warning Radar Würzburg", unit = "FuSe-65"}, 
+    },  
+
+    -- german flak
+    ["German flak anti-air"] = { 
+        { weight = 1303, desc = "Anti air Flak 18", unit = "flak18", isLauncher = true},
+        { weight = 1304, desc = "Opel Blitz truck", unit = "Blitz_36-6700A"},  
+    },           
+
+    -- england flak
+    ["English flak anti-air"] = { 
+        { weight = 1305, desc = "Anti air bofors 40mm", unit = "bofors40", isLauncher = true},
+        { weight = 1306, desc = "Bedford support truck", unit = "Bedford_MWD"},   
+    },  
+}
+
+
+TRPS.longRangeSAMsystem = {
+
+    -- SA-10 S-300 System
+    ["S-300 System"] = { 
+        {unit = "S-300PS 40B6MD sr", desc = "S300 Search radar 40B6MD", weight = 1801},
+        {unit = "S-300PS 64H6E sr", desc = "S300 Search radar 64H6E", weight = 1803},
+        {unit = "S-300PS 40B6M tr", desc = "S300 Track radar 40B6M", weight = 1805},
+        {unit = "S-300PS 54K6 cp", desc = "S300 C2 unit", weight = 1807},
+        {unit = "S-300PS 5P85D ln", desc = "S300 Launcher 5P85D", isLauncher = true, weight = 1811},
+        {unit = "S-300PS 5P85C ln", desc = "S300 Launcher 5P85C", weight = 1809},
+        --{unit = "Ural-4320T", desc = "S300 Ural rearm truck ", weight = 1813},
+    },  
+
+    -- PATRIOT system
+    ["Patriot System"] = { 
+        {unit = "Patriot str", desc = "Patriot Radar SR TR", weight = 1802},
+        {unit = "Patriot ECS", desc = "Patriot ECS CC unit", weight = 1804},
+        {unit = "Patriot AMG", desc = "Patriot CR AMG AN MRC 137", weight = 1806},
+        {unit = "Patriot cp", desc = "Patriot C2 ICC", weight = 1808},
+        {unit = "Patriot EPP", desc = "Patriot EPP generator", weight = 1810},
+        {unit = "Patriot ln", desc = "Patriot launcher", isLauncher = true, weight = 1812},
+        --{unit = "M 818", desc = "Patriot rearm support M939", weight = 1814},
+    },         
+}
+
+if TRPS.longRangeSamCrates == true then
+    for sysName, sysData in pairs(TRPS.longRangeSAMsystem) do
+        TRPS.samSystems[sysName] = sysData
+        --table.insert(TRPS.samSystems, crateData)
+    end
+end
+
+if TRPS.ctryList and #TRPS.ctryList > 0 then
+    local missionYear = tonumber(env.mission.date.Year)
+
+    for sysName, sysData in pairs(TRPS.samSystems) do
+        env.info((ModuleName .. ": checking SAM system " .. tostring(sysName)))
+        local isRed = 0
+        local isBlue = 0
+        local numCheck = #sysData
+        for _, stbl in pairs(sysData) do
+            local model = stbl.unit
+            env.info((ModuleName .. ": checking SAM unit " .. tostring(model)))
+            if model then
+                for obj, objData in pairs(TRPS.dbYears) do            
+                    if obj == model then
+                        for cName, cData in pairs(objData) do
+                            if missionYear <= cData.yEnd and missionYear >= cData.yStart then
+                                for _, ctData in pairs(TRPS.ctryList) do
+                                    if cName == ctData.n then
+                                        if ctData.s == 1 then
+                                            isRed = isRed + 1
+                                            env.info((ModuleName .. ": defined isRed"))
+                                        elseif ctData.s == 2 then
+                                            isBlue = isBlue + 1
+                                            env.info((ModuleName .. ": defined isRed"))
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        if isRed == numCheck then
+            local t = TRPS.deepCopy(sysData)
+            for _, sData in pairs(t) do
+                sData.side = 1
+            end
+
+            for cat, catData in pairs(TRPS.spawnableCrates) do
+                if cat == "Deliverable" then
+                    if catData["SAM system"] then
+                        catData["SAM system"][sysName] = t
+                    end
+                end
+            end
+        end
+
+        if isBlue == numCheck then
+            local t = TRPS.deepCopy(sysData)
+            for _, sData in pairs(t) do
+                sData.side = 2
+            end
+
+            for cat, catData in pairs(TRPS.spawnableCrates) do
+                if cat == "Deliverable" then
+                    if catData["SAM system"] then
+                        catData["SAM system"][sysName] = t
+                    end
+                end
+            end
+        end
+
+    end
+end
 
 -- remove JTAC crates if not active
 if TRPS.JTAC_dropEnabled == false then
@@ -32530,11 +32750,20 @@ if TRPS.JTAC_dropEnabled == false then
 end
 
 if not WRHS_module_active then -- check DSMC_hooks.lua for reference, WRHS must be always be loaded BEFORE TRPS due to this
-    TRPS.spawnableCrates["Sling load supplies"] = nil -- no sense to keep logistic crates if warehouse system is offline!
+    TRPS.spawnableCrates["Airlift supplies"]["Supply crates"] = nil -- no sense to keep logistic crates if warehouse system is offline!
     env.info(ModuleName .. " spawnableCrates: since WRHS is off, logistic crates aren't active")
 end
 
+if TRPS.modernSet == false then
+    TRPS.spawnableCrates["Deliverable"]["JTAC"] = nil    
+    TRPS.spawnableCrates["Airlift supplies"]["Supply crates"] = nil-- no sense to keep logistic crates if warehouse system is offline!
+end
+
 TRPS.platoonCrates = {
+    ["Tanks"] = {},
+    ["Vehicles"] = {},
+    ["Air Defence"] = {},
+    ["Logistic"] = {},
 }
 
 --platoon table constructor
@@ -32542,11 +32771,15 @@ function TRPS.enablePlatoons()
     --env.info(ModuleName .. " enablePlatoons: factoryok " .. tostring(TRPS.factoryok))	
     if TRPS.allowPlatoons then
         local function builtPltTable()
-            TRPS.platoonCrates = {}
+            TRPS.platoonCrates = {
+                ["Tanks"] = {},
+                ["Vehicles"] = {},
+                ["Air Defence"] = {},
+                ["Logistic"] = {},
+            }
             local cDataside = nil
-            local curWeight = 900
+            local curWeight = 1100
             local missionYear = tonumber(env.mission.date.Year)
-            local beforeMissionYear = missionYear - TRPS.datespan
             --env.info(ModuleName .. " builtPltTable x1")
             for _coalitionName, _coalitionData in pairs(env.mission.coalition) do
                 local check = false
@@ -32582,15 +32815,20 @@ function TRPS.enablePlatoons()
                                                 --env.info(ModuleName .. " builtPltTable wDesc.attributes: " .. tostring(wDesc))
                                                 if wDesc.attributes["Tanks"] then
 
-                                                    if not TRPS.platoonCrates["MBT"] then
-                                                        TRPS.platoonCrates["MBT"] = {}
+                                                    if not TRPS.platoonCrates["Tanks"]["MBT"] then
+                                                        TRPS.platoonCrates["Tanks"]["MBT"] = {}
                                                     end
 
                                                     for countryId, countryData in pairs(wData) do
                                                         if string.lower(_ctryName) == string.lower(countryId) or countryId == "ALL" then
                                                             env.info(ModuleName .. " builtPltTable is Tank")
                                                             local yearEntryService = countryData.yStart
-                                                            if yearEntryService <= missionYear and yearEntryService >= beforeMissionYear then
+                                                            local yearExitService = countryData.yEnd
+                                                            if yearExitService < 9999 then
+                                                                yearExitService = yearEntryService + TRPS.datespan
+                                                            end
+
+                                                            if yearEntryService <= missionYear and yearExitService >= missionYear then
                                                                 curWeight = curWeight + 1
                                                                 local string = wId .. " plt"
                                                                 local unitNum = 3
@@ -32599,7 +32837,7 @@ function TRPS.enablePlatoons()
                                                                     value = 5
                                                                 end
                                                                 env.info(ModuleName .. " builtPltTable added Tank")
-                                                                TRPS.platoonCrates["MBT"][#TRPS.platoonCrates["MBT"]+1] = { weight = curWeight, desc = string, unit = wId, side = Cside, cratesRequired = value, quantity = unitNum, movers = true, class = "Tanks", country = _ctryName, factory = true}
+                                                                TRPS.platoonCrates["Tanks"]["MBT"][#TRPS.platoonCrates["Tanks"]["MBT"]+1] = { weight = curWeight, desc = string, unit = wId, side = Cside, cratesRequired = value, quantity = unitNum, movers = true, class = "Tanks", country = _ctryName, factory = true}
                                                                 
                                                             end
                                                         end
@@ -32608,22 +32846,27 @@ function TRPS.enablePlatoons()
 
                                                 elseif wDesc.attributes["Artillery"] then
                                                     
-                                                    if not TRPS.platoonCrates["ARTY"] then
-                                                        TRPS.platoonCrates["ARTY"] = {}
+                                                    if not TRPS.platoonCrates["Vehicles"]["ARTY"] then
+                                                        TRPS.platoonCrates["Vehicles"]["ARTY"] = {}
                                                     end
 
                                                     for countryId, countryData in pairs(wData) do
                                                         if string.lower(_ctryName) == string.lower(countryId) or countryId == "ALL" then
                                                             env.info(ModuleName .. " builtPltTable is Arty")
                                                             local yearEntryService = countryData.yStart
-                                                            if yearEntryService <= missionYear and yearEntryService >= beforeMissionYear then
+                                                            local yearExitService = countryData.yEnd
+                                                            if yearExitService < 9999 then
+                                                                yearExitService = yearEntryService + TRPS.datespan
+                                                            end
+
+                                                            if yearEntryService <= missionYear and yearExitService >= missionYear then
                                                                 curWeight = curWeight + 1
                                                                 local string = wId .. " sec"
                                                                 local unitNum = 3
                                                                 local value = math.floor(wDesc.life * unitNum / TRPS.crateReductionFactor)+1
                                                                 --env.info(ModuleName .. " builtPltTable value: " .. tostring(value))
                                                                 env.info(ModuleName .. " builtPltTable added arty")
-                                                                TRPS.platoonCrates["ARTY"][#TRPS.platoonCrates["ARTY"]+1] = { weight = curWeight, desc = string, unit = wId, side = Cside, cratesRequired = value, quantity = unitNum, movers = true, class = "Artillery", country = _ctryName, factory = true}
+                                                                TRPS.platoonCrates["Vehicles"]["ARTY"][#TRPS.platoonCrates["Vehicles"]["ARTY"]+1] = { weight = curWeight, desc = string, unit = wId, side = Cside, cratesRequired = value, quantity = unitNum, movers = true, class = "Artillery", country = _ctryName, factory = true}
                                                             end
                                                         end
                                                     end
@@ -32631,22 +32874,27 @@ function TRPS.enablePlatoons()
 
                                                 elseif wDesc.attributes["IFV"] then                                                 
 
-                                                    if not TRPS.platoonCrates["IFV"] then
-                                                        TRPS.platoonCrates["IFV"] = {}
+                                                    if not TRPS.platoonCrates["Vehicles"]["IFV"] then
+                                                        TRPS.platoonCrates["Vehicles"]["IFV"] = {}
                                                     end
 
                                                     for countryId, countryData in pairs(wData) do
                                                         if string.lower(_ctryName) == string.lower(countryId) or countryId == "ALL" then
                                                             env.info(ModuleName .. " builtPltTable is IFV")
                                                             local yearEntryService = countryData.yStart
-                                                            if yearEntryService <= missionYear and yearEntryService >= beforeMissionYear then
+                                                            local yearExitService = countryData.yEnd
+                                                            if yearExitService < 9999 then
+                                                                yearExitService = yearEntryService + TRPS.datespan
+                                                            end
+
+                                                            if yearEntryService <= missionYear and yearExitService >= missionYear then
                                                                 curWeight = curWeight + 1
                                                                 local string = wId .. " plt"
                                                                 local unitNum = 3
                                                                 local value = math.floor(wDesc.life * unitNum / TRPS.crateReductionFactor)+1
                                                                 --env.info(ModuleName .. " builtPltTable value: " .. tostring(value))
                                                                 env.info(ModuleName .. " builtPltTable added IFV")
-                                                                TRPS.platoonCrates["IFV"][#TRPS.platoonCrates["IFV"]+1] = { weight = curWeight, desc = string, unit = wId, side = Cside, cratesRequired = value, quantity = unitNum, movers = true, class = "IFV", country = _ctryName, factory = true}
+                                                                TRPS.platoonCrates["Vehicles"]["IFV"][#TRPS.platoonCrates["Vehicles"]["IFV"]+1] = { weight = curWeight, desc = string, unit = wId, side = Cside, cratesRequired = value, quantity = unitNum, movers = true, class = "IFV", country = _ctryName, factory = true}
                                                             end
                                                         end
                                                     end   
@@ -32654,8 +32902,8 @@ function TRPS.enablePlatoons()
 
                                                 elseif wDesc.attributes["APC"] then                                                    
 
-                                                    if not TRPS.platoonCrates["APC"] then
-                                                        TRPS.platoonCrates["APC"] = {}
+                                                    if not TRPS.platoonCrates["Vehicles"]["APC"] then
+                                                        TRPS.platoonCrates["Vehicles"]["APC"] = {}
                                                     end
 
                                                     --env.info(ModuleName .. " builtPltTable wDesc.attributes APC")
@@ -32663,68 +32911,83 @@ function TRPS.enablePlatoons()
                                                         if string.lower(_ctryName) == string.lower(countryId) or countryId == "ALL" then
                                                             env.info(ModuleName .. " builtPltTable is APC")
                                                             local yearEntryService = countryData.yStart
-                                                            if yearEntryService <= missionYear and yearEntryService >= beforeMissionYear then
+                                                            local yearExitService = countryData.yEnd
+                                                            if yearExitService < 9999 then
+                                                                yearExitService = yearEntryService + TRPS.datespan
+                                                            end
+
+                                                            if yearEntryService <= missionYear and yearExitService >= missionYear then
                                                                 curWeight = curWeight + 1
                                                                 local string = wId .. " plt"
                                                                 local unitNum = 3
                                                                 local value = math.floor(wDesc.life * unitNum / TRPS.crateReductionFactor)+1
                                                                 --env.info(ModuleName .. " builtPltTable value: " .. tostring(value))
                                                                 env.info(ModuleName .. " builtPltTable added APC")
-                                                                TRPS.platoonCrates["APC"][#TRPS.platoonCrates["APC"]+1] = { weight = curWeight, desc = string, unit = wId, side = Cside, cratesRequired = value, quantity = unitNum, movers = true, class = "APC", country = _ctryName, factory = true}
+                                                                TRPS.platoonCrates["Vehicles"]["APC"][#TRPS.platoonCrates["Vehicles"]["APC"]+1] = { weight = curWeight, desc = string, unit = wId, side = Cside, cratesRequired = value, quantity = unitNum, movers = true, class = "APC", country = _ctryName, factory = true}
                                                             end
                                                         end
                                                     end
 
 
-                                                elseif wDesc.attributes["SR SAM"] then
+                                                elseif wDesc.attributes["SR SAM"] and not wDesc.attributes["SAM elements"] then
 
-                                                    if not TRPS.platoonCrates["SHORAD"] then
-                                                        TRPS.platoonCrates["SHORAD"] = {}
+                                                    if not TRPS.platoonCrates["Air Defence"]["SHORAD"] then
+                                                        TRPS.platoonCrates["Air Defence"]["SHORAD"] = {}
                                                     end
 
                                                     for countryId, countryData in pairs(wData) do
                                                         if string.lower(_ctryName) == string.lower(countryId) or countryId == "ALL" then
                                                             env.info(ModuleName .. " builtPltTable is SHORAD")
                                                             local yearEntryService = countryData.yStart
-                                                            if yearEntryService <= missionYear and yearEntryService >= beforeMissionYear then
+                                                            local yearExitService = countryData.yEnd
+                                                            if yearExitService < 9999 then
+                                                                yearExitService = yearEntryService + TRPS.datespan
+                                                            end
+
+                                                            if yearEntryService <= missionYear and yearExitService >= missionYear then
                                                                 curWeight = curWeight + 1
                                                                 local string = wId .. " sec"
                                                                 local unitNum = 2
                                                                 local value = math.floor(wDesc.life * unitNum / TRPS.crateReductionFactor)+1
                                                                 --env.info(ModuleName .. " builtPltTable value: " .. tostring(value))
                                                                 env.info(ModuleName .. " builtPltTable added SHORAD")
-                                                                TRPS.platoonCrates["SHORAD"][#TRPS.platoonCrates["SHORAD"]+1] = { weight = curWeight, desc = string, unit = wId, side = Cside, cratesRequired = value, quantity = unitNum, movers = true, class = "Air Defence vehicles", country = _ctryName, factory = true}
+                                                                TRPS.platoonCrates["Air Defence"]["SHORAD"][#TRPS.platoonCrates["Air Defence"]["SHORAD"]+1] = { weight = curWeight, desc = string, unit = wId, side = Cside, cratesRequired = value, quantity = unitNum, movers = true, class = "Air Defence vehicles", country = _ctryName, factory = true}
                                                             end
                                                         end
                                                     end
 
 
-                                                elseif wDesc.attributes["AAA"] and wDesc.attributes["Vehicles"] then                                                                                                     
+                                                elseif wDesc.attributes["AAA"] and wDesc.attributes["Vehicles"] and wDesc.attributes["Mobile AAA"] then                                                                                                     
 
-                                                    if not TRPS.platoonCrates["AAA"] then
-                                                        TRPS.platoonCrates["AAA"] = {}
+                                                    if not TRPS.platoonCrates["Air Defence"]["AAA"] then
+                                                        TRPS.platoonCrates["Air Defence"]["AAA"] = {}
                                                     end
 
                                                     for countryId, countryData in pairs(wData) do
                                                         if string.lower(_ctryName) == string.lower(countryId) or countryId == "ALL" then
                                                             env.info(ModuleName .. " builtPltTable is AAA")
                                                             local yearEntryService = countryData.yStart
-                                                            if yearEntryService <= missionYear and yearEntryService >= beforeMissionYear then
+                                                            local yearExitService = countryData.yEnd
+                                                            if yearExitService < 9999 then
+                                                                yearExitService = yearEntryService + TRPS.datespan
+                                                            end
+
+                                                            if yearEntryService <= missionYear and yearExitService >= missionYear then
                                                                 curWeight = curWeight + 1
                                                                 local string = wId .. " sec"
                                                                 local unitNum = 2
                                                                 local value = math.floor(wDesc.life * unitNum / TRPS.crateReductionFactor)+1
                                                                 --env.info(ModuleName .. " builtPltTable value: " .. tostring(value))
                                                                 env.info(ModuleName .. " builtPltTable added AAA")
-                                                                TRPS.platoonCrates["AAA"][#TRPS.platoonCrates["AAA"]+1] = { weight = curWeight, desc = string, unit = wId, side = Cside, cratesRequired = value, quantity = unitNum, movers = true, class = "Air Defence vehicles", country = _ctryName, factory = true}
+                                                                TRPS.platoonCrates["Air Defence"]["AAA"][#TRPS.platoonCrates["Air Defence"]["AAA"]+1] = { weight = curWeight, desc = string, unit = wId, side = Cside, cratesRequired = value, quantity = unitNum, movers = true, class = "Air Defence vehicles", country = _ctryName, factory = true}
                                                             end
                                                         end
                                                     end
 
                                                 elseif wDesc.typeName == "M 818" or wDesc.typeName == "Ural-375" or wDesc.typeName == "GAZ-66" or wDesc.typeName == "KrAZ6322" or wDesc.typeName == "KAMAZ Truck" or wDesc.typeName == "GAZ-3308" or wDesc.typeName == "Ural-4320T" then 
                                                     
-                                                    if not TRPS.platoonCrates["Logistic"] then
-                                                        TRPS.platoonCrates["Logistic"] = {}
+                                                    if not TRPS.platoonCrates["Logistic"]["Truck convoy"] then
+                                                        TRPS.platoonCrates["Logistic"]["Truck convoy"] = {}
                                                     end
 
                                                     for countryId, countryData in pairs(wData) do
@@ -32738,7 +33001,7 @@ function TRPS.enablePlatoons()
                                                                 local value = math.floor(wDesc.life * (unitNum/2) / TRPS.crateReductionFactor)+1
                                                                 --env.info(ModuleName .. " builtPltTable value: " .. tostring(value))
                                                                 env.info(ModuleName .. " builtPltTable added Truck")
-                                                                TRPS.platoonCrates["Logistic"][#TRPS.platoonCrates["Logistic"]+1] = { weight = curWeight, desc = string, unit = wId, side = Cside, cratesRequired = value, quantity = unitNum, movers = true, class = "Transport", country = _ctryName, factory = true}
+                                                                TRPS.platoonCrates["Logistic"]["Truck convoy"][#TRPS.platoonCrates["Logistic"]["Truck convoy"]+1] = { weight = curWeight, desc = string, unit = wId, side = Cside, cratesRequired = value, quantity = unitNum, movers = true, class = "Transport", country = _ctryName, factory = true}
                                                             --end
                                                         end
                                                     end
@@ -32935,13 +33198,13 @@ function TRPS.spawnGroupAtTrigger(_groupSide, _number, _triggerName, _searchRadi
     local _country
     if _groupSide == "red" then
         _groupSide = 1
-        _country = 0
+        _country = 81 -- 0
     elseif _groupSide == "blue" then
         _groupSide = 2
-        _country = 2
+        _country = 80 -- 2
     else
         _groupSide = 0
-        _country = 0       
+        _country = 81 -- 0       
     end
 
     if _searchRadius < 0 then
@@ -33662,24 +33925,55 @@ end
 -- A New system added here also needs the launcher added
 TRPS.specificTemplate = {
 
+    --[[
+    {
+        name = "NASAMS AA System",
+        count = 3,
+        parts = {
+            {name = "NASAMS_Radar_MPQ64F1", desc = "NASAMS Radar", wht = 918},
+            {name = "NASAMS_LN_C", desc = "NASAMS Launcher", launcher = true, wht = 916},
+            {name = "NASAMS_Command_Post", desc = "NASAMS C2", wht = 920},            
+        },
+        repair = "Rapier Repair",
+    },
+    --]]--
+    {
+        name = "Rapier AA System",
+        count = 3,
+        parts = {
+            {name = "rapier_fsa_blindfire_radar", desc = "Rapier Radar", wht = 906},
+            {name = "rapier_fsa_launcher", desc = "Rapier Launcher", launcher = true, wht = 902},
+            {name = "rapier_fsa_optical_tracker_unit", desc = "Rapier Tracker", wht = 904},            
+        },
+        repair = "Rapier Repair",
+    },
     {
         name = "HAWK AA System",
         count = 4,
         parts = {
-            {name = "Hawk sr", desc = "HAWK Search Radar", wht = 811},
-            {name = "Hawk ln", desc = "HAWK Launcher", launcher = true, wht = 814},
-            {name = "Hawk tr", desc = "HAWK Track Radar", wht = 812},            
-            {name = "Hawk pcp", desc = "HAWK PCP", wht = 813},
+            {name = "Hawk sr", desc = "HAWK Search Radar", wht = 910},
+            {name = "Hawk ln", desc = "HAWK Launcher", launcher = true, wht = 908},
+            {name = "Hawk tr", desc = "HAWK Track Radar", wht = 912},            
+            {name = "Hawk pcp", desc = "HAWK PCP", wht = 914},
         },
         repair = "HAWK Repair",
     },
     {
+        name = "Roland AA System",
+        count = 2,
+        parts = {
+            {name = "Roland Radar", desc = "Roland Radar unit", wht = 918},
+            {name = "Roland ADS", desc = "Roland Launcher", launcher = true, wht = 916},
+        },
+        repair = "Roland Repair",
+    },    
+    {
         name = "BUK AA System",
         count = 3,
         parts = {
-            {name = "SA-11 Buk SR 9S18M1", desc = "BUK Search Radar", wht = 608},
-            {name = "SA-11 Buk LN 9A310M1", desc = "BUK Launcher" , launcher = true, wht = 609},
-            {name = "SA-11 Buk CC 9S470M1", desc = "BUK CC Radar", wht = 611},            
+            {name = "SA-11 Buk SR 9S18M1", desc = "BUK Search Radar", wht = 907},
+            {name = "SA-11 Buk LN 9A310M1", desc = "BUK Launcher" , launcher = true, wht = 905},
+            {name = "SA-11 Buk CC 9S470M1", desc = "BUK CC Radar", wht = 909},            
         },
         repair = "BUK Repair",
     },
@@ -33687,8 +33981,8 @@ TRPS.specificTemplate = {
         name = "KUB AA System",
         count = 2,
         parts = {
-            {name = "Kub 1S91 str", desc = "KUB Radar", wht = 606},
-            {name = "Kub 2P25 ln", desc = "KUB Launcher", launcher = true, wht = 607},
+            {name = "Kub 1S91 str", desc = "KUB Radar", wht = 903},
+            {name = "Kub 2P25 ln", desc = "KUB Launcher", launcher = true, wht = 901},
         },
         repair = "KUB Repair",
     },
@@ -33696,22 +33990,72 @@ TRPS.specificTemplate = {
         name = "FARP_red",
         count = 4,
         parts = {
-            {name = "Ural-375", desc = "FARP Ural Ammo", wht = 810},
-            {name = "SKP-11", desc = "FARP SKP Command", wht = 800},
-            {name = "ATZ-10", desc = "FARP ATZ Fuel", wht = 830},
-            {name = "ZiL-131 APA-80", desc = "FARP Zil Electricity", wht = 820},
+            {name = "Ural-375", desc = "FARP Ural Ammo", wht = 803},
+            {name = "SKP-11", desc = "FARP SKP Command", wht = 801},
+            {name = "ATZ-10", desc = "FARP ATZ Fuel", wht = 807},
+            {name = "ZiL-131 APA-80", desc = "FARP Zil Electricity", wht = 805},
         },
     }, 
     {
         name = "FARP_blue",
         count = 4,
         parts = {
-            {name = "Hummer", desc = "FARP HMMWV Command", wht = 805},
-            {name = "M 818", desc = "FARP M818 Ammo", wht = 815},
-            {name = "M978 HEMTT Tanker", desc = "FARP HEMTT Fuel", wht = 835},
-            {name = "HEMTT TFFT", desc = "FARP HEMTT TFFT", wht = 825},
+            {name = "Hummer", desc = "FARP HMMWV Command", wht = 802},
+            {name = "M 818", desc = "FARP M939 Ammo", wht = 804},
+            {name = "M978 HEMTT Tanker", desc = "FARP HEMTT Fuel", wht = 808},
+            {name = "HEMTT TFFT", desc = "FARP HEMTT TFFT", wht = 806},
         },
-    },    
+    },
+    {
+        name = "SA3 AA System",
+        count = 3,
+        parts = {
+            {name = "p-19 s-125 sr", desc = "P19 Radar", wht = 915},
+            {name = "snr s-125 tr", desc = "SA3 Radar Low Blow", wht = 917},
+            {name = "5p73 s-125 ln", desc = "SA3 launcher", launcher = true, wht = 919},
+        },
+        repair = "SA3 Repair",
+    },
+    {
+        name = "SA2 AA System",
+        count = 3,
+        parts = {
+            {name = "p-19 s-125 sr", desc = "P19 Radar", wht = 921},
+            {name = "SNR_75V", desc = "SA2 Radar Fan Song", wht = 923},
+            {name = "S_75M_Volhov", desc = "SA2 launcher", launcher = true, wht = 925},
+        },
+        repair = "SA2 Repair",
+    },
+    {
+        name = "S300 AA System",
+        count = 6,
+        parts = {
+            {name = "S-300PS 40B6MD sr", desc = "S300 Search radar 40B6MD", wht = 1801},
+            {name = "S-300PS 64H6E sr", desc = "S300 Search radar 64H6E", wht = 1803},
+            {name = "S-300PS 40B6M tr", desc = "S300 Track radar 40B6M", wht = 1805},
+            {name = "S-300PS 54K6 cp", desc = "S300 C2 unit", wht = 1807},
+            {name = "S-300PS 5P85D ln", desc = "S300 Launcher 5P85D", launcher = true, wht = 1811},
+            {name = "S-300PS 5P85C ln", desc = "S300 Launcher 5P85C", wht = 1809},
+            --{name = "Ural-4320T", desc = "S300 Ural rearm truck ", wht = 1813},
+        },
+        repair = "S300 Repair",
+        longrange= true
+    },
+    {
+        name = "Patriot AA System",
+        count = 6,
+        parts = {
+            {name = "Patriot str", desc = "Patriot Radar SR TR", wht = 1802},
+            {name = "Patriot ECS", desc = "Patriot ECS CC unit", wht = 1804},
+            {name = "Patriot AMG", desc = "Patriot CR AMG AN MRC 137", wht = 1806},
+            {name = "Patriot cp", desc = "Patriot C2 ICC", wht = 1808},
+            {name = "Patriot EPP", desc = "Patriot EPP generator", wht = 1810},
+            {name = "Patriot ln", desc = "Patriot launcher", launcher = true, wht = 1812},
+            --{name = "M 818", desc = "Patriot rearm support M939", wht = 1814},
+        },
+        repair = "Patriot Repair",
+        longrange= true
+    },
 }
 
 TRPS.crateWait = {} 
@@ -34667,6 +35011,35 @@ end
 function TRPS.generateTroopTypes(_side, _countOrTemplate, _country)
 
     local _troops = {}
+    local smb = TRPS.soldierModelBlue
+    local smr = TRPS.soldierModelRed
+
+    --modify arab
+    if _country == 2 or _country == 16 or _country == 20 then
+        smb = TRPS.soldierModelBlue
+        smr = TRPS.soldierModelBlue        
+    elseif _country == 0 or _country == 1 or _country == 19 then
+        smb = TRPS.soldierModelRed
+        smr = TRPS.soldierModelRed
+    elseif _country == 17 or _country == 42 or _country == 72 or _country == 74 or _country == 34 or _country == 58  or _country == 59  or _country == 48  or _country == 71 or _country == 71 or _country == 29 or _country == 47 then
+        smb = TRPS.soldierModelInsurg
+        smr = TRPS.soldierModelInsurg        
+    end
+    -- reset for wwII!
+    if TRPS.modernSet == false then
+        smb = TRPS.soldierModelBlueWWII
+        smr = TRPS.soldierModelRedWWII
+        if _country == 4 then
+            smb = TRPS.soldierModelBlueWWIIUK
+            smr = TRPS.soldierModelBlueWWIIUK
+        elseif _country == 66 then
+            smb = TRPS.soldierModelRedWWII
+            smr = TRPS.soldierModelRedWWII
+        elseif _country == 2 then
+            smb = TRPS.soldierModelBlueWWII
+            smr = TRPS.soldierModelBlueWWII
+        end
+    end
 
     if type(_countOrTemplate) == "table" then
 
@@ -34680,9 +35053,9 @@ function TRPS.generateTroopTypes(_side, _countOrTemplate, _country)
 
         if _countOrTemplate.inf then
             if _side == 2 then
-                _troops = TRPS.insertIntoTroopsArray("Soldier M4",_countOrTemplate.inf,_troops)
+                _troops = TRPS.insertIntoTroopsArray(smb,_countOrTemplate.inf,_troops)
             else
-                _troops = TRPS.insertIntoTroopsArray("Soldier AK",_countOrTemplate.inf,_troops)
+                _troops = TRPS.insertIntoTroopsArray(smr,_countOrTemplate.inf,_troops)
             end
         end
 
@@ -34701,10 +35074,10 @@ function TRPS.generateTroopTypes(_side, _countOrTemplate, _country)
     else
         for _i = 1, _countOrTemplate do
 
-            local _unitType = "Soldier AK"
+            local _unitType = smb
 
             if _side == 2 then
-                _unitType = "Soldier M4"
+                _unitType = smb
 
                 if _i <= 5 and TRPS.spawnStinger then
                     _unitType = "Stinger manpad"
@@ -34716,7 +35089,7 @@ function TRPS.generateTroopTypes(_side, _countOrTemplate, _country)
                     _unitType = "Soldier M249"
                 end
             else
-                _unitType = "Infantry AK"
+                _unitType = smr
                 if _i <= 5 and TRPS.spawnStinger then
                     _unitType = "SA-18 Igla manpad"
                 end
@@ -36163,6 +36536,8 @@ function TRPS.unpackCrates(_arguments)
                             return
                         end
                     else
+                        env.info("TRPS unpackCrates: TRPS.inLogisticsZone " .. tostring(TRPS.inLogisticsZone(_heli)))
+                        env.info("TRPS unpackCrates: TRPS.farEnoughFromLogisticZone " .. tostring(TRPS.farEnoughFromLogisticZone(_heli)))
                         if TRPS.inLogisticsZone(_heli) == true  or  TRPS.farEnoughFromLogisticZone(_heli) == false then
                             TRPS.displayMessageToGroup(_heli, "You can't unpack that here! Take it to where it's needed!", 20)
                             return
@@ -36906,8 +37281,9 @@ function TRPS.unpackTemplate(_heli, _nearestCrate, _nearbyCrates, _CustomTemplat
 
     -- are there all the pieces close enough together
     local _systemParts = {}
-
+    local _longRange = _CustomTemplate.longrange
     --initialise list of parts
+
     for _,_part in pairs(_CustomTemplate.parts) do
         _systemParts[_part.name] = {name = _part.name, desc = _part.desc, found = false, ln = _part.launcher}
         env.info(ModuleName .. " unpackTemplate: _systemParts added " .. tostring(_part.name))
@@ -36954,6 +37330,11 @@ function TRPS.unpackTemplate(_heli, _nearestCrate, _nearbyCrates, _CustomTemplat
     local _typeArray = {}
 
     env.info(ModuleName .. " unpackTemplate: _lnPart: " .. tostring(_lnPart))
+    if _longRange == true then
+        if _lnPart < 6 then
+            _txt = _txt .. "insufficient launchers for long range sam, required at least 6 launcher crates"
+        end
+    end
 
     for _name, _systemPart in pairs(_systemParts) do
         env.info(ModuleName .. " unpackTemplate: _systemPart: adding _name " .. tostring(_name))
@@ -36969,14 +37350,19 @@ function TRPS.unpackTemplate(_heli, _nearestCrate, _nearbyCrates, _CustomTemplat
             if (_launcherPart == _name and TRPS.aaLaunchers  > 1) then
 
                 --add multiple launcher
-                local _launchers = TRPS.aaLaunchers + _lnPart - 1
+                local _launchers = nil
+                if _longRange == true then
+                    _launchers = _lnPart
+                else
+                    _launchers = TRPS.aaLaunchers + _lnPart - 1
+                end
 
                 for _i = 1, _launchers do
 
                     -- spawn in a circle around the crate
                     local _angle = math.pi * 2 * (_i - 1) / _launchers
-                    local _xOffset = math.cos(_angle) * 12
-                    local _yOffset = math.sin(_angle) * 12
+                    local _xOffset = math.cos(_angle) * 20
+                    local _yOffset = math.sin(_angle) * 20
 
                     local _point = _systemPart.crate.crateUnit:getPoint()
 
@@ -38359,7 +38745,7 @@ function TRPS.addF10MenuOptions()
 
                         local _rootPath = missionCommands.addSubMenuForGroup(_groupId, _menuCode, {"DSMC"})
                         local _unitActions = TRPS.getUnitActions(_unit:getTypeName())
-                        env.info(ModuleName .. " addF10MenuOptions _rootPath: " .. tostring(_rootPath))
+                        --env.info(ModuleName .. " addF10MenuOptions _rootPath: " .. tostring(_rootPath))
 
                         if _unitActions.troops then
                             --env.info(ModuleName .. " addF10MenuOptions _unitActions.troops ok for " .. tostring(_unitName))
@@ -38450,10 +38836,13 @@ function TRPS.addF10MenuOptions()
                                     
                                     for _category, _catData in pairs(TRPS.spawnableCrates) do
 
-                                        local uCoa = _unit:getCoalition()
+                                       local uCoa = _unit:getCoalition()
                                         if uCoa then
                                             local uCheck = ""
                                             local check = false
+
+                                            --env.info(ModuleName .. " addF10MenuOptions _category: " .. tostring(_category))
+
                                             if _category == "Constructible" then
                                                 if uCoa == 2 then
                                                     uCheck = "blue"
@@ -38470,6 +38859,8 @@ function TRPS.addF10MenuOptions()
                                                 check = true
                                             end
 
+                                            --env.info(ModuleName .. " addF10MenuOptions check: " .. tostring(check))
+
                                             if check == true then
 
 
@@ -38477,35 +38868,48 @@ function TRPS.addF10MenuOptions()
                                                 local _consPath = missionCommands.addSubMenuForGroup(_groupId, _consCode, _rootPath)   
                                                 --dumpTable("TRPS._catData.lua", _catData)
 
-                                                for _subMenuName, _crates in pairs(_catData) do
 
-                                                    local _cratePath = missionCommands.addSubMenuForGroup(_groupId, _subMenuName, _consPath)
+                                                for _subMenuName, _subCatData in pairs(_catData) do
+
+                                                    local _subCatPath = missionCommands.addSubMenuForGroup(_groupId, _subMenuName, _consPath)
+                                                    --env.info(ModuleName .. " addF10MenuOptions _subMenuName: " .. tostring(_subMenuName))
+
                                                     --dumpTable("TRPS._crates.lua", _crates)
-                                                    for _, _crate in pairs(_crates) do
-                                                        if _crate.unit then
-                                                            if TRPS.isJTACUnitType(_crate.unit) == false
-                                                                    or (TRPS.isJTACUnitType(_crate.unit) == true and TRPS.JTAC_dropEnabled) then
-                                                                if _crate.side == nil or (_crate.side == _unit:getCoalition()) then
-                                                                    if _crate.country == nil or (string.lower(_crate.country) == string.lower(country.name[_unit:getCountry()])) then
-                                                                        local _crateRadioMsg = _crate.desc
 
-                                                                        --add in the number of crates required to build something
-                                                                        if _crate.cratesRequired ~= nil and _crate.cratesRequired > 1 then
-                                                                            _crateRadioMsg = _crateRadioMsg.." (".._crate.cratesRequired..")"
+                                                    for _subSubMenuName, _crates in pairs(_subCatData) do
+                                                        local _cratePath = missionCommands.addSubMenuForGroup(_groupId, _subSubMenuName, _subCatPath)
+                                                        env.info(ModuleName .. " addF10MenuOptions _subSubMenuName: " .. tostring(_subSubMenuName))
+
+                                                        for _, _crate in pairs(_crates) do
+                                                            if _crate.unit then
+                                                                env.info(ModuleName .. " addF10MenuOptions _crate.unit: " .. tostring(_crate.unit))
+
+                                                                if TRPS.isJTACUnitType(_crate.unit) == false
+                                                                        or (TRPS.isJTACUnitType(_crate.unit) == true and TRPS.JTAC_dropEnabled) then
+                                                                    if _crate.side == nil or (_crate.side == _unit:getCoalition()) then
+                                                                        if _crate.country == nil or (string.lower(_crate.country) == string.lower(country.name[_unit:getCountry()])) then
+                                                                            local _crateRadioMsg = _crate.desc
+
+                                                                            --add in the number of crates required to build something
+                                                                            if _crate.cratesRequired ~= nil and _crate.cratesRequired > 1 then
+                                                                                _crateRadioMsg = _crateRadioMsg.." (".._crate.cratesRequired..")"
+                                                                            end
+
+                                                                            --env.info(ModuleName .. " addF10MenuOptions added command 7 for " .. tostring(_unitName) .. ", _crate.weight: " .. tostring(_crate.weight))
+                                                                            missionCommands.addCommandForGroup(_groupId,_crateRadioMsg, _cratePath, TRPS.spawnCrate, { _unitName, _crate.weight })
+                                                                            
                                                                         end
-
-                                                                        --env.info(ModuleName .. " addF10MenuOptions added command 7 for " .. tostring(_unitName) .. ", _crate.weight: " .. tostring(_crate.weight))
-                                                                        missionCommands.addCommandForGroup(_groupId,_crateRadioMsg, _cratePath, TRPS.spawnCrate, { _unitName, _crate.weight })
-                                                                        
                                                                     end
                                                                 end
                                                             end
                                                         end
+
                                                     end
-                                                    
                                                 end
+
                                             end
-                                        end
+                                        end 
+
                                     end
                                 end
 
@@ -40593,23 +40997,29 @@ end
 
 -- create crate lookup table
 for cCat, cTable in pairs(TRPS.spawnableCrates) do 
-    for _subMenuName, _crates in pairs(cTable) do
-        for _, _crate in pairs(_crates) do
-            -- convert number to string otherwise we'll have a pointless giant
-            -- table. String means 'hashmap' so it will only contain the right number of elements
-            TRPS.crateLookupTable[tostring(_crate.weight)] = _crate
+    for _subCatData, scTable in pairs(cTable) do
+        for _subSubCat, _crates in pairs(scTable) do
+            for _, _crate in pairs(_crates) do
+                -- convert number to string otherwise we'll have a pointless giant
+                -- table. String means 'hashmap' so it will only contain the right number of elements
+                TRPS.crateLookupTable[tostring(_crate.weight)] = _crate
+            end
         end
     end
 end
+--[[
 for cCat, cTable in pairs(TRPS.spawnableCrates) do 
-    for _subMenuName, _crates in pairs(cTable) do
-        for _, _crate in pairs(_crates) do
-            -- convert number to string otherwise we'll have a pointless giant
-            -- table. String means 'hashmap' so it will only contain the right number of elements
-            TRPS.crateLookupTable[tostring(_crate.weight)] = _crate
+    for _subMenuName, scTable in pairs(cTable) do
+        for _subSubMenuName, _crates in pairs(scTable) do
+            for _, _crate in pairs(_crates) do
+                -- convert number to string otherwise we'll have a pointless giant
+                -- table. String means 'hashmap' so it will only contain the right number of elements
+                TRPS.crateLookupTable[tostring(_crate.weight)] = _crate
+            end
         end
     end
 end
+--]]--
 
 -- Search for crates
 -- Crates are NOT returned by coalition.getStaticObjects() for some reason
