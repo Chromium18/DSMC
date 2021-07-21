@@ -32565,9 +32565,9 @@ TRPS.spawnableCrates = {
 
 TRPS.samSystems = {
     -- NASAMS System
-    { weight = 916, desc = "NASAMS Launcher", unit = "NASAMS_LN_C", side = 2, isLauncher = true},
-    { weight = 918, desc = "NASAMS Radar", unit = "NASAMS_Radar_MPQ64F1", side = 2},
-    { weight = 920, desc = "NASAMS C2", unit = "NASAMS_Command_Post", side = 2},
+    { weight = 916, desc = "NASAMS Launcher", unit = "NASAMS_LN_C", isLauncher = true},
+    { weight = 918, desc = "NASAMS Radar", unit = "NASAMS_Radar_MPQ64F1"},
+    { weight = 920, desc = "NASAMS C2", unit = "NASAMS_Command_Post"},
 
     -- RAPIER System
     ["Rapier System"] = {
