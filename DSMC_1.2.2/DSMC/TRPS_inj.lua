@@ -32565,10 +32565,11 @@ TRPS.spawnableCrates = {
 
 TRPS.samSystems = {
     -- NASAMS System
-    { weight = 916, desc = "NASAMS Launcher", unit = "NASAMS_LN_C", isLauncher = true},
-    { weight = 918, desc = "NASAMS Radar", unit = "NASAMS_Radar_MPQ64F1"},
-    { weight = 920, desc = "NASAMS C2", unit = "NASAMS_Command_Post"},
-
+    ["NASAMS System"] = {
+        { weight = 916, desc = "NASAMS Launcher", unit = "NASAMS_LN_C", isLauncher = true},
+        { weight = 918, desc = "NASAMS Radar", unit = "NASAMS_Radar_MPQ64F1"},
+        { weight = 920, desc = "NASAMS C2", unit = "NASAMS_Command_Post"},
+    },
     -- RAPIER System
     ["Rapier System"] = {
         { weight = 902, desc = "Rapier Launcher", unit = "rapier_fsa_launcher", isLauncher = true},
@@ -32684,21 +32685,23 @@ if TRPS.ctryList and #TRPS.ctryList > 0 then
         local isBlue = 0
         local numCheck = #sysData
         for _, stbl in pairs(sysData) do
-            local model = stbl.unit
-            env.info((ModuleName .. ": checking SAM unit " .. tostring(model)))
-            if model then
-                for obj, objData in pairs(TRPS.dbYears) do            
-                    if obj == model then
-                        for cName, cData in pairs(objData) do
-                            if missionYear <= cData.yEnd and missionYear >= cData.yStart then
-                                for _, ctData in pairs(TRPS.ctryList) do
-                                    if cName == ctData.n then
-                                        if ctData.s == 1 then
-                                            isRed = isRed + 1
-                                            env.info((ModuleName .. ": defined isRed"))
-                                        elseif ctData.s == 2 then
-                                            isBlue = isBlue + 1
-                                            env.info((ModuleName .. ": defined isRed"))
+            if stbl then
+                local model = stbl.unit
+                env.info((ModuleName .. ": checking SAM unit " .. tostring(model)))
+                if model then
+                    for obj, objData in pairs(TRPS.dbYears) do            
+                        if obj == model then
+                            for cName, cData in pairs(objData) do
+                                if missionYear <= cData.yEnd and missionYear >= cData.yStart then
+                                    for _, ctData in pairs(TRPS.ctryList) do
+                                        if cName == ctData.n then
+                                            if ctData.s == 1 then
+                                                isRed = isRed + 1
+                                                env.info((ModuleName .. ": defined isRed"))
+                                            elseif ctData.s == 2 then
+                                                isBlue = isBlue + 1
+                                                env.info((ModuleName .. ": defined isRed"))
+                                            end
                                         end
                                     end
                                 end

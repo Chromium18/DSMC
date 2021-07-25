@@ -35,8 +35,8 @@ package.path =
 DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "2"
-DSMC_Build 			= "1579"
-DSMC_Date			= "13/07/2021"
+DSMC_Build 			= "1601"
+DSMC_Date			= "22/07/2021"
 
 -- ## DEBUG TO TEXT FUNCTION
 debugProcess	= true -- this should be left on for testers normal ops and test missions
@@ -419,7 +419,6 @@ function loadDSMCHooks()
 		return
 	end
 
-	--UTIL.saveTable("dByearsNew", _G.dbYears, DSMCdirectory)
 end
 loadDSMCHooks()
 
@@ -528,7 +527,7 @@ end
 function startDSMCprocess()
 	if UTIL and SAVE then
 
-		
+		--UTIL.dumpTable("nightlyGa.lua", _G)
 
 		--## CHECKING MIZ FILENAME, IF NOT DMSCyourfilename THEN STOP
 		loadedMizFileName = DCS.getMissionName()
@@ -1126,7 +1125,6 @@ function DSMC.onTriggerMessage(message)
 
 	elseif message == "DSMC save..." then			
 		--command save actions
-		
 		batchSaveProcess()
 
 	elseif message == "DSMC is trying to restart the server! land or disconnect as soon as you can: DSMC will try again in 10 minutes" then			

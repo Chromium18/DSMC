@@ -285,6 +285,7 @@ function killUnits(missionEnv)
 	end
 	
 	-- kill units
+	--UTIL.dumpTable("tblToBeKilled.lua", tblToBeKilled)
 	for _, kData in pairs(tblToBeKilled) do	
 		for coalitionID,coalition in pairs(missionEnv["coalition"]) do
 			for countryID,country in pairs(coalition["country"]) do
@@ -312,7 +313,41 @@ function killUnits(missionEnv)
 											else										
 												HOOK.writeDebugDetail(ModuleName .. ": killUnits unit " .. tostring(unitID) .. " is not alive, removing unit table")									
 
+												-- fix group position
+												if unitID == 1 then
+													for uID, u in pairs(group["units"]) do
+														if uID == 2 then
+															group["x"] = u["x"];
+															group["y"] = u["y"];
+															HOOK.writeDebugDetail(ModuleName .. ": killUnits updated group position")
+
+															group.route.points[1]["x"] = u["x"];
+															group.route.points[1]["y"] = u["y"];
+
+															HOOK.writeDebugDetail(ModuleName .. ": killUnits updated group route")
+															group.route.spans = {
+																					[1] = 
+																					{
+																						[1] = 
+																						{
+																							["y"] = u["y"],
+																							["x"] = u["x"],
+																						}, -- end of [1]
+																						[2] = 
+																						{
+																							["y"] = u["y"]+0.0001,
+																							["x"] = u["x"]+0.0001,
+																						}, -- end of [2]
+																					}, -- end of [1]													
+																				} -- end of ["spans"]
+															HOOK.writeDebugDetail(ModuleName .. ": killUnits updated group spans")
+														end
+													end
+												end
+
 												table.remove(group.units, unitID);
+												--group.units[unitID] = nil
+
 												HOOK.writeDebugDetail(ModuleName .. ": killUnits killed unit. table.getn(group.units): " .. tostring(table.getn(group.units)))
 												if table.getn(group.units) < 1 then -- next(group.units) == nil
 													table.remove(attr.group, groupID)
@@ -412,19 +447,20 @@ function updateUnits(missionEnv)
 																							["x"] = unit["x"]+0.0001,
 																						}, -- end of [2]
 																					}, -- end of [1]													
-																				}, -- end of ["spans"]
+																				} -- end of ["spans"]
 															HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 spans")												
 														end
 														
 														for id, pointData in pairs (group.route.points) do
 															if id > 1 then
-																table.remove(group.route.points, id);
+																--table.remove(group.route.points, id);
+																group.route.points[id] = nil
 															end
 														end
 														
-														if group.route.spans then
-															group.route.spans = nil 
-														end
+														--if group.route.spans then
+														--	group.route.spans = nil 
+														--end
 														HOOK.writeDebugDetail(ModuleName .. ": updateUnits unit updated")
 														unitsUpdateNumber = unitsUpdateNumber + 1
 													end
@@ -463,7 +499,8 @@ function updateUnits(missionEnv)
 														unit["x"] = updatedData.x;
 														unit["y"] = updatedData.z;
 
-														if unitID == 1 then  -- try to fix ME stuff
+														if unitID == 1 then  -- try to fix ME stuff -- QUESTO VA AGGIORNATO!!!!
+
 															group["x"] = unit["x"];
 															group["y"] = unit["y"];
 															HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 position")
@@ -486,7 +523,7 @@ function updateUnits(missionEnv)
 																							["x"] = unit["x"]+0.0001,
 																						}, -- end of [2]
 																					}, -- end of [1]													
-																				}, -- end of ["spans"]
+																				} -- end of ["spans"]
 															HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 spans")													
 														end
 														
@@ -507,6 +544,7 @@ function updateUnits(missionEnv)
 										end
 									end
 								end
+
 							end
 						end				
 					end
