@@ -914,57 +914,6 @@ function loadtables()
 	--]]--
 end
 
---[[ function update serversettings.lua to enter saved mission as 1st
-function makefirstmission(missionPath)
-	if (DCS_Multy and DCS_Server) or DSMC_isRecovering == true then -- only server mode
-		local future_file_path = getNewMizFile(loadedMissionPath)
-		if future_file_path then -- a mission file was found
-			writeDebugDetail(DSMC_ModuleName .. ": makefirstmission future_file_path = " .. tostring(future_file_path))
-			UTIL.copyFile(SAVE.NewMizPath, future_file_path)			
-			local serSettingPath = configfilesdirectory .. "serverSettings.lua"
-			if UTIL.fileExist(serSettingPath) then
-				local serSettingString = nil
-				if serSettingPath then
-					local f = io.open(serSettingPath, 'r')
-					if f then
-						serSettingString = f:read('*all')
-						f:close()
-					end
-				end		
-				
-				local changed = false
-				local serEnv = {}
-				if serSettingString then
-					local sResFun, sErrStr 	= loadstring(serSettingString);
-					
-					if sResFun then
-						setfenv(sResFun, serEnv)
-						sResFun()								
-						UTIL.dumpTable("serEnv.cfg.lua", serEnv.cfg)
-						if serEnv.cfg then
-							serEnv.cfg["missionList"][1] = future_file_path
-							serEnv.cfg["current"] = 1
-							writeDebugDetail(DSMC_ModuleName .. ": makefirstmission serSetting modified")
-						end
-					end
-				end
-				local outFile = io.open(serSettingPath, "w");
-				local newSrvConfigStr = UTIL.IntegratedserializeWithCycles('cfg', serEnv.cfg);
-				outFile:write(newSrvConfigStr);
-				io.close(outFile);
-			end			
-		end
-		local stringOK = "trigger.action.outText('setup done!', 5)"
-		if DSMC_isRecovering == false then
-			UTIL.inJectCode("stringOK", stringOK)
-		end
-		DSMC_isRecovering = false
-	else	
-		writeDebugDetail(DSMC_ModuleName .. ": makefirstmission stopped, no multy or no server")
-	end
-end
---]]--
-
 function makefirstmission(missionPath)
 	if missionPath then -- only server mode
 		local future_file_path = missionPath
@@ -991,9 +940,14 @@ function makefirstmission(missionPath)
 						sResFun()								
 						UTIL.dumpTable("serEnv.cfg.lua", serEnv.cfg)
 						if serEnv.cfg then
-							serEnv.cfg["missionList"][1] = future_file_path
-							serEnv.cfg["current"] = 1
-							writeDebugDetail(DSMC_ModuleName .. ": makefirstmission serSetting modified")
+							local mizList = serEnv.cfg["missionList"]
+							if #mizList == 1 then
+								serEnv.cfg["missionList"][1] = future_file_path
+								serEnv.cfg["current"] = 1
+								writeDebugDetail(DSMC_ModuleName .. ": makefirstmission serSetting modified")
+							else
+								writeDebugBase(DSMC_ModuleName .. ": WARNING: mission list is made by more than 1 mission: DSMC won't update mission list with recently saved file!")
+							end
 						end
 					end
 				end
