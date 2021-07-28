@@ -9,6 +9,7 @@ io 							= require('io')
 lfs 						= require('lfs')
 os 							= require('os')
 minizip 					= require('minizip')
+local lang					= require('i18n')
 DSMCdir						= lfs.writedir() .. "DSMC/"
 DSOdir						= lfs.writedir()
 
@@ -1190,6 +1191,10 @@ if UTIL then
 	--UTIL.dumpTable("DB.db.Units.Helicopters.Helicopter.lua", DB.db.Units.Helicopters.Helicopter) 
 
 end
+
+
+local language, langCountry = lang.getLocale()
+writeDebugDetail(DSMC_ModuleName .. ": language = " .. tostring(language) .. ", langCountry = " .. tostring(langCountry))
 
 writeDebugBase(DSMC_DSMC_ModuleName .. ": Loaded " .. DSMC_MainVersion .. "." .. DSMC_SubVersion .. "." .. DSMC_Build .. ", released " .. DSMC_Date)
 
