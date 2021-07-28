@@ -234,7 +234,7 @@ function loadDSMCHooks()
 	DCSR_var							= opt_DCSR_var or DSMC_automated_CSAR
 	DCSR_setup_var						= DSMC_DCSR_useCoalitionMessages
 	DCSR_setup2_var						= DSMC_DCSR_clientPilotOnly
-	GOAP_var							= true -- opt_GOAP_var or DSMC_AutomaticAI
+	GOAP_var							= false -- opt_GOAP_var or DSMC_AutomaticAI
 
 	-- debug call
 	debugProcessDetail = DEBUG_var
