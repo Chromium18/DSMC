@@ -2095,6 +2095,11 @@ end
 EMBD.setDestroyedObjectAtStart = function()
 	local function fxc()
 		trigger.action.setUserFlag("12345" , true )
+		local function resetFlag()
+			trigger.action.setUserFlag("12345" , false )
+			env.info(("EMBD.sceneryDestroyRefresh is a client, flag reset done"))
+		end
+		timer.scheduleFunction(resetFlag, {}, timer.getTime() + 1)
 	end
 	timer.scheduleFunction(fxc, {}, timer.getTime() + 1)
 end
