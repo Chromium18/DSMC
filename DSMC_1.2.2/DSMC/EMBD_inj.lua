@@ -2090,7 +2090,16 @@ EMBD.scheduleAutosave = function()
 	end
 	timer.scheduleFunction(EMBD.scheduleAutosave, {}, timer.getTime() + tonumber(DSMC_autosavefrequency))
 end
-	
+
+
+EMBD.setDestroyedObjectAtStart = function()
+	local function fxc()
+		trigger.action.setUserFlag("12345" , true )
+	end
+	timer.scheduleFunction(fxc, {}, timer.getTime() + 1)
+end
+EMBD.setDestroyedObjectAtStart()
+
 --### SET FUNCTIONS
 
 --check vars for debug

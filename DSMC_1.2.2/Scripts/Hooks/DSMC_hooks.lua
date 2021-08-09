@@ -942,12 +942,17 @@ function makefirstmission(missionPath)
 						UTIL.dumpTable("serEnv.cfg.lua", serEnv.cfg)
 						if serEnv.cfg then
 							local mizList = serEnv.cfg["missionList"]
-							if #mizList == 1 then
+							if #mizList < 2 then
 								serEnv.cfg["missionList"][1] = future_file_path
 								serEnv.cfg["current"] = 1
 								writeDebugDetail(DSMC_ModuleName .. ": makefirstmission serSetting modified")
 							else
-								writeDebugBase(DSMC_ModuleName .. ": WARNING: mission list is made by more than 1 mission: DSMC won't update mission list with recently saved file!")
+								writeDebugBase(DSMC_ModuleName .. ": WARNING: mission list is made by more than 1 mission: DSMC will remove all the other entries")
+								for mId, mData in pairs(serEnv.cfg["missionList"]) do
+									if mId > 1 then
+										serEnv.cfg["missionList"][mId] = nil
+									end
+								end
 							end
 						end
 					end
@@ -1196,6 +1201,6 @@ end
 local language, langCountry = lang.getLocale()
 writeDebugDetail(DSMC_ModuleName .. ": language = " .. tostring(language) .. ", langCountry = " .. tostring(langCountry))
 
-writeDebugBase(DSMC_DSMC_ModuleName .. ": Loaded " .. DSMC_MainVersion .. "." .. DSMC_SubVersion .. "." .. DSMC_Build .. ", released " .. DSMC_Date)
+writeDebugBase(DSMC_ModuleName .. ": Loaded " .. DSMC_MainVersion .. "." .. DSMC_SubVersion .. "." .. DSMC_Build .. ", released " .. DSMC_Date)
 
 --~=
