@@ -471,9 +471,10 @@ local code = [[echo Checking DCS process...
 REM this script is done to provide restart automation
 set "titleWhileRunning=DSMC_DCS_Server_Monitor"
 ]] .. "\n"
-code = code .. 'set DCS_PATH=' .. '"' .. lfs.currentdir() .. 'bin\\'     .. '"' .. "\n"
-code = code .. [[tasklist /v /fi "imagename eq cmd.exe" /fi "windowtitle eq %titleWhileRunning%" | find "%titleWhileRunning%" >NUL
-if %ERRORLEVEL% EQU 0  echo Powershell script already running, wait for it to finish. >&2 & exit /b 1
+code = code .. 'set DCS_PATH=' .. '"' .. lfs.currentdir() .. 'bin/'     .. '"' .. "\n"
+code = code .. [[for /f "tokens=2 delims=," %%a in ('
+tasklist /fi "imagename eq cmd.exe" /v /fo:csv /nh 
+^| findstr /r /c:".DSMC_DCS[^,]$" ') do echo Powershell script already running, wait for it to finish. >&2 & exit /b 1
 
 title %titleWhileRunning%
 taskkill /F /IM DCS.exe
@@ -798,7 +799,12 @@ function startDSMCprocess()
 						lfs.mkdir(DSMCtemp)
 						lfs.mkdir(DSMCfiles)
 						writeDebugDetail(DSMC_ModuleName .. ": created dir = " .. tostring(missionfilesdirectory .. "Temp/"))
-						UTIL.copyFile(loadedMissionPath, DSMCfiles .. "tempFile.miz")					
+						UTIL.copyFile(loadedMissionPath, DSMCfiles .. "tempFile.miz")		
+						
+						local tmpSlots = DCS.getAvailableSlots("blue")
+						UTIL.dumpTable("slotsData.lua", tmpSlots)
+
+
 						
 						if STOP_var or STOP_var then
 							if RSTS_var then

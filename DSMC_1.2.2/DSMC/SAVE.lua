@@ -420,49 +420,62 @@ function updateUnits(missionEnv)
 											if group and unit then
 												HOOK.writeDebugDetail(ModuleName .. ": updateUnits updating unit")
 												for id, updatedData in pairs (tblUnitsUpdate) do
-													if tonumber(updatedData.unitId) == tonumber(unit.unitId) then										
-														unit["x"] = updatedData.x;
-														unit["y"] = updatedData.z;
+													if tonumber(updatedData.unitId) == tonumber(unit.unitId) then
+														
+														local posChanged = false
+														if math.floor(unit["x"]) ~= math.floor(updatedData.x) or math.floor(unit["y"]) ~= math.floor(updatedData.z) then
+															HOOK.writeDebugDetail(ModuleName .. ": updateUnits position is changed: x = " .. tostring(unit["x"]) .. ", new x = " .. tostring(updatedData.x))
+															posChanged = true
+														end
+														if posChanged == true then
+															if group["lateActivation"] == true then
+																HOOK.writeDebugDetail(ModuleName .. ": updateUnits unit was late activation, removing the option")
+																group["lateActivation"] = nil
+															end
+														
+															unit["x"] = updatedData.x;
+															unit["y"] = updatedData.z;
 
-														if unitID == 1 then  -- try to fix ME stuff
-															group["x"] = unit["x"];
-															group["y"] = unit["y"];
-															HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 position")
+															if unitID == 1 then  -- try to fix ME stuff
+																group["x"] = unit["x"];
+																group["y"] = unit["y"];
+																HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 position")
 
-															group.route.points[1]["x"] = unit["x"];
-															group.route.points[1]["y"] = unit["y"];
+																group.route.points[1]["x"] = unit["x"];
+																group.route.points[1]["y"] = unit["y"];
 
-															HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 route")
-															group.route.spans = {
-																					[1] = 
-																					{
+																HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 route")
+																group.route.spans = {
 																						[1] = 
 																						{
-																							["y"] = unit["y"],
-																							["x"] = unit["x"],
-																						}, -- end of [1]
-																						[2] = 
-																						{
-																							["y"] = unit["y"]+0.0001,
-																							["x"] = unit["x"]+0.0001,
-																						}, -- end of [2]
-																					}, -- end of [1]													
-																				} -- end of ["spans"]
-															HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 spans")												
-														end
-														
-														for id, pointData in pairs (group.route.points) do
-															if id > 1 then
-																--table.remove(group.route.points, id);
-																group.route.points[id] = nil
+																							[1] = 
+																							{
+																								["y"] = unit["y"],
+																								["x"] = unit["x"],
+																							}, -- end of [1]
+																							[2] = 
+																							{
+																								["y"] = unit["y"]+0.0001,
+																								["x"] = unit["x"]+0.0001,
+																							}, -- end of [2]
+																						}, -- end of [1]													
+																					} -- end of ["spans"]
+																HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 spans")												
 															end
+															
+															for id, pointData in pairs (group.route.points) do
+																if id > 1 then
+																	--table.remove(group.route.points, id);
+																	group.route.points[id] = nil
+																end
+															end
+															
+															--if group.route.spans then
+															--	group.route.spans = nil 
+															--end
+															HOOK.writeDebugDetail(ModuleName .. ": updateUnits unit updated")
+															unitsUpdateNumber = unitsUpdateNumber + 1
 														end
-														
-														--if group.route.spans then
-														--	group.route.spans = nil 
-														--end
-														HOOK.writeDebugDetail(ModuleName .. ": updateUnits unit updated")
-														unitsUpdateNumber = unitsUpdateNumber + 1
 													end
 												end												
 											end
@@ -496,48 +509,62 @@ function updateUnits(missionEnv)
 												if tonumber(updatedData.unitId) == tonumber(unit.unitId) then	
 													HOOK.writeDebugDetail(ModuleName .. ": updateUnits updating unit: found update data ")							
 													if updatedData.aircraft == false then
-														unit["x"] = updatedData.x;
-														unit["y"] = updatedData.z;
+													
+														local posChanged = false
+														if math.floor(unit["x"]) ~= math.floor(updatedData.x) or math.floor(unit["y"]) ~= math.floor(updatedData.z) then
+															HOOK.writeDebugDetail(ModuleName .. ": updateUnits position is changed: x = " .. tostring(unit["x"]) .. ", new x = " .. tostring(updatedData.x))
+															posChanged = true
+														end
+														if posChanged == true then
+															if group["lateActivation"] == true then
+																HOOK.writeDebugDetail(ModuleName .. ": updateUnits unit was late activation, removing the option")
+																group["lateActivation"] = nil
+															end
 
-														if unitID == 1 then  -- try to fix ME stuff -- QUESTO VA AGGIORNATO!!!!
+														
+															unit["x"] = updatedData.x;
+															unit["y"] = updatedData.z;
 
-															group["x"] = unit["x"];
-															group["y"] = unit["y"];
-															HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 position")
+															if unitID == 1 then  -- try to fix ME stuff -- QUESTO VA AGGIORNATO!!!!
 
-															group.route.points[1]["x"] = unit["x"];
-															group.route.points[1]["y"] = unit["y"];
+																group["x"] = unit["x"];
+																group["y"] = unit["y"];
+																HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 position")
 
-															HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 route")
-															group.route.spans = {
-																					[1] = 
-																					{
+																group.route.points[1]["x"] = unit["x"];
+																group.route.points[1]["y"] = unit["y"];
+
+																HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 route")
+																group.route.spans = {
 																						[1] = 
 																						{
-																							["y"] = unit["y"],
-																							["x"] = unit["x"],
-																						}, -- end of [1]
-																						[2] = 
-																						{
-																							["y"] = unit["y"]+0.0001,
-																							["x"] = unit["x"]+0.0001,
-																						}, -- end of [2]
-																					}, -- end of [1]													
-																				} -- end of ["spans"]
-															HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 spans")													
-														end
-														
-														for id, pointData in pairs (group.route.points) do
-															if id > 1 then
-																table.remove(group.route.points, id);
+																							[1] = 
+																							{
+																								["y"] = unit["y"],
+																								["x"] = unit["x"],
+																							}, -- end of [1]
+																							[2] = 
+																							{
+																								["y"] = unit["y"]+0.0001,
+																								["x"] = unit["x"]+0.0001,
+																							}, -- end of [2]
+																						}, -- end of [1]													
+																					} -- end of ["spans"]
+																HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 spans")													
 															end
+															
+															for id, pointData in pairs (group.route.points) do
+																if id > 1 then
+																	table.remove(group.route.points, id);
+																end
+															end
+															
+															--if group.route.spans then
+															--	group.route.spans = nil 
+															--end
+															HOOK.writeDebugDetail(ModuleName .. ": updateUnits unit updated")
+															unitsUpdateNumber = unitsUpdateNumber + 1
 														end
-														
-														--if group.route.spans then
-														--	group.route.spans = nil 
-														--end
-														HOOK.writeDebugDetail(ModuleName .. ": updateUnits unit updated")
-														unitsUpdateNumber = unitsUpdateNumber + 1
 													end
 												end
 											end												

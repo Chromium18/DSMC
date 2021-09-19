@@ -32395,6 +32395,7 @@ TRPS.unitLoadLimits = {
 	["SA342Minigun"] = 4,
 	["Ka-50"] = 0,
     ["Mi-24P"] = 8, -- check if ok
+    ["AH-64D_apache"] = 0, -- check if ok
 }
 
 -- ************** Allowable actions for UNIT TYPES ******************
@@ -32418,7 +32419,7 @@ TRPS.unitActions = {
     --["SA342L"] = {crates=false, troops=true},
     --["SA342M"] = {crates=false, troops=true},
     ["Ka-50"] = {crates=true, troops=false},
-
+    ["AH-64D_apache"] = {crates=true, troops=false},
 }
 
 -- ************** INFANTRY GROUPS FOR PICKUP ******************
@@ -32587,8 +32588,8 @@ TRPS.samSystems = {
 
     -- ROLAND SYSTEM
     ["Roland System"] = {
-        { weight = 916, desc = "Roland Launcher", unit = "Roland ADS", isLauncher = true},
-        { weight = 918, desc = "Roland Radar unit", unit = "Roland Radar"},
+        { weight = 922, desc = "Roland Launcher", unit = "Roland ADS", isLauncher = true},
+        { weight = 924, desc = "Roland Radar unit", unit = "Roland Radar"},
     },
 
     -- KUB SYSTEM
@@ -32623,6 +32624,13 @@ TRPS.samSystems = {
         { weight = 923, desc = "SA2 Radar Fan Song", unit = "SNR_75V"},
         { weight = 925, desc = "SA2 launcher", unit = "S_75M_Volhov", isLauncher = true},
     },      
+    
+    -- SA5 SYSTEM
+    ["S-200 System"] = {  
+        { weight = 927, desc = "S-200 Tin shield Search radar", unit = "RLS_19J6"},
+        { weight = 929, desc = "S-200 Square Pair Track radar", unit = "RPC_5N62V"},
+        { weight = 931, desc = "S-200 SA5 launcher", unit = "S-200_Launcher", isLauncher = true},
+    }, 
 
     -- WWII
     ["Radar System"] = {  
@@ -34025,6 +34033,16 @@ TRPS.specificTemplate = {
             {name = "S_75M_Volhov", desc = "SA2 launcher", launcher = true, wht = 925},
         },
         repair = "SA2 Repair",
+    },
+    {
+        name = "S200 AA System",
+        count = 3,
+        parts = {
+            {name = "RLS_19J6", desc = "S-200 Search radar", wht = 927},
+            {name = "RPC_5N62V", desc = "S-200 Track radar", wht = 929},
+            {name = "S-200_Launcher", desc = "S-200 launcher", launcher = true, wht = 931},
+        },
+        repair = "S200 Repair",
     },
     {
         name = "S300 AA System",

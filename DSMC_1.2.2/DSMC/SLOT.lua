@@ -228,7 +228,21 @@ local standardPlaneTypes = {
 		}, -- end of ["payload"]
 	},
 
-
+	
+	["MosquitoFBMkVI"] = {
+		["type"] = "MosquitoFBMkVI",
+		["payload"] = 
+		{
+			["pylons"] = 
+			{
+			}, -- end of ["pylons"]
+			["fuel"] = 996.6432,
+			["flare"] = 0,
+			["ammo_type"] = 1,
+			["chaff"] = 0,
+			["gun"] = 100,
+		}, -- end of ["payload"]
+	},
 
 	["A-10A"] = {
 		["type"] = "A-10A",
