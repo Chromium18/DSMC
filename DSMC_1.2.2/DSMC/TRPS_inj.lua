@@ -31107,6 +31107,7 @@ TRPS.Limit_IFV = TRPSLimit_IFV or 10000
 TRPS.Limit_Tanks = TRPSLimit_Tanks or 10000
 TRPS.Limit_ads = TRPSLimit_ads or 10000
 TRPS.Limit_Arty = TRPSLimit_Arty or 10000
+TRPS.Limit_trucks = TRPSLimit_Trucks or 10000
 
 TRPS.unitClassLimits = {
     ["Tanks"] = TRPS.Limit_Tanks,
@@ -31114,7 +31115,7 @@ TRPS.unitClassLimits = {
     ["APC"] = TRPS.Limit_APC,
     ["Artillery"] = TRPS.Limit_Arty,
     ["Air Defence vehicles"] = TRPS.Limit_ads,
-    ["Transport"] = 1000000,
+    ["Transport"] = TRPS.Limit_trucks,
 }  
 
 
@@ -31163,6 +31164,7 @@ TRPS.radioSoundFC3 = "beaconsilent.ogg" -- name of the second silent radio file,
 TRPS.deployedBeaconBattery = 90 -- the battery on deployed beacons will last for this number minutes before needing to be re-deployed
 TRPS.enabledRadioBeaconDrop = true -- if its set to false then beacons cannot be dropped by units
 TRPS.allowRandomAiTeamPickups = false -- Allows the AI to randomize the loading of infantry teams (specified below) at pickup zones
+TRPS.allowAItoLoadUnloadTroopsInZones = false -- Allowes the AI to load/unload the troops automatically when in pickupZones and dropZones
 
 -- Simulated Sling load configuration
 
@@ -31965,7 +31967,7 @@ TRPS.pickupZones = {
     { "pickzone9", "none", 5, "yes", 1 }, -- limits pickup zone 9 to 5 groups of soldiers or vehicles, only red can pick up
     { "pickzone10", "none", 10, "yes", 2 },  -- limits pickup zone 10 to 10 groups of soldiers or vehicles, only blue can pick up
 
-    { "pickzone11", "blue", 20, "no", 2 },  -- limits pickup zone 11 to 20 groups of soldiers or vehicles, only blue can pick up. Zone starts inactive!
+    { "pickzone11", "blue", 20, "yes", 2 },  -- limits pickup zone 11 to 20 groups of soldiers or vehicles, only blue can pick up. Zone starts inactive!
     { "pickzone12", "red", 20, "no", 1 },  -- limits pickup zone 11 to 20 groups of soldiers or vehicles, only blue can pick up. Zone starts inactive!
     { "pickzone13", "none", -1, "yes", 0 },
     { "pickzone14", "none", -1, "yes", 0 },
@@ -33289,6 +33291,7 @@ end
 
 -- Preloads a transport with troops or vehicles
 -- replaces any troops currently on board
+--[[
 function TRPS.preLoadTransport(_unitName, _number, _troops)
 
     local _unit = TRPS.getTransportUnit(_unitName)
@@ -33301,7 +33304,7 @@ function TRPS.preLoadTransport(_unitName, _number, _troops)
         --        end
     end
 end
-
+--]]--
 
 -- Continuously counts the number of crates in a zone and sets the value of the passed in flag
 -- to the count amount
@@ -35410,7 +35413,7 @@ function TRPS.loadTroopsFromZone(_args)
             return TRPS.extractTroops({_heli:getName(), _troops})
         end
 
-    elseif _zone.inZone == true then
+    elseif _zone.inZone == true then --- QUI PER LOAD TRUPPE AUTOMATICO
 
         if _zone.limit - 1 >= 0 then
             -- decrease zone counter by 1
@@ -38673,22 +38676,24 @@ function TRPS.checkAIStatus()
                             TRPS.loadTroopsFromZone({ _unitName, true,TRPS.loadableGroups[TRPS.blueTeams[_team]],true })
                         end
                     else
+                        env.info(ModuleName .. " checkAIStatus loading troop from zone. unit: " .. tostring(_unitName))
                         TRPS.loadTroopsFromZone({ _unitName, true,"",true })
                     end
 
                 elseif TRPS.inDropoffZone(_unit) and TRPS.troopsOnboard(_unit, true) then
                     --     env.error("in dropoff zone, unloading.. ".._unit:getName())
+                    env.info(ModuleName .. " checkAIStatus dropping troop from zone. unit: " .. tostring(_unitName))
                     TRPS.unloadMultiTroops( { _unitName, true })
                 end
 
                 if TRPS.unitCanCarryVehicles(_unit) then
 
                     if _zone.inZone == true and not TRPS.troopsOnboard(_unit, false) then
-
+                        env.info(ModuleName .. " checkAIStatus loading vehicle from zone. unit: " .. tostring(_unitName))
                         TRPS.loadTroopsFromZone({ _unitName, false,"",true })
 
                     elseif TRPS.inDropoffZone(_unit) and TRPS.troopsOnboard(_unit, false) then
-
+                        env.info(ModuleName .. " checkAIStatus dropping vehicle from zone. unit: " .. tostring(_unitName))
                         TRPS.unloadTroops( { _unitName, false })
                     end
                 end
@@ -38699,8 +38704,6 @@ function TRPS.checkAIStatus()
             env.error(string.format("Error with ai status: %s", error), false)
         end
     end
-
-
 end
 
 function TRPS.getTransportLimit(_unitType)
@@ -40298,8 +40301,9 @@ end
 
 
 -- Scheduled functions (run cyclically) -- but hold execution for a second so we can override parts
-
-timer.scheduleFunction(TRPS.checkAIStatus, nil, timer.getTime() + 1)
+if TRPS.allowAItoLoadUnloadTroopsInZones == true then
+    timer.scheduleFunction(TRPS.checkAIStatus, nil, timer.getTime() + 1)
+end
 timer.scheduleFunction(TRPS.checkTransportStatus, nil, timer.getTime() + 5)
 
 timer.scheduleFunction(function()

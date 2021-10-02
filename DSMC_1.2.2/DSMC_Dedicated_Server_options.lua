@@ -78,6 +78,7 @@ DSMC_CTLD_Limit_IFV             = 150       -- number
 DSMC_CTLD_Limit_Tanks           = 80        -- number
 DSMC_CTLD_Limit_ads             = 50        -- number
 DSMC_CTLD_Limit_Arty            = 60        -- number
+DSMC_CTLD_Limit_Trucks          = 100       -- number
 
 -- Save scenery enhancement
 DSMC_BuilderToolsBeta 		    = false		-- true / false -- // NOT WORKING YET Leave FALSE ALWAYS

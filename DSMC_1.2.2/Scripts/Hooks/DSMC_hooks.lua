@@ -36,8 +36,8 @@ package.path =
 DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "2"
-DSMC_Build 			= "1611"
-DSMC_Date			= "28/07/2021"
+DSMC_Build 			= "1640"
+DSMC_Date			= "26/09/2021"
 
 -- ## DEBUG TO TEXT FUNCTION
 debugProcess	= true -- this should be left on for testers normal ops and test missions
@@ -232,6 +232,7 @@ function loadDSMCHooks()
 	TRPS_setup10_var					= DSMC_CTLD_longRangeSamCrates or true
 	TRPS_setup11_var					= DSMC_CTLD_crateReductionFactor or false
 	TRPS_setup12_var					= DSMC_CTLD_JTACenable or false
+	TRPS_setup13_var					= DSMC_CTLD_Limit_Trucks or 10000	
 	DCSR_var							= opt_DCSR_var or DSMC_automated_CSAR
 	DCSR_setup_var						= DSMC_DCSR_useCoalitionMessages
 	DCSR_setup2_var						= DSMC_DCSR_clientPilotOnly
@@ -272,9 +273,12 @@ function loadDSMCHooks()
 	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup7_Limit_Tanks = " ..tostring(TRPS_setup7_var))
 	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup8_Limit_ads = " ..tostring(TRPS_setup8_var))
 	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup9_Limit_Arty = " ..tostring(TRPS_setup9_var))
+	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup13_Trucks = " ..tostring(TRPS_setup13_var))
 	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup10_Year_Filter = " ..tostring(TRPS_setup10_var))
 	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup11_Crates_Factor = " ..tostring(TRPS_setup11_var))
 	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup12_JTAC = " ..tostring(TRPS_setup12_var))
+
+	
 	writeDebugBase(DSMC_ModuleName .. ": GOAP_var = " ..tostring(GOAP_var))
 
 	-- debug call check (doesn't print if debugProcessDetail is false!)
@@ -715,6 +719,10 @@ function startDSMCprocess()
 
 								if TRPS_setup9_var then
 									UTIL.inJectCode("TRPS_Setup9", "TRPSLimit_Arty = " .. tostring(TRPS_setup9_var))
+								end
+
+								if TRPS_setup13_var then
+									UTIL.inJectCode("TRPS_Setup13", "TRPSLimit_Trucks = " .. tostring(TRPS_setup13_var))
 								end
 
 								if TRPS_setup10_var == true then
