@@ -1949,10 +1949,12 @@ function EMBD.sceneryDestroyRefresh:onEvent(event) -- used for scenery destructi
 	if event.id == world.event.S_EVENT_BIRTH or event.id == world.event.S_EVENT_MISSION_START then 
 		env.info(("EMBD.sceneryDestroyRefresh event birth found"))
 		if event.initiator then
+			env.info(("EMBD.sceneryDestroyRefresh event birth initiator is valid"))
 			--if Object.getCategory(event.initiator) == 1 then -- unit. if it's a unit, can have fuel
-				
+			
 				local isClient = event.initiator:getPlayerName()
-				if isClient == true then
+				env.info(("EMBD.sceneryDestroyRefresh event birth player name is: " .. tostring(isClient)))
+				if isClient and type(isClient) == "string" then
 					env.info(("EMBD.sceneryDestroyRefresh is a client, setting flag"))
 					trigger.action.setUserFlag("12345" , true )
 					local function resetFlag()
