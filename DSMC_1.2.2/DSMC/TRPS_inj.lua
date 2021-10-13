@@ -32710,7 +32710,7 @@ if TRPS.ctryList and #TRPS.ctryList > 0 then
                                                 env.info((ModuleName .. ": defined isRed"))
                                             elseif ctData.s == 2 then
                                                 isBlue = isBlue + 1
-                                                env.info((ModuleName .. ": defined isRed"))
+                                                env.info((ModuleName .. ": defined isBlue"))
                                             end
                                         end
                                     end
@@ -32722,7 +32722,8 @@ if TRPS.ctryList and #TRPS.ctryList > 0 then
             end
         end
 
-        if isRed == numCheck then
+        if isRed >= numCheck then
+            env.info((ModuleName .. ": valid sam system for red: " .. tostring(sysName)))
             local t = TRPS.deepCopy(sysData)
             for _, sData in pairs(t) do
                 sData.side = 1
@@ -32737,7 +32738,8 @@ if TRPS.ctryList and #TRPS.ctryList > 0 then
             end
         end
 
-        if isBlue == numCheck then
+        if isBlue >= numCheck then
+            env.info((ModuleName .. ": valid sam system for blue: " .. tostring(sysName)))
             local t = TRPS.deepCopy(sysData)
             for _, sData in pairs(t) do
                 sData.side = 2
@@ -32762,7 +32764,7 @@ end
 
 if not WRHS_module_active then -- check DSMC_hooks.lua for reference, WRHS must be always be loaded BEFORE TRPS due to this
     TRPS.spawnableCrates["Airlift supplies"]["Supply crates"] = nil -- no sense to keep logistic crates if warehouse system is offline!
-    env.info(ModuleName .. " spawnableCrates: since WRHS is off, logistic crates aren't active")
+    env.info(ModuleName .. " spawnableCrates: since WRHS is off, Supply crates crates aren't active")
 end
 
 if TRPS.modernSet == false then
