@@ -38859,7 +38859,6 @@ function TRPS.addF10MenuOptions()
                             end
                         end
 
-
                         if _unitActions.crates then
 
                             if TRPS.enableCrates and _unitActions.crates then

@@ -130,7 +130,7 @@ function updateAirbaseTable(missionEnv)
 			end
 		end
 
-		-- remove used parking from me
+		--[[ remove used parking from me -- IF YOU ENABLE, IT WILL BREAK SLOT CREATION
 		for coalitionID,coalition in pairs(missionEnv["coalition"]) do
 			for countryID,country in pairs(coalition["country"]) do
 				for attrID,attr in pairs(country) do
@@ -481,9 +481,22 @@ function updateUnits(missionEnv)
 											end
 										end
 									end
+								else
+									for unitID,unit in pairs(group["units"]) do
+										HOOK.writeDebugDetail(ModuleName .. ": updateUnits looking for carrier group unit number " .. tostring(unitID) .. ", unitId: " .. tostring(unit.unitId))
+										local isAlive = true
+										for id, deadData in pairs (tblDeadUnits) do -- check if this unit is dead
+											if tonumber(deadData.unitId) == tonumber(unit.unitId) then
+												isAlive = false
+											end
+										end
+										HOOK.writeDebugDetail(ModuleName .. ": updateUnits isAlive: " .. tostring(isAlive))
+										if isAlive == false then
+											tblToBeKilled[#tblToBeKilled+1] = {uId = unit.unitId, gId = group.groupId}
+											HOOK.writeDebugDetail(ModuleName .. ": updateUnits  carrier group unit isAlive: " .. tostring(isAlive) .. ", unit added to tblToBeKilled")
+										end
+									end
 								end
-
-
 							end
 						end					
 					else

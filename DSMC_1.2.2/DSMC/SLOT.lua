@@ -2095,8 +2095,6 @@ function cleanSlots(missionEnv, warehouseEnv)
 							HOOK.writeDebugDetail(ModuleName .. ": cleanSlots killed category no more groups")
 						end
 					end
-				else
-					HOOK.writeDebugDetail(ModuleName .. ": cleanSlots, airports: " .. tostring(afbId) .. " is unlimited")
 				end
 			end
 		end
@@ -2401,7 +2399,7 @@ function buildAirbaseSlot(missionEnv, warehouseEnv, airbaseTbl, tblSlots, usedPa
 									end
 								end
 							end
-							UTIL.dumpTable("parking_tbl.lua", parking_tbl)
+							--UTIL.dumpTable("parking_tbl.lua", parking_tbl)
 
 							if #parking_tbl > 0 then				
 								for acfCat, acfTbl in pairs(afbData.aircrafts) do
@@ -2464,7 +2462,7 @@ function buildAirbaseSlot(missionEnv, warehouseEnv, airbaseTbl, tblSlots, usedPa
 							end
 
 							if #slotsToBuilt > 0 then
-								UTIL.dumpTable("slotsToBuilt.lua", slotsToBuilt)
+								--UTIL.dumpTable("slotsToBuilt.lua", slotsToBuilt)
 								
 								-- define base data
 								local choose_coa = nil
