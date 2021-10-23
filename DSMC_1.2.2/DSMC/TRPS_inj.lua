@@ -38912,7 +38912,7 @@ function TRPS.addF10MenuOptions()
                                                         --env.info(ModuleName .. " addF10MenuOptions _subCatData is more than zero for: " .. tostring(_subMenuName))
                                                         
                                                         local _subCatPath = missionCommands.addSubMenuForGroup(_groupId, _subMenuName, _consPath)
-                                                       -- env.info(ModuleName .. " addF10MenuOptions _subMenuName: " .. tostring(_subMenuName))
+                                                        --env.info(ModuleName .. " addF10MenuOptions _subMenuName: " .. tostring(_subMenuName))
 
                                                         --dumpTable("TRPS._crates.lua", _crates)
 
@@ -38921,7 +38921,7 @@ function TRPS.addF10MenuOptions()
                                                                 --env.info(ModuleName .. " addF10MenuOptions _crates is more than zero for: " .. tostring(_subSubMenuName))
 
                                                                 -- check valid crate side here
-                                                                local ack = false
+                                                                local ack = true
                                                                 local cnt = 0
                                                                 local ref = 0
                                                                 
@@ -38943,7 +38943,9 @@ function TRPS.addF10MenuOptions()
                                                                     ack = true
                                                                 end
 
-                                                                if ack == true then
+
+
+                                                                if ack == true or _subMenuName ~= "SAM system" then
 
                                                                     local _cratePath = missionCommands.addSubMenuForGroup(_groupId, _subSubMenuName, _subCatPath)
                                                                     --env.info(ModuleName .. " addF10MenuOptions _subSubMenuName: " .. tostring(_subSubMenuName))
@@ -40865,7 +40867,7 @@ function TRPS.updateCTLDTables()
                                                                             table.insert(TRPS.warehouseObjects, unitName)
                                                                             env.info(ModuleName .. " updateCTLDTables: unit " .. tostring(unitName) .. " is ammo or whr object, TRPS.warehouseObjects updated")
 
-                                                                            local tblPck = {unitName, "none", 20, "yes", 0}
+                                                                            local tblPck = {unitName, "none", 20, "yes", 1} -- changed for 1.2.3
                                                                             table.insert(TRPS.pickupZones, tblPck)
                                                                             TRPS.activatePickupZone(unitName)
                                                                             env.info(ModuleName .. " updateCTLDTables: warehouse added as pickupZone " .. tostring(unitName))
