@@ -74,7 +74,7 @@ dialog = {
 	["children"] = {
 		["containerPlugin"] = {
 			["children"] = {
-				["nameLabel4"] = {
+				["DSMC_Title_MAIN_label"] = {
 					["params"] = {
 						["bounds"] = {
 							["h"] = verticalBound,
@@ -91,7 +91,7 @@ dialog = {
 					["skin"] = TitleSkin,
 					["type"] = "Static",
 				},
-				["DidascaliaHelpLabel"] = {
+				["DSMC_Help_MAIN_label"] = {
 					["params"] = {
 						["bounds"] = {
 							["h"] = verticalBound,
@@ -108,13 +108,13 @@ dialog = {
 					["skin"] = HelpSkin,
 					["type"] = "Static",
 				},
-				["DidascaliaHelpLabel2"] = {
+				["DSMC_Help_AIE_1_label"] = {
 					["params"] = {
 						["bounds"] = {
 							["h"] = verticalBound,
 							["w"] = width, 
 							["x"] = leftMargin2,
-							["y"] = verticalStack*6.5,
+							["y"] = verticalStack*5.50,
 						},
 						["enabled"] = true,
 						["text"] = "$DSMC_Help_AIE_1",
@@ -125,13 +125,14 @@ dialog = {
 					["skin"] = HelpSkin,
 					["type"] = "Static",
 				},
-				["DidascaliaHelpLabel3"] = {
+				--[[
+				["DSMC_Help_AIE_2_label"] = {
 					["params"] = {
 						["bounds"] = {
 							["h"] = verticalBound,
 							["w"] = width, 
 							["x"] = leftMargin2,
-							["y"] = verticalStack*7.0,
+							["y"] = verticalStack*6.25,
 						},
 						["enabled"] = true,
 						["text"] = "$DSMC_Help_AIE_2",
@@ -142,13 +143,13 @@ dialog = {
 					["skin"] = HelpSkin,
 					["type"] = "Static",
 				},
-				["DidascaliaHelpLabel4"] = {
+				["DSMC_Help_AIE_3_label"] = {
 					["params"] = {
 						["bounds"] = {
 							["h"] = verticalBound,
 							["w"] = width, 
 							["x"] = leftMargin2,
-							["y"] = verticalStack*7.5,
+							["y"] = verticalStack*6.75,
 						},
 						["enabled"] = true,
 						["text"] = "$DSMC_Help_AIE_3",
@@ -159,13 +160,13 @@ dialog = {
 					["skin"] = HelpSkin,
 					["type"] = "Static",
 				},	
-				["DidascaliaHelpLabel5"] = {
+				["DSMC_Help_AIE_4_label"] = {
 					["params"] = {
 						["bounds"] = {
 							["h"] = verticalBound,
 							["w"] = width, 
 							["x"] = leftMargin2,
-							["y"] = verticalStack*8.0,
+							["y"] = verticalStack*7.25,
 						},
 						["enabled"] = true,
 						["text"] = "$DSMC_Help_AIE_4",
@@ -176,14 +177,14 @@ dialog = {
 					["skin"] = HelpSkin,
 					["type"] = "Static",
 				},		
-				["DidascaliaHelpLabel6"] = {
+				["DSMC_Help_AIE_5_label"] = {
 					["params"] = {
 						["bounds"] = {
 							["h"] = verticalBound,
 							["w"] = width, 
 							["x"] = leftMargin2,
-							["y"] = verticalStack*8.5,
-						},
+							["y"] = verticalStack*7.75,
+						},							
 						["enabled"] = true,
 						["text"] = "$DSMC_Help_AIE_5",
 						["tooltip"] = "",
@@ -192,8 +193,10 @@ dialog = {
 					},
 					["skin"] = HelpSkin,
 					["type"] = "Static",
-				},				
-				["nameLabel"] = {
+				},	
+				--]]--
+
+				["DSMC_Title_SAVE_label"] = {
 					["params"] = {
 						["bounds"] = {
 							["h"] = verticalBound,
@@ -227,7 +230,8 @@ dialog = {
 					["skin"] = TitleSkin,
 					["type"] = "Static",
 				},
-				["nameLabel3"] = {
+				--[[
+				["WRHS_txt_helpLabel"] = {
 					["params"] = {
 						["bounds"] = {
 							["h"] = verticalBound,
@@ -236,22 +240,23 @@ dialog = {
 							["y"] = verticalStack*13.5,
 						},
 						["enabled"] = true,
-						["text"] = "$DSMC_Title_LOG",
+						["text"] = "$WRHS_txt_help",
 						["tooltip"] = "",
 						["visible"] = true,
 						["zindex"] = 0,
 					},
 					["skin"] = TitleSkin,
 					["type"] = "Static",
-				},					
+				},
+				--]]--				
 				--  COMMENT GROUP HERE TO REMOVE RELOAD OPTIONS!
-				["nameLabel8"] = {
+				["DSMC_Title_SRV_label"] = {
 					["params"] = {
 						["bounds"] = {
 							["h"] = verticalBound,
 							["w"] = width,
 							["x"] = leftMargin1,
-							["y"] = verticalStack*15.5,
+							["y"] = verticalStack*10.5,
 						},
 						["enabled"] = true,
 						["text"] = "$DSMC_Title_SRV",
@@ -268,7 +273,7 @@ dialog = {
 								["h"] = verticalBound,
 								["w"] = 800, 
 								["x"] = leftMargin1,
-								["y"] = verticalStack*16.25,
+								["y"] = verticalStack*11.25,
 						},
 						["enabled"] = true,
 						["state"] = false,
@@ -287,7 +292,7 @@ dialog = {
 								["h"] = verticalBound,
 								["w"] = 150, 
 								["x"] = leftMargin1,
-								["y"] = verticalStack*17.0,
+								["y"] = verticalStack*12,
 						},
 						["enabled"] = true,
 						["state"] = false,
@@ -306,7 +311,7 @@ dialog = {
 							["h"] = verticalBound,
 							["w"] = width, 
 							["x"] = leftMargin1,
-							["y"] = verticalStack*18.0-10,
+							["y"] = verticalStack*12.75,
 						},
 						["enabled"] = true,
 						["text"] = "$ATRL_Help_txt",
@@ -323,7 +328,7 @@ dialog = {
 							["h"] = verticalBound,
 							["w"] = 200, 
 							["x"] = leftMargin1+170,
-							["y"] = verticalStack*17.0-5,
+							["y"] = verticalStack*12-5,
 						},
 						["enabled"] = true,
 						["pageStep"] = 2,
@@ -352,7 +357,7 @@ dialog = {
 							["h"] = verticalBound,
 							["w"] = 30, 
 							["x"] = leftMargin1+170+200,
-							["y"] = verticalStack*17.0,
+							["y"] = verticalStack*12,
 						},
 						["enabled"] = true,
 						["text"] = "0",
@@ -367,9 +372,7 @@ dialog = {
 					},
 					["type"] = "Static",
 				},
-				--]]--
-
-
+				--[[
 				["MOBJCheckbox"] = {
 					["params"] = {
 						["bounds"] = {
@@ -388,14 +391,15 @@ dialog = {
 					},
 					["skin"] = CheckBoxSkin,
 					["type"] = "CheckBox",
-				},				
+				},		
+				--]]--		
 				["CRSTCheckbox"] = {
 					["params"] = {
 						["bounds"] = {
 								["h"] = verticalBound,
 								["w"] = width, 
 								["x"] = leftMargin1,
-								["y"] = verticalStack*4.75,
+								["y"] = verticalStack*4,
 						},
 						["enabled"] = true,
 						["state"] = false,
@@ -408,6 +412,7 @@ dialog = {
 					["skin"] = CheckBoxSkin,
 					["type"] = "CheckBox",
 				},					
+				--[[
 				["WTHRCheckbox"] = {
 					["params"] = {
 						["bounds"] = {
@@ -426,14 +431,15 @@ dialog = {
 					},
 					["skin"] = CheckBoxSkin,
 					["type"] = "CheckBox",
-				},				
+				},
+							
 				["SPWNCheckbox"] = {
 					["params"] = {
 						["bounds"] = {
 								["h"] = verticalBound,
 								["w"] = width, 
 								["x"] = leftMargin1,
-								["y"] = verticalStack*6.25,
+								["y"] = verticalStack*4.75,
 						},
 						["enabled"] = true,
 						["state"] = false,
@@ -445,7 +451,9 @@ dialog = {
 					},
 					["skin"] = CheckBoxSkin,
 					["type"] = "CheckBox",
-				},						
+				},				
+				--]]--
+				--[[
 				["WRHSCheckbox"] = {
 					["params"] = {
 						["bounds"] = {
@@ -465,6 +473,8 @@ dialog = {
 					["skin"] = CheckBoxSkin,
 					["type"] = "CheckBox",
 				},
+				--]]--
+
 				--[[
 				["TRPS_setupCheckbox"] = {
 					["params"] = {
@@ -485,7 +495,8 @@ dialog = {
 					["skin"] = CheckBoxSkin,
 					["type"] = "CheckBox",
 				},	
-				--]]--						
+				--]]--		
+								
 				["DCSRCheckbox"] = {
 					["params"] = {
 						["bounds"] = {
@@ -512,7 +523,7 @@ dialog = {
 								["h"] = verticalBound,
 								["w"] = width, 
 								["x"] = leftMargin1,
-								["y"] = verticalStack*7.5,
+								["y"] = verticalStack*7, -- 5.5
 						},
 						["enabled"] = true,
 						["state"] = false,
@@ -532,7 +543,7 @@ dialog = {
 								["h"] = verticalBound,
 								["w"] = width, 
 								["x"] = leftMargin1,
-								["y"] = verticalStack*8.25,
+								["y"] = verticalStack*7.75,
 						},
 						["enabled"] = true,
 						["state"] = false,
@@ -546,16 +557,16 @@ dialog = {
 					["type"] = "CheckBox",
 				},
 
-				["DidascaliaSLOTLabel"] = {
+				["SLOT_txt_Help_label"] = {
 					["params"] = {
 						["bounds"] = {
 							["h"] = verticalBound,
 							["w"] = 850,
 							["x"] = leftMargin1,
-							["y"] = verticalStack*8.75,
+							["y"] = verticalStack*8.5,
 						},
 						["enabled"] = true,
-						["text"] = "$DSMC_Help_SLOT_ab",
+						["text"] = "$SLOT_txt_Help",
 						["tooltip"] = "",
 						["visible"] = true,
 						["zindex"] = 0,
@@ -563,7 +574,7 @@ dialog = {
 					["skin"] = HelpSkin,
 					["type"] = "Static",
 				},
-				
+				--[[
 				["TMUPCheckbox"] = {
 					["params"] = {
 						["bounds"] = {
@@ -583,13 +594,14 @@ dialog = {
 					["skin"] = CheckBoxSkin,
 					["type"] = "CheckBox",
 				},	
+				--]]--
 				["TMUP_cont_trueRadioButton"] = {
 					["params"] = {
 						["bounds"] = {
 								["h"] = verticalBound,
 								["w"] = 800,
 								["x"] = leftMargin1,
-								["y"] = verticalStack*10.75,
+								["y"] = verticalStack*4.75, -- 7.75
 						},
 						["enabled"] = true,
 						["state"] = false,
@@ -662,7 +674,7 @@ dialog = {
 								["h"] = verticalBound,
 								["w"] = 800,
 								["x"] = leftMargin1,
-								["y"] = verticalStack*11.5,
+								["y"] = verticalStack*5.5,
 						},
 						["enabled"] = true,
 						["state"] = false,
@@ -735,7 +747,7 @@ dialog = {
 								["h"] = verticalBound,
 								["w"] = 800,
 								["x"] = leftMargin1,
-								["y"] = verticalStack*12.25,
+								["y"] = verticalStack*6.25,
 						},
 						["enabled"] = true,
 						["state"] = false,
