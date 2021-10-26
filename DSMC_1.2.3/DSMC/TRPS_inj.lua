@@ -34100,7 +34100,7 @@ TRPS.crateWait = {}
 TRPS.crateMove = {}
 
 ---------------- INTERNAL FUNCTIONS ----------------
-function TRPS.getTransportUnit(_unitName)
+function TRPS.getTransportUnit(_unitName, okStatic)
     --env.info(("TRPS_inj, getTransportUnit _unitName: " ..tostring(_unitName)))
     if _unitName == nil then
         return nil
@@ -34111,6 +34111,14 @@ function TRPS.getTransportUnit(_unitName)
     if _heli ~= nil and _heli:isActive() and _heli:getLife() > 0 then
         --env.info(("TRPS_inj, getTransportUnit returning _heli: " .. tostring(_unitName)))
         return _heli
+    else
+        if okStatic == true then
+            local _static = StaticObject.getByName(_unitName)
+            if _static ~= nil and _static:getLife() > 0 then
+                --env.info(("TRPS_inj, getTransportUnit returning _heli: " .. tostring(_unitName)))
+                return _static        
+            end
+        end
     end
 
     return nil
@@ -38112,7 +38120,7 @@ function TRPS.inPickupZone(_heli)
         local _triggerZone = trigger.misc.getZone(_zoneDetails[1])
 
         if _triggerZone == nil then
-            local _ship = TRPS.getTransportUnit(_zoneDetails[1])
+            local _ship = TRPS.getTransportUnit(_zoneDetails[1], true)
 
             if _ship then
                 local _point = _ship:getPoint()
@@ -38942,8 +38950,6 @@ function TRPS.addF10MenuOptions()
                                                                     --env.info(ModuleName .. " addF10MenuOptions ack ok")
                                                                     ack = true
                                                                 end
-
-
 
                                                                 if ack == true or _subMenuName ~= "SAM system" then
 
@@ -40183,27 +40189,6 @@ TRPS.missionEditorCargoCrates = {} --crates added by mission editor for triggeri
 TRPS.callbacks = {} -- function callback
 
 
--- Remove intransit troops when heli / cargo plane dies
---TRPS.eventHandler = {}
---function TRPS.eventHandler:onEvent(_event)
---
---    if _event == nil or _event.initiator == nil then
---        env.info("TRPS null event")
---    elseif _event.id == 9 then
---        -- Pilot dead
---        TRPS.inTransitTroops[_event.initiator:getName()] = nil
---
---    elseif world.event.S_EVENT_EJECTION == _event.id or _event.id == 8 then
---        -- env.info("Event unit - Pilot Ejected or Unit Dead")
---        TRPS.inTransitTroops[_event.initiator:getName()] = nil
---
---        -- env.info(_event.initiator:getName())
---    end
---
---end
-
-
-
 --sort out pickup zones
 for _, _zone in pairs(TRPS.pickupZones) do
 
@@ -40849,7 +40834,13 @@ function TRPS.updateCTLDTables()
                                                         --local unitName = env.getValueDictByKey(_unit.name)
                                                         local unitName = _unit.name
                                                         if unitName then		
-                                                            local unitTable = Unit.getByName(unitName)
+                                                            local unitTable = StaticObject.getByName(unitName)
+                                                            local unitCoa = nil
+                                                            if unitTable then
+                                                                unitCoa = unitTable:getCoalition()
+                                                            end
+
+
                                                             env.info(ModuleName .. " updateCTLDTables: unitName: " .. tostring(unitName))
                                                             --if unitTable then
                                                                 --local unitLife = unitTable:getLife()
@@ -40867,7 +40858,15 @@ function TRPS.updateCTLDTables()
                                                                             table.insert(TRPS.warehouseObjects, unitName)
                                                                             env.info(ModuleName .. " updateCTLDTables: unit " .. tostring(unitName) .. " is ammo or whr object, TRPS.warehouseObjects updated")
 
-                                                                            local tblPck = {unitName, "none", 20, "yes", 1} -- changed for 1.2.3
+                                                                            local c = nil
+                                                                            if unitCoa then
+                                                                                c = unitCoa
+                                                                            else
+                                                                                c = 0
+                                                                            end
+
+
+                                                                            local tblPck = {unitName, "none", 10000, 1, c} -- changed for 1.2.3
                                                                             table.insert(TRPS.pickupZones, tblPck)
                                                                             TRPS.activatePickupZone(unitName)
                                                                             env.info(ModuleName .. " updateCTLDTables: warehouse added as pickupZone " .. tostring(unitName))

@@ -1944,30 +1944,30 @@ function EMBD.collectSpawned:onEvent(event)
 end
 world.addEventHandler(EMBD.collectSpawned)
 
+--
 EMBD.sceneryDestroyRefresh = {}
 function EMBD.sceneryDestroyRefresh:onEvent(event) -- used for scenery destruction obj
-	if event.id == world.event.S_EVENT_BIRTH or event.id == world.event.S_EVENT_MISSION_START then 
-		--env.info(("EMBD.sceneryDestroyRefresh event birth found"))
-		if event.initiator then
-			--env.info(("EMBD.sceneryDestroyRefresh event birth initiator is valid"))
-			--if Object.getCategory(event.initiator) == 1 then -- unit. if it's a unit, can have fuel
-			
-				local isClient = event.initiator:getPlayerName()
-				--env.info(("EMBD.sceneryDestroyRefresh event birth player name is: " .. tostring(isClient)))
-				if isClient and type(isClient) == "string" then
-					--env.info(("EMBD.sceneryDestroyRefresh is a client, setting flag"))
-					trigger.action.setUserFlag("12345" , true )
-					local function resetFlag()
-						trigger.action.setUserFlag("12345" , false )
-						env.info(("EMBD.sceneryDestroyRefresh is a client, flag reset done"))
-					end
-					timer.scheduleFunction(resetFlag, {}, timer.getTime() + 1)
-				end
-			--end
+	if event.id == world.event.S_EVENT_MISSION_START then 
+
+		trigger.action.setUserFlag("12345" , true )
+		local function resetFlag()
+			trigger.action.setUserFlag("12345" , false )
+			env.info(("EMBD.sceneryDestroyRefresh is a client, flag reset done"))
 		end
+		timer.scheduleFunction(resetFlag, {}, timer.getTime() + 1)
 	end
 end
 world.addEventHandler(EMBD.sceneryDestroyRefresh)
+--]]--
+
+function EMBD.sceneryDestroyRefreshRemote()
+	trigger.action.setUserFlag("12345" , true )
+	local function resetFlag()
+		trigger.action.setUserFlag("12345" , false )
+		env.info(("EMBD.sceneryDestroyRefreshRemote is a client, flag reset done"))
+	end
+	timer.scheduleFunction(resetFlag, {}, timer.getTime() + 1)
+end
 
 --
 EMBD.airbaseFuelIndex = {}
@@ -2157,3 +2157,6 @@ env.info((ModuleName .. ": Loaded " .. MainVersion .. "." .. SubVersion .. "." .
 
 --dumpTable("TRPS.ctryList.lua", TRPS.ctryList)
 --dumpTable("TRPS.spawnableCrates.lua", TRPS.spawnableCrates)
+
+
+--timer.scheduleFunction(EMBD.executeSAVE, {}, timer.getTime() + 30)

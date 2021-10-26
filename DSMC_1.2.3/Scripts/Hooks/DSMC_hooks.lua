@@ -111,7 +111,6 @@ strWeather					= nil
 strSpawned					= nil
 hits_max_count				= 10000  -- more that this number and the aircraft is considerered grounded!. Set 10000 to "disable" that function
 tempWeatherTable			= nil
-randomizeDynWeather			= false
 trackspawnedinfantry		= true
 --ATRLloaded				= false
 autosavefrequency			= nil -- minutes
@@ -170,13 +169,13 @@ function loadDSMCHooks()
 				if opt_id == "plugins" then
 					for pl_id, pl_data in pairs (opt_data) do
 						if pl_id == "DSMC" then						
-							opt_MOBJ_var 		= pl_data.MOBJ
+							opt_MOBJ_var 		= true -- pl_data.MOBJ
 							opt_CRST_var 		= pl_data.CRST	
-							opt_WTHR_var 		= pl_data.WTHR		
-							opt_TMUP_var		= pl_data.TMUP
+							opt_WTHR_var 		= true -- pl_data.WTHR		
+							opt_TMUP_var		= true -- pl_data.TMUP
 							opt_TMUP_cont_var	= pl_data.timer_options	or 2
-							opt_WRHS_var		= pl_data.WRHS
-							opt_SPWN_var		= pl_data.SPWN
+							opt_WRHS_var		= true -- pl_data.WRHS
+							opt_SPWN_var		= true -- pl_data.SPWN
 							opt_TRPS_var		= pl_data.TRPS
 							opt_DCSR_var		= pl_data.DCSR
 							opt_TRPS_setup_var	= pl_data.TRPS_setup
@@ -198,14 +197,14 @@ function loadDSMCHooks()
 	end
 
 	-- assign variables
-	MOBJ_var 							= opt_MOBJ_var or DSMC_MapPersistence
+	MOBJ_var 							= true -- opt_MOBJ_var or DSMC_MapPersistence
 	CRST_var 							= opt_CRST_var or DSMC_StaticDeadUnits		
-	WTHR_var 							= opt_WTHR_var or DSMC_WeatherUpdate		
-	TMUP_var							= opt_TMUP_var or DSMC_UpdateStartTime		
+	WTHR_var 							= true -- opt_WTHR_var or DSMC_WeatherUpdate		
+	TMUP_var							= true -- opt_TMUP_var or DSMC_UpdateStartTime		
 	TMUP_cont_var						= opt_TMUP_cont_var or DSMC_UpdateStartTime_mode	
-	WRHS_var							= opt_WRHS_var or DSMC_TrackWarehouses
+	WRHS_var							= true -- opt_WRHS_var or DSMC_TrackWarehouses
 	WRHS_rblt							= DSMC_WarehouseAutoSetup or false
-	SPWN_var							= opt_SPWN_var or DSMC_TrackSpawnedUnits
+	SPWN_var							= true -- opt_SPWN_var or DSMC_TrackSpawnedUnits
 	DEBUG_var							= opt_DEBUG_var or DSMC_DebugMode
 	ATRL_var							= opt_ATRL_var or DSMC_AutosaveProcess 
 	ATRL_time_var						= opt_ATRL_time_var or DSMC_AutosaveProcess_min 
@@ -232,11 +231,11 @@ function loadDSMCHooks()
 	TRPS_setup10_var					= DSMC_CTLD_longRangeSamCrates or true
 	TRPS_setup11_var					= DSMC_CTLD_crateReductionFactor or false
 	TRPS_setup12_var					= DSMC_CTLD_JTACenable or false
-	TRPS_setup13_var					= DSMC_CTLD_Limit_Trucks or 10000	
+	TRPS_setup13_var					= DSMC_CTLD_Limit_Arty or 10000	
 	DCSR_var							= opt_DCSR_var or DSMC_automated_CSAR
 	DCSR_setup_var						= DSMC_DCSR_useCoalitionMessages
 	DCSR_setup2_var						= DSMC_DCSR_clientPilotOnly
-	GOAP_var							= false -- opt_GOAP_var or DSMC_AutomaticAI
+	GOAP_var							= true -- opt_GOAP_var or DSMC_AutomaticAI
 
 	-- debug call
 	debugProcessDetail = DEBUG_var
@@ -1105,6 +1104,10 @@ function DSMC.onTriggerMessage(message)
 				--command save actions
 				batchSaveProcess()
 
+			elseif message == "DSMC close..." then			
+				writeDebugBase(DSMC_ModuleName .. ": DCS is closing due to trigger message DSMC close")
+				DCS.exitProcess()
+
 			elseif message == "DSMC is trying to restart the server! land or disconnect as soon as you can: DSMC will try again in 10 minutes" then			
 				--command server closeup
 
@@ -1137,14 +1140,10 @@ function DSMC.onTriggerMessage(message)
 	
 end
 
-function DSMC.onPlayerDisconnect()
-	local lmz = DCS.getMissionName()
-	if lmz then
-		if string.sub(lmz,1,4) == StartFilterCode then
-			saveOnDisconnect()
-		end
-	end
+function DSMC.onPlayerConnect()
+	UTIL.inJectCode("DSMC_resetSceneryDestruction", "EMBD.sceneryDestroyRefreshRemote()")
 end
+
 
 --[[
 function DSMC.onRadioMessage(message, duration)
