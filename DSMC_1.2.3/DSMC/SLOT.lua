@@ -31,6 +31,32 @@ local maxFlights				= 4
 
 
 -- ## MANUAL TABLES
+
+local standardCallsigns = {
+	["helicopter"] = {
+		[1] = "Dodge",
+		[2] = "Ford",
+		[3] = "Chevy",
+		[4] = "Pontiac",
+		[5] = "Dodge",
+		[6] = "Ford",
+		[7] = "Chevy",
+		[8] = "Pontiac",
+		[9] = "Chevy",
+	},
+	["plane"] = {
+		[1] = "Enfield",
+		[2] = "Springfield",
+		[3] = "Uzi",
+		[4] = "Colt",
+		[5] = "Enfield",
+		[6] = "Springfield",
+		[7] = "Uzi",
+		[8] = "Colt",
+		[9] = "Enfield",
+	},
+}
+
 local standardPlaneTypes = {
 	["Bf-109K-4"] = {
 		["type"] = "Bf-109K-4",
@@ -670,7 +696,6 @@ local standardPlaneTypes = {
 	},
 }
 
-
 local standardHeloTypes = {
     ["Ka-50"] = {	
 		["ropeLength"] = 15,
@@ -1271,6 +1296,53 @@ function getParkingForAircraftType(a_listP, uType, uCat)
 	end
 end
 
+function createCallsign(country, category)
+
+	local flightID = math.random(1,9)
+	local groupID = math.random(1,9)
+	local flightNum = flightID
+
+	local wes = true
+	if ME_U then
+		if ME_U.isWesternCountry(country) then
+			wes = true
+		else
+			wes = false
+		end
+	end
+
+	if wes then
+		for c, v in pairs(standardCallsigns) do
+			if c == category then
+				for x, d in pairs(v) do
+					if x == flightID then
+						flightName = d
+					end
+				end
+			end
+		end
+	end
+
+	local n = nil
+	if wes then
+		n = tostring(flightName .. tostring(groupID))
+	else
+		n = tonumber(tostring(flightNum .. tostring(groupID)))
+	end
+
+	HOOK.writeDebugDetail(ModuleName .. ": createCallsign creating callsign name: " .. tostring(n))
+
+
+	local Cls = {
+		[1] =  flightNum,
+		[2] =  tonumber(groupID),
+		["name"] = n,
+	}
+	
+	return Cls, wes
+
+end
+
 function createHeloGroups(mission) -- , dictionary
 	local maxG, maxU = setMaxId(mission)
 	local MaxDict = mission.maxDictId
@@ -1412,6 +1484,10 @@ function createHeloGroups(mission) -- , dictionary
 											-- now check standard unit
 											local unitData = {}
 											local cls_group = ""
+
+											local ctryControl = _(country.name)
+											local cls_base, cls_western = createCallsign(ctryControl, attrID)
+
 											for i=1, sData.numUnits do
 												for acfId, acfData in pairs(standardHeloTypes) do
 													if acfId == sData.acfType then
@@ -1466,76 +1542,18 @@ function createHeloGroups(mission) -- , dictionary
 														--set skill
 														uTbl.skill = "Client"
 
-														--set callsign
-														local mtext = "Chevy"
-														local mnum  = 1
-														local groupNum = addedGroups
-												
-														if addedGroups < 10 then
-															mtext = "Chevy"
-															mnum  = 1
-															groupNum = addedGroups
-														elseif addedGroups < 19 then
-															mtext = "Ford"
-															mnum  = 2
-															groupNum = addedGroups - 9
-														elseif addedGroups < 28 then
-															mtext = "Pontiac"
-															mnum  = 3
-															groupNum = addedGroups - 18		
-														elseif addedGroups < 37 then
-															mtext = "Dodge"
-															mnum  = 4
-															groupNum = addedGroups - 27	
-														--elseif addedGroups < 46 then
-															--mtext = "Enfield"
-															--mnum  = 5
-															--groupNum = addedGroups - 36
+														--rev callsign
+														local cls = UTIL.deepCopy(cls_base)
+														cls[3] = tonumber(i)
+														local n = cls["name"]
+														if cls_western == true then
+															cls["name"] = tostring(n) .. tostring(i)
 														else
-															mtext = "Chevy"
-															mnum  = 1
-															groupNum = addedGroups
+															cls["name"] = tonumber(tostring(n) .. tostring(i))
 														end
 
-														HOOK.writeDebugDetail(ModuleName .. ": createHeloGroups adding unit, callsign.name: " .. tostring(mtext .. tostring(groupNum) .. tostring(i)))
-														
-														local revCls = {}
-														
-														if ME_U then
-															HOOK.writeDebugDetail(ModuleName .. ": createHeloGroups ME_U available")
-															revCls = {
-																[1] =  mnum,
-																[2] =  tonumber(groupNum),
-																[3] =  tonumber(i),
-																["name"] = tonumber(tostring(mnum .. tostring(groupNum) .. tostring(i)))
-															}
+														uTbl.callsign = cls
 
-															HOOK.writeDebugDetail(ModuleName .. ": createHeloGroups country.name: " .. tostring(country.name))
-
-															local ctryControl = _(country.name)
-
-															if ME_U.isWesternCountry(ctryControl) then
-
-																HOOK.writeDebugDetail(ModuleName .. ": createHeloGroups is a western country")
-
-																revCls["name"] = mtext .. tostring(groupNum) .. tostring(i)
-																cls_group = mtext .. tostring(groupNum)
-															else
-																cls_group = tostring(mnum .. tostring(groupNum) .. "0")
-															end
-														else
-															revCls = {
-																[1] =  mnum,
-																[2] =  tonumber(groupNum),
-																[3] =  tonumber(i),
-																["name"] = tostring(mtext .. tostring(groupNum) .. tostring(i)),
-															}															
-															HOOK.writeDebugDetail(ModuleName .. ": createHeloGroups ME_U module not available, possible problem with china & eastern countries!")
-															cls_group = tostring(mtext .. tostring(groupNum) .. tostring(i))
-														end
-														uTbl.callsign = revCls
-
-														
 														-- set unit name
 														--DICTPROBLEM
 														--MaxDict = MaxDict+1									
@@ -1543,8 +1561,8 @@ function createHeloGroups(mission) -- , dictionary
 														--addedunits = addedunits + 1
 														--dictionary[UnitDictEntry] = tostring(revCls["name"])
 
-														HOOK.writeDebugDetail(ModuleName .. ": createHeloGroups adding unit, uname: " .. tostring(sData.acfType .. "_unit_" .. addedunits))
-														uTbl.name = tostring(revCls["name"]) -- UnitDictEntry
+														HOOK.writeDebugDetail(ModuleName .. ": createHeloGroups adding unit, uname: " .. tostring(cls["name"]))
+														uTbl.name = tostring(cls["name"]) -- UnitDictEntry
 
 														-- retrieve from standard
 														uTbl.alt = 0
@@ -1571,7 +1589,7 @@ function createHeloGroups(mission) -- , dictionary
 											--local gDictEntry = "DictKey_GroupName_" .. MaxDict
 											if #unitData > 0 then
 
-												local gNameEntry = tostring(tostring(cls_group) .. "_" .. sData.acfType .. "_DSMC_" .. tostring(addedGroups))
+												local gNameEntry = tostring(tostring(cls_base["name"]) .. "_" .. sData.acfType .. "_DSMC_" .. tostring(addedGroups))
 												--dictionary[gDictEntry] = gNameEntry
 												HOOK.writeDebugDetail(ModuleName .. ": createHeloGroups, adding gNameEntry: " .. tostring(gNameEntry))
 
@@ -1745,7 +1763,12 @@ function createPlaneGroups(mission) -- CHECK THIS
 
 													-- now check standard unit
 													local unitData = {}
+
 													local cls_group = ""
+
+													local ctryControl = _(country.name)
+													local cls_base, cls_western = createCallsign(ctryControl, attrID)
+
 													for i=1, sData.numUnits do
 														for acfId, acfData in pairs(standardPlaneTypes) do
 															if acfId == sData.acfType then
@@ -1799,76 +1822,19 @@ function createPlaneGroups(mission) -- CHECK THIS
 																--set skill
 																uTbl.skill = "Client"
 
-																--set callsign
-																local mtext = "Enfield"
-																local mnum  = 1
-																local groupNum = addedGroups
-														
-																if addedGroups < 10 then
-																	mtext = "Springfield"
-																	mnum  = 1
-																	groupNum = addedGroups
-																elseif addedGroups < 19 then
-																	mtext = "Uzi"
-																	mnum  = 2
-																	groupNum = addedGroups - 9
-																elseif addedGroups < 28 then
-																	mtext = "Colt"
-																	mnum  = 3
-																	groupNum = addedGroups - 18		
-																elseif addedGroups < 37 then
-																	mtext = "Tusk"
-																	mnum  = 4
-																	groupNum = addedGroups - 27	
-																elseif addedGroups < 46 then
-																	mtext = "Hawg"
-																	mnum  = 5
-																	groupNum = addedGroups - 36	
+																--rev callsign
+																local cls = UTIL.deepCopy(cls_base)
+																cls[3] = tonumber(i)
+																local n = cls["name"]
+																if cls_western == true then
+																	cls["name"] = tostring(n) .. tostring(i)
 																else
-																	mtext = "Enfield"
-																	mnum  = 1
-																	groupNum = addedGroups
+																	cls["name"] = tonumber(tostring(n) .. tostring(i))
 																end
 
-																HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups adding unit, callsign.name: " .. tostring(mtext .. tostring(groupNum) .. tostring(i)))
-																
-																local revCls = {}
-																
-																if ME_U then
-																	HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups ME_U available")
-																	revCls = {
-																		[1] =  mnum,
-																		[2] =  tonumber(groupNum),
-																		[3] =  tonumber(i),
-																		["name"] = tonumber(tostring(mnum .. tostring(groupNum) .. tostring(i)))
-																	}
 
-																	HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups country.name: " .. tostring(country.name))
-
-																	local ctryControl = _(country.name)
-
-																	if ME_U.isWesternCountry(ctryControl) then
-
-																		HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups is a western country")
-
-																		revCls["name"] = mtext .. tostring(groupNum) .. tostring(i)
-																		cls_group = mtext .. tostring(groupNum)
-																	else
-																		cls_group = tostring(mnum .. tostring(groupNum) .. "0")
-																	end
-																else
-																	revCls = {
-																		[1] =  mnum,
-																		[2] =  tonumber(groupNum),
-																		[3] =  tonumber(i),
-																		["name"] = tostring(mtext .. tostring(groupNum) .. tostring(i)),
-																	}															
-																	HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups ME_U module not available, possible problem with china & eastern countries!")
-																	cls_group = tostring(mtext .. tostring(groupNum) .. tostring(i))
-																end
-																uTbl.callsign = revCls
-
-																
+																uTbl.callsign = cls
+													
 																-- set unit name
 																--DICTPROBLEM
 																--MaxDict = MaxDict+1									
@@ -1876,8 +1842,8 @@ function createPlaneGroups(mission) -- CHECK THIS
 																--addedunits = addedunits + 1
 																--dictionary[UnitDictEntry] = tostring(revCls["name"])
 
-																HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups adding unit, uname: " .. tostring(sData.acfType .. "_unit_" .. addedunits))
-																uTbl.name = tostring(revCls["name"]) -- UnitDictEntry
+																HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups adding unit, uname: " .. tostring(cls["name"]))
+																uTbl.name = tostring(cls["name"]) -- UnitDictEntry
 
 																-- retrieve from standard
 																uTbl.alt = 0
@@ -1903,7 +1869,7 @@ function createPlaneGroups(mission) -- CHECK THIS
 														--DICTPROBLEM
 														--MaxDict = MaxDict+1
 														--local gDictEntry = "DictKey_GroupName_" .. MaxDict
-														local gNameEntry = tostring(tostring(cls_group) .. "_" .. sData.acfType .. "_DSMC_" .. tostring(addedGroups))
+														local gNameEntry = tostring(tostring(cls_base["name"]) .. "_" .. sData.acfType .. "_DSMC_" .. tostring(addedGroups))
 														--dictionary[gDictEntry] = gNameEntry
 														HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups, adding gNameEntry: " .. tostring(gNameEntry))
 
@@ -1914,7 +1880,7 @@ function createPlaneGroups(mission) -- CHECK THIS
 														HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups adding unit, group added")
 														--UTIL.dumpTable("groupTable_" .. tostring(addedGroups) .. ".lua", groupTable)
 													else
-														HOOK.writeDebugDetail(ModuleName .. ": createHeloGroups unable to add unit, skip")
+														HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups unable to add unit, skip")
 													end
 												end
 											end

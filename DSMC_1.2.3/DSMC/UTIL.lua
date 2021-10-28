@@ -741,8 +741,6 @@ function addFARPwh(wh)
 end
 
 
-
-
 function makeWhZero(whData, whTbl, base_qty) -- used in whRestart
 	local zWpn = nil
 	local zAcf = nil
