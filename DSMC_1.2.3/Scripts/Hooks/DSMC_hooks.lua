@@ -36,8 +36,8 @@ package.path =
 DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "2"
-DSMC_Build 			= "1901"
-DSMC_Date			= "29/10/2021"
+DSMC_Build 			= "1905"
+DSMC_Date			= "30/10/2021"
 
 -- ## DEBUG TO TEXT FUNCTION
 debugProcess	= true -- this should be left on for testers normal ops and test missions
@@ -117,6 +117,7 @@ autosavefrequency			= nil -- minutes
 DCS_Multy					= nil
 DCS_Server					= nil
 DSMC_isRecovering			= false
+local alreadyStarted		= false
 writeDebugDetail(DSMC_ModuleName .. ": local variables loaded")
 
 -- ## PATHS VARIABLES
@@ -1053,6 +1054,7 @@ end
 --## CALLBACKS
 function DSMC.onSimulationStart()
 	startDSMCprocess()
+	alreadyStarted = true
 end
 
 --## ALL EXTERNAL FUNCTIONS AND PROCESSES ARE ALWAYS ACTIVATED BY TRIGGER MESSAGE. ALSO MAIN INFORMATION ARE PASSED BY WITH TRIGGER MESSAGES
@@ -1140,8 +1142,13 @@ function DSMC.onTriggerMessage(message)
 	
 end
 
-function DSMC.onPlayerConnect()
-	UTIL.inJectCode("DSMC_resetSceneryDestruction", "EMBD.sceneryDestroyRefreshRemote()")
+function DSMC.onPlayerStart()
+	if alreadyStarted == true then
+		writeDebugDetail(DSMC_ModuleName .. ": client starting, DSMC_resetSceneryDestruction is resetting")
+		UTIL.inJectCode("DSMC_resetSceneryDestruction", "EMBD.sceneryDestroyRefreshRemote()")
+	else
+		writeDebugDetail(DSMC_ModuleName .. ": client connecting before simulation start, DSMC_resetSceneryDestruction is skipped")
+	end
 end
 
 
@@ -1166,6 +1173,7 @@ end
 --]]--
 
 function DSMC.onSimulationStop()
+	alreadyStarted = false
 	local lmz = DCS.getMissionName()
 	if lmz then
 		if string.sub(lmz,1,4) == StartFilterCode then

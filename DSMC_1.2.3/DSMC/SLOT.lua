@@ -2310,7 +2310,8 @@ function buildAirbaseSlot(missionEnv, warehouseEnv, airbaseTbl, tblSlots, usedPa
 	
 	--check used parkings, removing items used by AI
 	local whTbl = UTIL.deepCopy(warehouseEnv)
-	--tblPrksRemove[#tblPrksRemove+1] = {abId = afbId, prId = tostring(unit.parking_id), parDef = tostring(unit.parking), uType = unit.type}
+
+	-- this part checks for items in the wh and dimisish the item quantity based on the AI aircraft in the mission (clients have been removed before or base is unlimited)
 	for jId, jData in pairs(usedParkTbl) do
 		for afbType, afbIds in pairs(whTbl) do
 			if afbType == "airports" then
@@ -2340,7 +2341,7 @@ function buildAirbaseSlot(missionEnv, warehouseEnv, airbaseTbl, tblSlots, usedPa
 		if afbType == "airports" then
 			for afbId, afbData in pairs(afbIds) do
 				if string.lower(afbData.coalition) == string.lower(HOOK.SLOT_coa_var) or permitAll == true then
-					if string.lower(afbData.coalition) ~= "neutral" and string.lower(afbData.coalition) ~= "neutrals" then
+					if string.lower(afbData.coalition) ~= "neutral" and string.lower(afbData.coalition) ~= "neutrals" then -- neutral don't create acf
 
 						HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, checking airport: " .. tostring(afbId))
 
@@ -2469,6 +2470,8 @@ function buildAirbaseSlot(missionEnv, warehouseEnv, airbaseTbl, tblSlots, usedPa
 									end
 								end
 							end
+						else
+							HOOK.writeDebugBase(ModuleName .. ": buildAirbaseSlot, unlimitedAircrafts: " .. tostring(afbData.unlimitedAircrafts) .. ", skipping creation process")
 						end
 					end
 				end
