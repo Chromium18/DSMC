@@ -36,7 +36,7 @@ package.path =
 DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "2"
-DSMC_Build 			= "1905"
+DSMC_Build 			= "1906"
 DSMC_Date			= "30/10/2021"
 
 -- ## DEBUG TO TEXT FUNCTION
