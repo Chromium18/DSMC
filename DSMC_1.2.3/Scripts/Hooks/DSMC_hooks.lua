@@ -1151,6 +1151,9 @@ function DSMC.onPlayerStart()
 	end
 end
 
+function DSMC.onPlayerDisconnect()
+	saveOnDisconnect()
+end
 
 --[[
 function DSMC.onRadioMessage(message, duration)
