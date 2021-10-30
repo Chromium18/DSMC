@@ -1963,7 +1963,7 @@ world.addEventHandler(EMBD.sceneryDestroyRefresh)
 
 function EMBD.sceneryDestroyRefreshRemote()
 	local function setFlag()
-		trigger.action.setUserFlag("12345" , false )
+		trigger.action.setUserFlag("12345" , true )
 		env.info(("EMBD.sceneryDestroyRefreshRemote is a client, flag set done"))
 	end	
 	local function resetFlag()
