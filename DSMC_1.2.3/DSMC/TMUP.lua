@@ -101,7 +101,7 @@ function updateStTime(missionEnv)
 		
 			local RandomTime			= RandomHour*60*60
 			local NEWtime 				= CURday + 24*60*60 -- + RandomTime
-			local NEWtimeTable			= os.date("*t", NEWtime)			
+			--local NEWtimeTable			= os.date("*t", NEWtime)			
 			NEWstartDateYear			= tonumber(os.date("%Y", NEWtime))
 			NEWstartDateMonth			= tonumber(os.date("%m", NEWtime))
 			NEWstartDateDay				= tonumber(os.date("%d", NEWtime))

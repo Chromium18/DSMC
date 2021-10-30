@@ -12,6 +12,8 @@ local require 		= _G.require
 local io 			= require('io')
 local lfs 			= require('lfs')
 local os 			= require('os')
+local os 			= require('os')
+local ME_DB   		= require('me_db_api')
 
 -- ## DEBUG
 
@@ -260,7 +262,7 @@ function inJectTable(Table_name, Table_code)
 	local tbl_serial = IntegratedserializeWithCycles(Table_name, Table_code)	
 	local str, strErr = net.dostring_in("mission", "a_do_script(" .. "[===[" .. tbl_serial .. "]===]" .. ")")
 	if not strErr then
-		HOOK.writeDebugDetail(ModuleName .. ": inject worked: " .. tostring(strErr) .. ", str= " .. tostring("a_do_script(" .. "[===[" .. tbl_serial .. "]===]" .. ")") )
+		HOOK.writeDebugDetail(ModuleName .. ": inject not worked: " .. tostring(strErr) .. ", str= " .. tostring("a_do_script(" .. "[===[" .. tbl_serial .. "]===]" .. ")") )
 	else
 		HOOK.writeDebugDetail(ModuleName .. ": inject worked: " .. tostring(strErr) .. ", " .. tostring(Table_name) .. " loaded in mission env" )
 	end
@@ -708,7 +710,7 @@ function addFARPwhBase(unitId, coa, wh, voidIt)
 
 			HOOK.writeDebugDetail(ModuleName .. ": addFARPwhBase: warehouse has been set to all 0, id: " .. tostring(unitId))
 		else
-			HOOK.writeDebugDetail(ModuleName .. ": addFARPwhBase: no zero wh available")
+			HOOK.writeDebugBase(ModuleName .. ": addFARPwhBase: no zero wh available: cannot reset the FARP wh!")
 		end
 	end
 
@@ -737,8 +739,6 @@ function addFARPwh(wh)
 	end
 	HOOK.writeDebugDetail(ModuleName .. ": addFARPwh done")
 end
-
-
 
 
 function makeWhZero(whData, whTbl, base_qty) -- used in whRestart
@@ -2072,6 +2072,7 @@ io.close(boutFile);
 
 -- ## ADDED GLOBAL TABLES
 
+-- FOB naming
 tblFOBnames = {
 	[1] = "New York City",
 	[2] = "Los Angeles",
@@ -2383,9 +2384,14 @@ tblFOBnames = {
 	[308] = "Bend",
 }
 
-
-
-
-
+-- country table
+ctryList = {}
+if ME_DB.db.CountriesByName then
+	for cName, cData in pairs(ME_DB.db.CountriesByName) do
+		ctryList[#ctryList+1] = {n = cName, i = cData.WorldID}
+	end
+end
+dumpTable("ctryList_pre.lua", ctryList)
+--inJectTable("ctryList", ctryList) -- fatto quando la missione è avviata!
 
 --inJectTable("tblFOBnames", tblFOBnames)

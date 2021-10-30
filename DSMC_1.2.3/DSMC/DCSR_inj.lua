@@ -17,6 +17,7 @@ local Build 		= DSMC_Build or "missing, loaded without DSMC"
 local Date			= DSMC_Date or "missing, loaded without DSMC"
 
 DCSR = {}
+DCSR.commandDB = {}
 local debugProcessDetail = DSMC_debugProcessDetail or false
 
 -- SETTINGS FOR MISSION DESIGNER vvvvvvvvvvvvvvvvvv
@@ -74,6 +75,7 @@ if not DCSR.aircraftType then
     DCSR.aircraftType["SA342M"] = 2
     DCSR.aircraftType["UH-1H"] = 8
     DCSR.aircraftType["Mi-8MT"] = 16
+    DCSR.aircraftType["Mi-24P"] = 8
 end
 
 
@@ -1117,6 +1119,59 @@ function DCSR.addCsar(_coalition , _country, _point, _typeName, _unitName, _play
 
 end
 
+function DCSR.reqCSAR(_unit)
+    env.info(ModuleName .. " reqCSAR Client requested CSAR")
+
+    if _unit == nil then
+        env.info(ModuleName .. " reqCSAR Error! unit is nil")
+        return -- error!
+    end
+
+    local _coalition = _unit:getCoalition()
+
+    if _coalition == 1 and not DCSR.enableForRED then
+        env.info(ModuleName .. " reqCSAR Error! CSAR not active on red")
+        return --ignore!
+    end
+
+    if _coalition == 2 and not DCSR.enableForBLUE then
+        env.info(ModuleName .. " reqCSAR Error! CSAR not active on blue")
+        return --ignore!
+    end
+
+    if DCSR.takenOff[_unit:getName()] ~= true then
+        env.info(ModuleName .. " reqCSAR Pilot Hasn't took off, ignore")
+        return -- give up, pilot hasnt taken off
+    end
+
+    local _freq = DCSR.generateADFFrequency()
+    DCSR.addCsar(_coalition, _unit:getCountry(), _unit:getPoint()  , _unit:getTypeName(),  _unit:getName(), _unit:getPlayerName(), _freq, DCSR.useCoalitionMessages, 0)
+
+    --[[
+    local _uName = _unit:getName()
+    if _uName then
+        for pName, pData in pairs(DCSR.addedTo) do
+            if pData and type(pData) == "table" then
+                if pData.unitName == _uName then
+                    if pData.path and pData.groupId then
+                        if debugProcessDetail then
+                            env.info(ModuleName .. " reqCSAR deleted radio menu")
+                        end                        
+                        missionCommands.removeItemForGroup(pData.groupId, pData.path)
+                    end
+                    --local _CTLDpathID = DCSR.getPlayerNameOrUnitName(_unit)
+                    --DCSR.addedTo[_CTLDpathID] = nil
+                    --table.remove(TRPS.addedTo, pName)
+                    if debugProcessDetail then
+                        env.info(ModuleName .. " reqCSAR deleted addedTo entry")
+                    end
+                end
+            end
+        end        
+    end
+    --]]--
+end
+
 -- Handles all world events
 DCSR.eventHandler = {}
 function DCSR.eventHandler:onEvent(_event)
@@ -1672,7 +1727,7 @@ DCSR.addBeaconToGroup = function(_woundedGroupName, _freq)
         return
     else
         local _sound = "l10n/DEFAULT/" .. DCSR.radioSound
-
+        
         trigger.action.radioTransmission(_sound, _group:getUnit(1):getPoint(), 0, false, _freq, 1000)
     
         timer.scheduleFunction(DCSR.refreshRadioBeacon, { _woundedGroupName, _freq }, timer.getTime() + 30)
@@ -2572,6 +2627,7 @@ function DCSR.addweight( _heli )
   
 
 end
+
 -- Adds menuitem to all medevac units that are active
 function DCSR.addMedevacMenuItem()
     -- Loop through all Medevac units
@@ -2656,8 +2712,11 @@ function DCSR.addMedevacMenuItem()
 
                         missionCommands.addCommandForGroup(_groupId, "Request Signal Flare", _rootPath, DCSR.signalFlare, _unitName)
                         missionCommands.addCommandForGroup(_groupId, "Request Smoke", _rootPath, DCSR.reqsmoke, _unitName)
+
+                        missionCommands.addCommandForGroup(_groupId, "Declare emergency - request CSAR", _rootPath, DCSR.reqCSAR, _unit)
                         
                         DCSR.addedTo[tostring(_addedId)] = {path = _rootPath, groupId = _groupId, unitId = _unitId, unitName = _unitName, curTime = timer.getTime(), group = _group}
+                        
                     end
                 end
             else
