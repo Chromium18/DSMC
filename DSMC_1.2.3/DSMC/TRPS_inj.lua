@@ -32474,11 +32474,11 @@ TRPS.loadableGroups = {
 -- 901 -> 999 (reserved) used for Medium & Short range fixed SAM system (even for blue, odd for red)
 -- 1001 -> 1007 used for airlift/weapons
 -- 1099 used for generic repair template crate
--- 1100 -> 1500 used for platoons
+-- 1201 -> 1500 used for platoons
 -- 1200 -> FOB crate
 -- 1800 -> Long Range SAM System (even for blue, odd for red)
 
--- 1300 -> WWII anti air
+-- 1100 -> WWII anti air
 
 
 TRPS.cargoShapes = {
@@ -32636,20 +32636,20 @@ TRPS.samSystems = {
 
     -- WWII
     ["Radar System"] = {  
-        { weight = 1301, desc = "Early Warning Radar Freya", unit = "FuMG-401"}, 
-        { weight = 1302, desc = "Early Warning Radar Würzburg", unit = "FuSe-65"}, 
+        { weight = 1101, desc = "Early Warning Radar Freya", unit = "FuMG-401"}, 
+        { weight = 1102, desc = "Early Warning Radar Würzburg", unit = "FuSe-65"}, 
     },  
 
     -- german flak
     ["German flak anti-air"] = { 
-        { weight = 1303, desc = "Anti air Flak 18", unit = "flak18", isLauncher = true},
-        { weight = 1304, desc = "Opel Blitz truck", unit = "Blitz_36-6700A"},  
+        { weight = 1103, desc = "Anti air Flak 18", unit = "flak18", isLauncher = true},
+        { weight = 1104, desc = "Opel Blitz truck", unit = "Blitz_36-6700A"},  
     },           
 
     -- england flak
     ["English flak anti-air"] = { 
-        { weight = 1305, desc = "Anti air bofors 40mm", unit = "bofors40", isLauncher = true},
-        { weight = 1306, desc = "Bedford support truck", unit = "Bedford_MWD"},   
+        { weight = 1105, desc = "Anti air bofors 40mm", unit = "bofors40", isLauncher = true},
+        { weight = 1106, desc = "Bedford support truck", unit = "Bedford_MWD"},   
     },  
 }
 
@@ -32806,7 +32806,7 @@ function TRPS.enablePlatoons()
                 ["Logistic"] = {},
             }
             local cDataside = nil
-            local curWeight = 1100
+            local curWeight = 1201
             local missionYear = tonumber(env.mission.date.Year)
             --env.info(ModuleName .. " builtPltTable x1")
             for _coalitionName, _coalitionData in pairs(env.mission.coalition) do

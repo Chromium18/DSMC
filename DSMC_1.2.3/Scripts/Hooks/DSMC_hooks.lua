@@ -36,8 +36,8 @@ package.path =
 DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "2"
-DSMC_Build 			= "1907"
-DSMC_Date			= "01/11/2021"
+DSMC_Build 			= "1913"
+DSMC_Date			= "06/11/2021"
 
 -- ## DEBUG TO TEXT FUNCTION
 debugProcess	= true -- this should be left on for testers normal ops and test missions

@@ -1254,7 +1254,7 @@ function getMizFiles(loadedMissionPath)
 			NewSaveresourceFiles[filename] = fullPath
 			
 
-			if string.find(fullPath, "mission") then
+			if (fullPath:sub(-7) == "mission") then
 				local f = io.open(fullPath, 'r')
 				local mis_path = nil
 				if f then
@@ -1271,7 +1271,7 @@ function getMizFiles(loadedMissionPath)
 						f:close()								
 					end
 				end
-			elseif string.find(fullPath, "warehouses") then
+			elseif (fullPath:sub(-10) == "warehouses") then
 				local f = io.open(fullPath, 'r')
 				local wrhs_path = nil
 				if f then
@@ -1288,7 +1288,7 @@ function getMizFiles(loadedMissionPath)
 						f:close()						
 					end
 				end				
-			elseif string.find(fullPath, "dictionary") then
+			elseif (fullPath:sub(-10) == "dictionary") then
 				local f = io.open(fullPath, 'r')
 				local dict_path = nil
 				if f then
@@ -1305,7 +1305,7 @@ function getMizFiles(loadedMissionPath)
 						f:close()							
 					end
 				end	
-			elseif string.find(fullPath, "mapResource") then
+			elseif (fullPath:sub(-11) == "mapResource") then
 				local f = io.open(fullPath, 'r')
 				local mRes_path = nil
 				if f then
