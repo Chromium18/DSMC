@@ -21,6 +21,9 @@ HOOK.writeDebugDetail(ModuleName .. ": local required loaded")
 --## VARS
 tblToBeKilled 		= {}
 HOOK.writeDebugDetail(ModuleName .. ": vars required loaded")
+local wreckagePersistence_units = 2 -- days after destruction
+local wreckagePersistence_mapObj = 30 -- days after destruction (not implemented yet)
+local wreckagePersistence_statics = 30 -- days after destruction (not implemented yet)
 
 --## FUNCTIONS
 
@@ -375,6 +378,57 @@ function killUnits(missionEnv)
 	HOOK.writeDebugDetail(ModuleName .. ": killUnits ok")
 end	
 HOOK.writeDebugDetail(ModuleName .. ": killUnits loaded")
+
+function killStatics(missionEnv) -- remove static units wreckages created by DSCM CRST module
+
+	for coalitionID,coalition in pairs(missionEnv["coalition"]) do
+		for countryID,country in pairs(coalition["country"]) do
+			for attrID,attr in pairs(country) do
+				if (type(attr)=="table") and (attrID == "static") then
+					
+					for i = #attr.group, 1, -1 do
+
+						
+
+						if string.find(attr.group[i].name, "_dsmc_dd_") then
+								
+							local subDateFilter = string.sub(attr.group[i].name, string.find(attr.group[i].name, "_dsmc_dd_")+9)+wreckagePersistence_units
+
+							local y = missionEnv.date.Year
+							local m = missionEnv.date.Month
+							local d = missionEnv.date.Day
+	
+							local dayValue = nil
+	
+							if y and m and d then
+								if type(y) == "number" and type(m) == "number" and type(d) == "number" then 
+									dayValue = y*365+m*30+d -- (can't use os.time and os.date cause I can't be sure to have os available!)
+								end
+							end
+
+							HOOK.writeDebugDetail(ModuleName .. ": killStatics, subDateFilter: " .. tostring(subDateFilter) .. ", dayValue:" .. tostring(dayValue))
+
+							if dayValue > subDateFilter then
+								HOOK.writeDebugDetail(ModuleName .. ": killStatics filter is passed, attr.group[i] removed")
+								table.remove(attr.group, i)
+							end
+						end
+					end
+
+					HOOK.writeDebugDetail(ModuleName .. ": killStatics table.getn(attr.group): " .. tostring(table.getn(attr.group)))
+					if table.getn(attr.group) < 1 then -- next(attr.group) == nil													
+						country[attrID] = nil;
+						HOOK.writeDebugDetail(ModuleName .. ": killStatics killed static table for country (no more groups)")												
+					end
+
+				end
+			end
+		end
+	end	
+
+	HOOK.writeDebugDetail(ModuleName .. ": killStatics ok")
+end	
+HOOK.writeDebugDetail(ModuleName .. ": killStatics loaded")
 
 function updateUnits(missionEnv)	
 	local unitsUpdatePreview = table.getn(tblUnitsUpdate)
@@ -937,6 +991,7 @@ function save()
 		updateUnits(env.mission)	
 		updateStaticCoa(env.mission)
 		killUnits(env.mission)		
+		killStatics(env.mission)		
 
 		if HOOK.SPWN_var == true then
 			IncludeSpawned(env.mission, tblSpawned, wrhs_env.warehouses) -- , dict_env.dictionary

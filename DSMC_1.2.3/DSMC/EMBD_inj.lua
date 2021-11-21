@@ -351,6 +351,7 @@ function EMBD.getAptInfo()
 		local aptID	  = Adata:getID()
 		local indexId = Aid
 		local aptPos = Adata:getPosition().p
+		local aptCoa = Adata:getCoalition()
 		--if env.mission.theatre == "Caucasus" then
 		--	indexId = indexId +11			
 		--	if DSMC_debugProcessDetail == true then
@@ -361,7 +362,7 @@ function EMBD.getAptInfo()
 
 
 
-		tblAirbases[#tblAirbases+1] = {id = aptID, index = aptID, name = aptName, desc = aptInfo, pos = aptPos}
+		tblAirbases[#tblAirbases+1] = {id = aptID, index = aptID, name = aptName, desc = aptInfo, pos = aptPos, coa = aptCoa}
 	end
 end
                                                                                                                                                            
@@ -1448,7 +1449,20 @@ function EMBD.deathRecorder:onEvent(event)
 						if exist == false then
 							local Objdesc = event.initiator:getDesc()
 							if Objdesc.life > 1 then
-								tblDeadScenObj[#tblDeadScenObj + 1] = {id = mapObj_deathcounter, x = SOpos.x, y = SOpos.z, objId = event.initiator:getName(), SOdesc = Objdesc} 
+
+								local y = env.mission.date.Year
+								local m = env.mission.date.Month
+								local d = env.mission.date.Day
+
+								local dayValue = nil
+
+								if y and m and d then
+									if type(y) == "number" and type(m) == "number" and type(d) == "number" then 
+										dayValue = y*365+m*30+d -- (can't use os.time and os.date cause I can't be sure to have os available!)	
+									end
+								end
+
+								tblDeadScenObj[#tblDeadScenObj + 1] = {id = mapObj_deathcounter, x = SOpos.x, y = SOpos.z, objId = event.initiator:getName(), SOdesc = Objdesc, deathDay = dayValue} 
 							end
 						end
 
@@ -1456,8 +1470,21 @@ function EMBD.deathRecorder:onEvent(event)
 					elseif SOcategory == 3 then 
 						if DSMC_debugProcessDetail == true then
 							env.info(("EMBD.deathRecorder death event category 3, static object"))		
-						end													
-						tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(event.initiator:getID()), objCategory = 3}		
+						end							
+						
+						local y = env.mission.date.Year
+						local m = env.mission.date.Month
+						local d = env.mission.date.Day
+
+						local dayValue = nil
+
+						if y and m and d then
+							if type(y) == "number" and type(m) == "number" and type(d) == "number" then 
+								dayValue = y*365+m*30+d -- (can't use os.time and os.date cause I can't be sure to have os available!)	
+							end
+						end
+
+						tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(event.initiator:getID()), objCategory = 3, deathDay = dayValue}		
 					
 
 					elseif SOcategory == 1 then -- unit. Cargos, Bases and Weapons are left out 
@@ -1465,6 +1492,18 @@ function EMBD.deathRecorder:onEvent(event)
 						if DSMC_debugProcessDetail == true then
 							env.info(("EMBD.deathRecorder death event di category 1, unit"))	
 						end	
+
+						local y = env.mission.date.Year
+						local m = env.mission.date.Month
+						local d = env.mission.date.Day
+
+						local dayValue = nil
+
+						if y and m and d then
+							if type(y) == "number" and type(m) == "number" and type(d) == "number" then 
+								dayValue = y*365+m*30+d -- (can't use os.time and os.date cause I can't be sure to have os available!)
+							end
+						end
 					
 						--dead
 						local unitName		 	= nil
@@ -1556,14 +1595,14 @@ function EMBD.deathRecorder:onEvent(event)
 													}, -- end of ["units"]
 													["y"] = unitPos.z,
 													["x"] = unitPos.x,
-													["name"] = unitName,
+													["name"] = unitName .. "_dsmc_dd_" .. tostring(dayValue),
 													["dead"] = true,
 												} -- end of [1]			
 							else
 								groupTable = "none"
 							end	
 						
-							tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unitID), coalitionID = unitCoalition, countryID = unitCountry, staticTable = groupTable, objCategory = unitCatEnum, objTypeName = unitTypeName}
+							tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unitID), coalitionID = unitCoalition, countryID = unitCountry, staticTable = groupTable, objCategory = unitCatEnum, objTypeName = unitTypeName, deathDay = dayValue}
 							if DSMC_debugProcessDetail == true then
 								env.info(("EMBD.deathRecorder added unit"))	
 							end	

@@ -44,7 +44,6 @@ DSMC_DisableF10save				= true      -- true / false. F10 menù save option disabl
 DSMC_AutosaveExit_hours			= 25        -- value, 1->24 or 25. hours of simulation after with DCS closes, from 0 to 24 (higher values won't be accepted). If clients are online, it will delay 5 minutes and so on till nobody is online.
 DSMC_AutosaveExit_time      	= 0         -- value, 1->23. hour at witch DCS will automatically close regardless of clients or other settings. works only if DSMC_AutosaveExit_hours is set to >24. Values out of the 1-23 range will be ignored.
 DSMC_AutosaveExit_safe      	= true      -- true / false. If false, the autosaveExit will kill DCS even if there are clients online, for those server admin who prefer to have a specific kill time.
-DSMC_AutoRestart_active     	= false     -- true / false. If true, DSMC will load a dynamically created .bat file (base version in DSMC\files, kindly provided by Maverick87Shaka) that will monitor DCS process. Once it close, it will try to load up automatically. BEWARE: no stop on that process is provided, you must do it on your own.
 
 DSMC_CreateSlotCoalition    	= "all"     -- "all", "blue", "red". Case sensitive. If wrong, it reverts to "all". If blue or red, slots will be created only for that coalition
 
@@ -78,3 +77,6 @@ DSMC_BuilderToolsBeta 		    = false		-- true / false -- // NOT WORKING YET Leave
 
 -- additional feature (not working leave as it is)
 DSMC_ExportDocuments        	= false      -- true / false
+
+-- beta currently not working function to automatic restart of DCS after a graceful close
+DSMC_AutoRestart_active     	= false     -- true / false. If true, DSMC will load a dynamically created .bat file (base version in DSMC\files, kindly provided by Maverick87Shaka) that will monitor DCS process. Once it close, it will try to load up automatically. BEWARE: no stop on that process is provided, you must do it on your own.

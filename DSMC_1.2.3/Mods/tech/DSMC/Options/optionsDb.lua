@@ -9,7 +9,7 @@ return {
 	TRPS						= DbOption.new():setValue(true):checkbox():setEnforceable(), 	
 	--TRPS_setup					= DbOption.new():setValue(true):checkbox():setEnforceable(), 	
 	DCSR						= DbOption.new():setValue(true):checkbox():setEnforceable(), 	
-	DEBUG						= DbOption.new():setValue(true):checkbox():setEnforceable(),
+	DEBUG						= DbOption.new():setValue(false):checkbox():setEnforceable(),
 	--MOBJ						= DbOption.new():setValue(true):checkbox():setEnforceable(),
 	--WTHR						= DbOption.new():setValue(true):checkbox():setEnforceable(), 
 	CRST						= DbOption.new():setValue(true):checkbox():setEnforceable(), 
