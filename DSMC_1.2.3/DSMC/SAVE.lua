@@ -383,16 +383,31 @@ function killStatics(missionEnv) -- remove static units wreckages created by DSC
 
 	for coalitionID,coalition in pairs(missionEnv["coalition"]) do
 		for countryID,country in pairs(coalition["country"]) do
+			HOOK.writeDebugDetail(ModuleName .. ": killStatics, country: " .. tostring(country.name))
 			for attrID,attr in pairs(country) do
 				if (type(attr)=="table") and (attrID == "static") then
 					
 					for i = #attr.group, 1, -1 do
-
+						HOOK.writeDebugDetail(ModuleName .. ": killStatics, i: " .. tostring(i))
 						
 
 						if string.find(attr.group[i].name, "_dsmc_dd_") then
-								
-							local subDateFilter = string.sub(attr.group[i].name, string.find(attr.group[i].name, "_dsmc_dd_")+9)+wreckagePersistence_units
+							
+							local code = nil
+							local code2 = string.sub(attr.group[i].name, string.find(attr.group[i].name, "_dsmc_dd_")+9)
+							HOOK.writeDebugDetail(ModuleName .. ": killStatics, code2: " .. tostring(code2))
+
+							if string.find(code2, "%-") then
+								HOOK.writeDebugDetail(ModuleName .. ": killStatics, code check a")
+								code = string.sub(code2, 1, string.find(code2, "%-")-1)
+							else
+								HOOK.writeDebugDetail(ModuleName .. ": killStatics, code check b")
+								code = code2
+							end
+
+							HOOK.writeDebugDetail(ModuleName .. ": killStatics, code: " .. tostring(code))
+
+							local subDateFilter = tonumber(code)+wreckagePersistence_units
 
 							local y = missionEnv.date.Year
 							local m = missionEnv.date.Month
