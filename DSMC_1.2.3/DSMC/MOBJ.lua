@@ -31,7 +31,20 @@ function updateMapObject(missionEnv, tblDeadScenObj)
 	if table.getn(tblDeadScenObj) > 0 then
 
 		local currentZoneNum 	= table.getn(missionEnv.triggers.zones) + 1
-		local currentZoneId		= 1000
+		local maxZid = 0
+		for zId, zData in pairs (missionEnv.triggers.zones) do
+			if zData.zoneId > maxZid then
+				maxZid = zData.zoneId
+			end
+		end
+		
+		local currentZoneId	= 1000
+		if maxZid > 0 then
+			currentZoneId = maxZid +1
+		end
+		
+		HOOK.writeDebugDetail(ModuleName .. ": currentZoneId: " .. tostring(currentZoneId))
+		
 		local actionsId			= 1000		
 
 		local currentTrigNum = nil
@@ -112,13 +125,15 @@ function updateMapObject(missionEnv, tblDeadScenObj)
 				-- filter life
 				local okLifeFilter = true
 				if tonumber(ds_data.SOdesc.life) then
-					if tonumber(ds_data.SOdesc.life) < smallObjectFilter then				
+					if tonumber(ds_data.SOdesc.life) < smallObjectFilter then	
+						HOOK.writeDebugDetail(ModuleName .. ": object is too small: " .. tostring(ds_data.objId))			
 						okLifeFilter = false
 					end
 				end
 
 				-- create zone
 				if okDoDestZone and okLifeFilter then
+					currentZoneId	= currentZoneId +1
 					if not missionEnv.triggers.zones[currentZoneNum] then
 						missionEnv.triggers.zones[currentZoneNum] = {
 							["x"] = ds_data.x,
@@ -179,7 +194,7 @@ function updateMapObject(missionEnv, tblDeadScenObj)
 						end	
 						
 						currentZoneNum 	= currentZoneNum +1
-						currentZoneId	= currentZoneId +1
+						--currentZoneId	= currentZoneId +1
 						actionsId 		= actionsId +1
 						HOOK.writeDebugDetail(ModuleName .. ": created zone name " .. tostring("DSMC_ScenDest_" .. tostring(ds_data.objId)))
 					end
