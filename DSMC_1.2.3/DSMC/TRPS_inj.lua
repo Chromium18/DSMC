@@ -40075,7 +40075,7 @@ function TRPS.generateVHFrequencies() -- DSMC modified to limit range
     -- first range
     while _start < TRPS.beaconMaxFreq do
         table.insert(TRPS.freeVHFFrequencies, _start)
-        _start = _start + 25000
+        _start = _start + 50000
     end
 end
 
