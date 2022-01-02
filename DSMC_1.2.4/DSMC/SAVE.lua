@@ -1070,18 +1070,26 @@ function save()
 			createSlots(env.mission, wrhs_env.warehouses) -- , dict_env.dictionary
 		end		
 		
-		if HOOK.GOAP_var == true then
-			GOAP.loadtables()
-			
-			--test
-			GOAP.Gtest() -- , dict_env.dictionary
-			--GOAP.planGroundGroup(6, "CHERKESSK", true, 600)
-			--planAirGroup(id, missionEnv, task, pos, delay)
-			GOAP.planAirGroup(14, env.mission, "Strike", {x = 6466, y = 0, z = 383469}, 600) -- , dict_env.dictionary
-			GOAP.planAirGroup(15, env.mission, "CAP", {x = 0, y = 6096, z = 0}, 900) -- , dict_env.dictionary
-			GOAP.planAirGroup(16, env.mission, "CAS", {x = 6466, y = 0, z = 383469}, 300) -- , dict_env.dictionary
+		if HOOK.PLAN_var == true then
+			PLAN.loadtables()
 
-			GOAP.createColourZones(env.mission, tblTerrainDb)
+			--test
+			--PLAN.updateTerrDb(tblTerrainDb)
+			--PLAN.createTerrConnections(tblTerrainDb)
+
+			
+			--PLAN.checkRoadConnection("OZURGETI", "BATUMI")
+
+			--PLAN.Gtest() -- , dict_env.dictionary
+			--PLAN.planGroundGroup(6, "CHERKESSK", true, 600)
+			--planAirGroup(id, missionEnv, task, pos, delay)
+			--PLAN.planAirGroup(14, env.mission, "Strike", {x = 6466, y = 0, z = 383469}, 600) -- , dict_env.dictionary
+			--PLAN.planAirGroup(15, env.mission, "CAP", {x = 0, y = 6096, z = 0}, 900) -- , dict_env.dictionary
+			--PLAN.planAirGroup(16, env.mission, "CAS", {x = 6466, y = 0, z = 383469}, 300) -- , dict_env.dictionary
+
+			--PLAN.createColourZones(env.mission, tblTerrainDb)
+			PLAN.createConnectionLines(env.mission, tblTerrainDb)
+			
 		end	
 
 		if ADTR.tblAddResources then
@@ -1672,7 +1680,7 @@ function buildNewMizFile(loadedMissionPath, loadedMizFileName, cpm_path)
 		UTIL.moveFile(HOOK.OldMResPath, HOOK.NewMResPath)
 		HOOK.writeDebugDetail(ModuleName .. ": buildNewMizFile - mapResource file moved")
 
-		UTIL.dumpTable("DSMC_NewSaveresourceFiles.lua", DSMC_NewSaveresourceFiles)
+		--("DSMC_NewSaveresourceFiles.lua", DSMC_NewSaveresourceFiles)
 
 		local miz = minizip.zipCreate(NewMizPath)
 		if miz then

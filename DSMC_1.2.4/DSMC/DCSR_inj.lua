@@ -24,6 +24,8 @@ local debugProcessDetail = DSMC_debugProcessDetail or false
 --Enable CSar Options -HELICOPTERS
 --enableAllslots and Use prefix will work for Helicopter 
 
+DCSR.displayMessageTime     = TRPS_displayMessageTime or 20
+
 -- All slot / Limit settings
 
 if not DSMC_baseGcounter then
@@ -1076,7 +1078,7 @@ function DCSR.addCsar(_coalition , _country, _point, _typeName, _unitName, _play
   DCSR.addSpecialParametersToGroup(_spawnedGroup)
   
   if noMessage == true then
-    trigger.action.outTextForCoalition(_spawnedGroup:getCoalition(), "MAYDAY MAYDAY! " .. _typeName .. " is down. ", 10)
+    trigger.action.outTextForCoalition(_spawnedGroup:getCoalition(), "MAYDAY MAYDAY! " .. _typeName .. " is down. ", DCSR.displayMessageTime)
   end
   
   if _freq == nil then
@@ -1978,7 +1980,7 @@ function DCSR.pickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupName
     end
     if _unitsInHelicopter + 1 > _maxUnits then
         DCSR.displayMessageToSAR(_heliUnit, string.format("%s, %s. We're already crammed with %d guys! Sorry!",
-            _pilotName, _heliName, _unitsInHelicopter, _unitsInHelicopter), 10)
+            _pilotName, _heliName, _unitsInHelicopter, _unitsInHelicopter), DCSR.displayMessageTime/2)
         return true
     end
 
@@ -1993,7 +1995,7 @@ function DCSR.pickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupName
 
     Group.destroy(_woundedLeader:getGroup())
 
-    DCSR.displayMessageToSAR(_heliUnit, string.format("%s: %s I'm in! Get to the MASH ASAP! ", _heliName, _pilotName), 10)
+    DCSR.displayMessageToSAR(_heliUnit, string.format("%s: %s I'm in! Get to the MASH ASAP! ", _heliName, _pilotName), DCSR.displayMessageTime/2)
 
     timer.scheduleFunction(DCSR.scheduledSARFlight,
         {
@@ -2064,9 +2066,9 @@ function DCSR.checkCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedGr
     
     if DCSR.heliVisibleMessage[_lookupKeyHeli] == nil then
         if DCSR.autosmoke == true then
-          DCSR.displayMessageToSAR(_heliUnit, string.format("%s: %s. I hear you! Damn that thing is loud! Land or hover by the smoke.", _heliName, _pilotName), 30)
+          DCSR.displayMessageToSAR(_heliUnit, string.format("%s: %s. I hear you! Damn that thing is loud! Land or hover by the smoke.", _heliName, _pilotName), DCSR.displayMessageTime)
         else
-          DCSR.displayMessageToSAR(_heliUnit, string.format("%s: %s. I hear you! Damn that thing is loud! Request a Flare or Smoke if you need", _heliName, _pilotName), 30)
+          DCSR.displayMessageToSAR(_heliUnit, string.format("%s: %s. I hear you! Damn that thing is loud! Request a Flare or Smoke if you need", _heliName, _pilotName), DCSR.displayMessageTime)
         end
         --mark as shown for THIS heli and THIS group
         DCSR.heliVisibleMessage[_lookupKeyHeli] = true
@@ -2076,9 +2078,9 @@ function DCSR.checkCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedGr
 
         if DCSR.heliCloseMessage[_lookupKeyHeli] == nil then
             if DCSR.autosmoke == true then
-              DCSR.displayMessageToSAR(_heliUnit, string.format("%s: %s. You're close now! Land or hover at the smoke.", _heliName, _pilotName), 10)
+              DCSR.displayMessageToSAR(_heliUnit, string.format("%s: %s. You're close now! Land or hover at the smoke.", _heliName, _pilotName), DCSR.displayMessageTime)
             else
-              DCSR.displayMessageToSAR(_heliUnit, string.format("%s: %s. You're close now! Land in a safe place, i will go there ", _heliName, _pilotName), 10)
+              DCSR.displayMessageToSAR(_heliUnit, string.format("%s: %s. You're close now! Land in a safe place, i will go there ", _heliName, _pilotName), DCSR.displayMessageTime)
             end
             --mark as shown for THIS heli and THIS group
             DCSR.heliCloseMessage[_lookupKeyHeli] = true
@@ -2096,7 +2098,7 @@ function DCSR.checkCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedGr
                     DCSR.landedStatus[_lookupKeyHeli] = math.floor( (_distance * DCSR.loadtimemax ) / DCSR.extractDistance )   
                     _time = DCSR.landedStatus[_lookupKeyHeli] 
                     DCSR.orderGroupToMoveToPoint(_woundedLeader, _heliUnit:getPoint())
-                    DCSR.displayMessageToSAR(_heliUnit, "Wait till " .. _pilotName .. ". Gets in \n" .. _time .. " more seconds.", 10, true)
+                    DCSR.displayMessageToSAR(_heliUnit, "Wait till " .. _pilotName .. ". Gets in \n" .. _time .. " more seconds.", DCSR.displayMessageTime/2, true)
                 else
                     _time = DCSR.landedStatus[_lookupKeyHeli] - 1
                     DCSR.landedStatus[_lookupKeyHeli] = _time
@@ -2140,14 +2142,14 @@ function DCSR.checkCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedGr
                         end
 
                         if _time > 0 then
-                            DCSR.displayMessageToSAR(_heliUnit, "Hovering above " .. _pilotName .. ". \n\nHold hover for " .. _time .. " seconds to winch them up. \n\nIf the countdown stops you're too far away!", 10, true)
+                            DCSR.displayMessageToSAR(_heliUnit, "Hovering above " .. _pilotName .. ". \n\nHold hover for " .. _time .. " seconds to winch them up. \n\nIf the countdown stops you're too far away!", DCSR.displayMessageTime/2, true)
                         else
                             DCSR.hoverStatus[_lookupKeyHeli] = nil
                             return DCSR.pickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupName)
                         end
                         _reset = false
                     else
-                        DCSR.displayMessageToSAR(_heliUnit, "Too high to winch " .. _pilotName .. " \nReduce height and hover for 10 seconds!", 5, true)
+                        DCSR.displayMessageToSAR(_heliUnit, "Too high to winch " .. _pilotName .. " \nReduce height and hover for 10 seconds!", DCSR.displayMessageTime/4, true)
                     end
                 end
             
@@ -2277,7 +2279,7 @@ function DCSR.rescuePilots(_heliUnit)
         --DCSR.enableAircraft(_rescueGroup.originalUnit, _rescueGroup.player)
     end
 
-    DCSR.displayMessageToSAR(_heliUnit, _txt, 10)
+    DCSR.displayMessageToSAR(_heliUnit, _txt, DCSR.displayMessageTime/2)
 
     -- env.info("Rescued")
 end
@@ -2441,7 +2443,7 @@ function DCSR.displayActiveSAR(_unitName)
         _msg = _msg .. "\n" .. _line.msg
     end
 
-    DCSR.displayMessageToSAR(_heli, _msg, 20)
+    DCSR.displayMessageToSAR(_heli, _msg, DCSR.displayMessageTime)
 end
 
 
@@ -2491,11 +2493,11 @@ function DCSR.signalFlare(_unitName)
         local _clockDir = DCSR.getClockDirection(_heli, _closet.pilot)
 
         local _msg = string.format("%s - %.2f KHz ADF - %.3fM - Popping Signal Flare at your %s ", _closet.groupInfo.desc, _closet.groupInfo.frequency / 1000, _closet.distance, _clockDir)
-        DCSR.displayMessageToSAR(_heli, _msg, 20)
+        DCSR.displayMessageToSAR(_heli, _msg, DCSR.displayMessageTime*1.5)
 
         trigger.action.signalFlare(_closet.pilot:getPoint(), 1, 0)
     else
-        DCSR.displayMessageToSAR(_heli, "No Pilots within 8KM", 20)
+        DCSR.displayMessageToSAR(_heli, "No Pilots within 8KM", DCSR.displayMessageTime)
     end
 end
 
@@ -2508,7 +2510,7 @@ function DCSR.displayToAllSAR(_message, _side, _ignore)
         if _unit ~= nil and _unit:getCoalition() == _side then
 
             if _ignore == nil or _ignore ~= _unitName then
-                DCSR.displayMessageToSAR(_unit, _message, 10)
+                DCSR.displayMessageToSAR(_unit, _message, DCSR.displayMessageTime/2)
             end
         else
             -- env.info(string.format("unit nil %s",_unitName))
@@ -2530,7 +2532,7 @@ function DCSR.reqsmoke( _unitName )
         local _clockDir = DCSR.getClockDirection(_heli, _closet.pilot)
 
         local _msg = string.format("%s - %.2f KHz ADF - %.3fM - Popping Blue smoke at your %s ", _closet.groupInfo.desc, _closet.groupInfo.frequency / 1000, _closet.distance, _clockDir)
-        DCSR.displayMessageToSAR(_heli, _msg, 20)
+        DCSR.displayMessageToSAR(_heli, _msg, DCSR.displayMessageTime*1.5)
         
        local _smokecolor
         if (_closet.pilot:getCoalition() == 2) then
@@ -2542,7 +2544,7 @@ function DCSR.reqsmoke( _unitName )
          trigger.action.smoke(_closet.pilot:getPoint(), _smokecolor)
   
     else
-        DCSR.displayMessageToSAR(_heli, "No Pilots within 8KM", 20)
+        DCSR.displayMessageToSAR(_heli, "No Pilots within 8KM", DCSR.displayMessageTime)
     end
 
 end
@@ -2592,7 +2594,7 @@ function DCSR.checkOnboard(_unitName)
     local _inTransit = DCSR.inTransitGroups[_unitName]
 
     if _inTransit == nil or DCSR.tableLength(_inTransit) == 0 then
-        DCSR.displayMessageToSAR(_unit, "No Rescued Pilots onboard", 30)
+        DCSR.displayMessageToSAR(_unit, "No Rescued Pilots onboard", DCSR.displayMessageTime/2)
     else
 
         local _text = "Onboard - RTB to FARP/Airfield or MASH: "
@@ -2601,7 +2603,7 @@ function DCSR.checkOnboard(_unitName)
             _text = _text .. "\n" .. _onboard.desc
         end
 
-        DCSR.displayMessageToSAR(_unit, _text, 30)
+        DCSR.displayMessageToSAR(_unit, _text, DCSR.displayMessageTime*1.5)
     end
 end
 

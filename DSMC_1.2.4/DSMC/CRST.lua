@@ -25,7 +25,7 @@ CRSTloaded						= false
 -- ## ELAB FUNCTION
 function doStatics(missionEnv, tblDeaths)
 	if HOOK.debugProcessDetail then
-		UTIL.dumpTable("tblDeaths.lua", tblDeaths)
+		--UTIL.dumpTable("tblDeaths.lua", tblDeaths)
 	end
 	local addedDeathsDone = 0
 	local addedDeathsPreview = 0 

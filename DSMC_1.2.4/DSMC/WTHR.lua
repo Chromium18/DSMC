@@ -27,6 +27,11 @@ DewPointCalc					= nil
 local rndFactorPerc				= 15 --% of randomization on calculated values
 local cloudFog					= false
 
+-- single player / host with graphics: fog will be enabled
+if DSMC_ServerMode == false then
+	HOOK.writeDebugDetail(ModuleName .. ": Weather: fog disable turned off due to single player or host with graphics mode")	
+	WTHR_fog = false 
+end
 
 --# RND SEED
 math.randomseed(os.time())
@@ -1427,7 +1432,7 @@ function round(num, idp)
 	return math.floor(num * mult + 0.5) / mult
 end
 HOOK.writeDebugDetail(ModuleName .. ": c6")
-UTIL.dumpTable("clouds.lua", clouds)
+--UTIL.dumpTable("clouds.lua", clouds)
 
 if clouds and enableNewCloud == true then
 
@@ -1471,7 +1476,7 @@ if clouds and enableNewCloud == true then
 		enableNewCloud = false
 	end
 end
-UTIL.dumpTable("newWeatherPresets.lua", newWeatherPresets)
+--UTIL.dumpTable("newWeatherPresets.lua", newWeatherPresets)
 
 --# FUNCTIONS
 
@@ -1846,54 +1851,59 @@ function getWind(wthTable, hour)
 end
 
 function getFog(wthTable, iprecptns, temperature, windSpeed, humidity, clDensity, dewPoint) -- simplified estimation
-	if cloudFog then
-		HOOK.writeDebugDetail(ModuleName .. ": getFog is doing cloud fog setting")
-		return true, math.random(500,1000), math.random(100,1000)
-	else
-		if wthTable.fogAllowed == true then
-			if wthTable and iprecptns and temperature and windSpeed and humidity and clDensity and dewPoint then -- https://blog.metservice.com/Fog
-				local tempDewCheck = temperature-dewPoint
-				if iprecptns == 0 then
-					if humidity > 80 then
-						if tempDewCheck < 2 then
-							if windSpeed < 4 then
-								if clDensity < 4 and temperature > 10 then
-									local fogIndex = 1/((humidity-80)/(100-80))     -- the lower, the more fog
-									local fogVis = 6000*fogIndex
-									if fogVis < 1000 then fogVis = math.random(1000,2000) end 
-									local fogThick = 500*fogIndex
-									HOOK.writeDebugDetail(ModuleName .. ": getFog, fog present with visibility " .. tostring(fogVis) .. " and thickness " .. tostring(fogThick))
-									return true, fogThick, fogVis, 3000
+	if WTHR_fog == true then -- option to prevent fog formation
+		if cloudFog then
+			HOOK.writeDebugDetail(ModuleName .. ": getFog is doing cloud fog setting")
+			return true, math.random(500,1000), math.random(100,1000)
+		else
+			if wthTable.fogAllowed == true then
+				if wthTable and iprecptns and temperature and windSpeed and humidity and clDensity and dewPoint then -- https://blog.metservice.com/Fog
+					local tempDewCheck = temperature-dewPoint
+					if iprecptns == 0 then
+						if humidity > 80 then
+							if tempDewCheck < 2 then
+								if windSpeed < 4 then
+									if clDensity < 4 and temperature > 10 then
+										local fogIndex = 1/((humidity-80)/(100-80))     -- the lower, the more fog
+										local fogVis = 6000*fogIndex
+										if fogVis < 1000 then fogVis = math.random(1000,2000) end 
+										local fogThick = 500*fogIndex
+										HOOK.writeDebugDetail(ModuleName .. ": getFog, fog present with visibility " .. tostring(fogVis) .. " and thickness " .. tostring(fogThick))
+										return true, fogThick, fogVis, 3000
+									else
+										HOOK.writeDebugDetail(ModuleName .. ": getFog, too many clouds with temperature more than freezing point, temperature inversion less probable")
+										return false, 0, 6000, 3000
+									end
 								else
-									HOOK.writeDebugDetail(ModuleName .. ": getFog, too many clouds with temperature more than freezing point, temperature inversion less probable")
+									HOOK.writeDebugDetail(ModuleName .. ": getFog, wind below 4 mps")
 									return false, 0, 6000, 3000
 								end
 							else
-								HOOK.writeDebugDetail(ModuleName .. ": getFog, wind below 4 mps")
+								HOOK.writeDebugDetail(ModuleName .. ": getFog, temperature too high")
 								return false, 0, 6000, 3000
 							end
 						else
-							HOOK.writeDebugDetail(ModuleName .. ": getFog, temperature too high")
+							HOOK.writeDebugDetail(ModuleName .. ": getFog, humidity below 80 perc")
 							return false, 0, 6000, 3000
 						end
 					else
-						HOOK.writeDebugDetail(ModuleName .. ": getFog, humidity below 80 perc")
-						return false, 0, 6000, 3000
+						HOOK.writeDebugDetail(ModuleName .. ": getFog, rain or snow")
+						return false, 0, 6000	, 3000					
 					end
 				else
-					HOOK.writeDebugDetail(ModuleName .. ": getFog, rain or snow")
-					return false, 0, 6000	, 3000					
+					HOOK.writeDebugDetail(ModuleName .. ": getFog variable missing")
+					return false, 0, 6000, 3000
 				end
+
 			else
-				HOOK.writeDebugDetail(ModuleName .. ": getFog variable missing")
+				HOOK.writeDebugDetail(ModuleName .. ": getFog fog not allowed")
 				return false, 0, 6000, 3000
 			end
-
-		else
-			HOOK.writeDebugDetail(ModuleName .. ": getFog fog not allowed")
-			return false, 0, 6000, 3000
 		end
-	end
+	else
+		HOOK.writeDebugDetail(ModuleName .. ":  getFog fog disable by server options")
+		return false, 0, 6000, 3000
+	end		
 end
 
 function getDust(wthTable, iprecptns, temperature, windSpeed, windDir) -- https://iopscience.iop.org/article/10.1088/1748-9326/11/11/114013

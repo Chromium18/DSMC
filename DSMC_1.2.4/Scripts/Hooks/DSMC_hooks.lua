@@ -36,7 +36,7 @@ package.path =
 DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "2"
-DSMC_Build 			= "1921"
+DSMC_Build 			= "2002"
 DSMC_Date			= "21/11/2021"
 
 -- ## DEBUG TO TEXT FUNCTION
@@ -186,7 +186,7 @@ function loadDSMCHooks()
 							--opt_UPAP_var		= pl_data.UPAP			
 							opt_SLOT_var		= pl_data.SLOT
 							opt_SLOT_ab_var		= pl_data.SLOT_ab
-							opt_GOAP_var		= pl_data.GOAP
+							opt_PLAN_var		= pl_data.PLAN
 							--opt_SBEO			= pl_data.SBEO
 
 							--opt_SLOT			= pl_data.SLOT
@@ -200,7 +200,8 @@ function loadDSMCHooks()
 	-- assign variables
 	MOBJ_var 							= true -- opt_MOBJ_var or DSMC_MapPersistence
 	CRST_var 							= opt_CRST_var or DSMC_StaticDeadUnits		
-	WTHR_var 							= true -- opt_WTHR_var or DSMC_WeatherUpdate		
+	WTHR_var 							= true -- opt_WTHR_var or DSMC_WeatherUpdate	
+	WTHR_fog							= DSMC_DisableFog or false	
 	TMUP_var							= true -- opt_TMUP_var or DSMC_UpdateStartTime		
 	TMUP_cont_var						= opt_TMUP_cont_var or DSMC_UpdateStartTime_mode	
 	WRHS_var							= true -- opt_WRHS_var or DSMC_TrackWarehouses
@@ -218,6 +219,8 @@ function loadDSMCHooks()
 	STOP_var_time						= DSMC_AutosaveExit_time
 	STOP_var_safe						= DSMC_AutosaveExit_safe
 	RSTS_var							= DSMC_AutoRestart_active
+	UMLS_var							= DSMC_updateMissionList
+	S247_var							= DSMC_24_7_serverStandardSetup
 	SBEO_var							= DSMC_BuilderToolsBeta or false -- opt_SBEO or    NOT USED NOW if true some mess may happen
 	TRPS_var							= opt_TRPS_var or DSMC_automated_CTLD
 	TRPS_setup_var						= opt_TRPS_setup_var or DSMC_CTLD_RealSlingload
@@ -231,20 +234,51 @@ function loadDSMCHooks()
 	TRPS_setup9_var						= DSMC_CTLD_Limit_Arty or 10000	
 	TRPS_setup10_var					= DSMC_CTLD_longRangeSamCrates or true
 	TRPS_setup11_var					= DSMC_CTLD_crateReductionFactor or false
-	TRPS_setup12_var					= DSMC_CTLD_JTACenable or false
-	TRPS_setup13_var					= DSMC_CTLD_Limit_Arty or 10000	
+	TRPS_setup12_var					= DSMC_CTLD_Allow_JTAC_Crates or false
+	TRPS_setup13_var					= DSMC_CTLD_Limit_Arty or 10000
+	TRPS_setup14_var					= DSMC_CTLD_Allow_SAM_Crates or false
+	TRPS_setup15_var					= DSMC_CTLD_Allow_Supply_Crates or false	
+	TRPS_setup16_var					= DSMC_CTLD_MessageDuration
+	TRPS_setup17_var					= DSMC_CTLD_ForceCrateToBeMoved
+	TRPS_setup18_var					= DSMC_CTLD_crateLargeToSmallRto
+	TRPS_setup19_var					= DSMC_CTLD_buildTimeFOB
+	TRPS_setup20_var					= DSMC_CTLD_spawnCrateDistance
+	TRPS_setup21_var					= DSMC_CTLD_disableJTACSmoke
+	TRPS_param01_var					= DSMC_CTLD_forcePilot
+	TRPS_param02_var					= DSMC_CTLD_forceLogistic
+	TRPS_param03_var					= DSMC_CTLD_forcePickzone
+	TRPS_param04_var					= DSMC_CTLD_forceDropzone
+	TRPS_param05_var					= DSMC_CTLD_forceWpzone
 	DCSR_var							= opt_DCSR_var or DSMC_automated_CSAR
-	DCSR_setup_var						= DSMC_DCSR_useCoalitionMessages
-	DCSR_setup2_var						= DSMC_DCSR_clientPilotOnly
-	GOAP_var							= false -- opt_GOAP_var or DSMC_AutomaticAI
+	DCSR_setup_var						= DSMC_CSAR_useCoalitionMessages
+	DCSR_setup2_var						= DSMC_CSAR_clientPilotOnly
+	PLAN_var							= false -- opt_PLAN_var or DSMC_AutomaticAI
 
 	-- debug call
 	debugProcessDetail = DEBUG_var
 
+	-- reset variable depending from DSMC_24_7_serverStandardSetup
+	if S247_var and S247_var > 0 then
+		writeDebugBase(DSMC_ModuleName .. ": S247_var is a valid setting: " ..tostring(S247_var))
+		if S247_var > 24 then S247_var = 0 end
+		writeDebugBase(DSMC_ModuleName .. ": S247_var filtered: " ..tostring(S247_var))
+		
+		if S247_var > 0 then
+			writeDebugBase(DSMC_ModuleName .. ": S247_var filtered child variables")
+			UMLS_var = true
+			STOP_var = S247_var
+			STOP_var_time = 0
+			STOP_var_safe = true
+			RSTS_var = false
+		end
+	end
+
 	-- debug call
+	writeDebugBase(DSMC_ModuleName .. ": S247_var = " ..tostring(S247_var))
 	writeDebugBase(DSMC_ModuleName .. ": MOBJ_var = " ..tostring(MOBJ_var))
 	writeDebugBase(DSMC_ModuleName .. ": CRST_var = " ..tostring(CRST_var))
 	writeDebugBase(DSMC_ModuleName .. ": WTHR_var = " ..tostring(WTHR_var))
+	writeDebugBase(DSMC_ModuleName .. ": WTHR_fog = " ..tostring(WTHR_fog))
 	writeDebugBase(DSMC_ModuleName .. ": TMUP_var = " ..tostring(TMUP_var))
 	writeDebugBase(DSMC_ModuleName .. ": TMUP_cont_var = " ..tostring(TMUP_cont_var))
 	writeDebugBase(DSMC_ModuleName .. ": WRHS_var = " ..tostring(WRHS_var))
@@ -263,6 +297,7 @@ function loadDSMCHooks()
 	writeDebugBase(DSMC_ModuleName .. ": STOP_var_time = " ..tostring(STOP_var_time))
 	writeDebugBase(DSMC_ModuleName .. ": STOP_var_safe = " ..tostring(STOP_var_safe))
 	writeDebugBase(DSMC_ModuleName .. ": RSTS_var = " ..tostring(RSTS_var))
+	writeDebugBase(DSMC_ModuleName .. ": UMLS_var = " ..tostring(UMLS_var))
 	writeDebugBase(DSMC_ModuleName .. ": SBEO_var = " ..tostring(SBEO_var))
 	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup_var realslingload = " ..tostring(TRPS_setup_var))
 	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup2_var platoons = " ..tostring(TRPS_setup2_var))
@@ -277,9 +312,22 @@ function loadDSMCHooks()
 	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup10_Year_Filter = " ..tostring(TRPS_setup10_var))
 	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup11_Crates_Factor = " ..tostring(TRPS_setup11_var))
 	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup12_JTAC = " ..tostring(TRPS_setup12_var))
+	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup13_Arty = " ..tostring(TRPS_setup13_var))
+	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup14_SAM = " ..tostring(TRPS_setup14_var))
+	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup15_Airlift = " ..tostring(TRPS_setup15_var))
+	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup16_Messages = " ..tostring(TRPS_setup16_var))
+	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup17_crateMove = " ..tostring(TRPS_setup17_var))
+	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup18_smallCrateRatio = " ..tostring(TRPS_setup18_var))
+	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup19_buildFOBtime = " ..tostring(TRPS_setup19_var))
+	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup20_crateDistance = " ..tostring(TRPS_setup20_var))
+	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup21_disableJTACSmoke = " ..tostring(TRPS_setup21_var))
+	writeDebugBase(DSMC_ModuleName .. ": TRPS_param01_var = " ..tostring(TRPS_param01_var))
+	writeDebugBase(DSMC_ModuleName .. ": TRPS_param02_var = " ..tostring(TRPS_param02_var))
+	writeDebugBase(DSMC_ModuleName .. ": TRPS_param03_var = " ..tostring(TRPS_param03_var))
+	writeDebugBase(DSMC_ModuleName .. ": TRPS_param04_var = " ..tostring(TRPS_param04_var))
+	writeDebugBase(DSMC_ModuleName .. ": TRPS_param05_var = " ..tostring(TRPS_param05_var))
 
-	
-	writeDebugBase(DSMC_ModuleName .. ": GOAP_var = " ..tostring(GOAP_var))
+	writeDebugBase(DSMC_ModuleName .. ": PLAN_var = " ..tostring(PLAN_var))
 
 	-- debug call check (doesn't print if debugProcessDetail is false!)
 	writeDebugDetail(DSMC_ModuleName .. ": debugProcessDetail = " .. tostring(debugProcessDetail))
@@ -407,9 +455,10 @@ function loadDSMCHooks()
 			writeDebugBase(DSMC_ModuleName .. ": loaded in SLOT module")
 		end
 	end
-	if UTIL.fileExist(DSMCdirectory .. "GOAP" .. ".lua") == true and GOAP_var == true then
+	if UTIL.fileExist(DSMCdirectory .. "PLAN" .. ".lua") == true and UTIL.fileExist(DSMCdirectory .. "GOAP" .. ".lua") == true and PLAN_var == true then
 		GOAP 						= require("GOAP")
-		writeDebugBase(DSMC_ModuleName .. ": loaded in GOAP module")
+		PLAN 						= require("PLAN")
+		writeDebugBase(DSMC_ModuleName .. ": loaded in PLAN module")
 	end
 	if UTIL.fileExist(DSMCdirectory .. "ADTR" .. ".lua") == true then
 		ADTR 						= require("ADTR")
@@ -464,7 +513,10 @@ function recoverAutosave()
 	end
 end
 
+writeDebugDetail(DSMC_ModuleName .. ": loading loadrestart function..")
+
 function loadRestart()
+
 
 	writeDebugDetail(DSMC_ModuleName .. ": loadRestart, started")
 
@@ -475,7 +527,7 @@ local code = [[echo Checking DCS process...
 REM this script is done to provide restart automation
 set "titleWhileRunning=DSMC_DCS_Server_Monitor"
 ]] .. "\n"
-code = code .. 'set DCS_PATH=' .. '"' .. lfs.currentdir() .. 'bin/'     .. '"' .. "\n"
+code = code .. 'set DCS_PATH=' .. '"' .. lfs.currentdir() .. [[bin\]] .. '"' .. "\n"
 code = code .. [[for /f "tokens=2 delims=," %%a in ('
 tasklist /fi "imagename eq cmd.exe" /v /fo:csv /nh 
 ^| findstr /r /c:".DSMC_DCS[^,]$" ') do echo Powershell script already running, wait for it to finish. >&2 & exit /b 1
@@ -528,6 +580,8 @@ goto Serverrestart]]
 	--writeDebugDetail(DSMC_ModuleName .. ": loadRestart, .bat file reErrors: " .. tostring(reErrors))
 
 end
+
+writeDebugDetail(DSMC_ModuleName .. ": loadrestart function done")
 
 -- callback on start
 function startDSMCprocess()
@@ -602,7 +656,7 @@ function startDSMCprocess()
 						baseUcounter = baseUcounter + 1
 
 						-- filter units table
-						--DICTPROBLEM
+						
 						UTIL.filterNamingTables(SAVE.tempEnv.mission) --SAVE.tempEnv.dictionary
 
 						-- inject version
@@ -664,7 +718,7 @@ function startDSMCprocess()
 									UTIL.inJectCode("WRHS_active", "WRHS_module_active = true") -- cross code utils variable (in TRPS for example)
 									UTIL.inJectTable("dbWarehouse", SAVE.tempEnv.warehouses)
 									if HOOK.debugProcessDetail then
-										UTIL.dumpTable("dbWarehouse.lua", SAVE.tempEnv.warehouses)
+										--UTIL.dumpTable("dbWarehouse.lua", SAVE.tempEnv.warehouses)
 									end
 								else
 									writeDebugDetail(DSMC_ModuleName .. ": createdbWeapon, dbWeapon not injected cause table has 0 entry. probable all airbase are unlimited weapons")
@@ -736,6 +790,63 @@ function startDSMCprocess()
 								if TRPS_setup12_var then
 									UTIL.inJectCode("TRPS_Setup12", "TRPS_JTAC_dropEnabled = " .. tostring(TRPS_setup12_var))
 								end
+								
+								if TRPS_setup13_var then
+									UTIL.inJectCode("TRPS_Setup13", "TRPS_Arty_factor = " .. tostring(TRPS_setup13_var))
+								end
+								
+								if TRPS_setup14_var then
+									UTIL.inJectCode("TRPS_Setup14", "TRPS_SAM_dropEnabled = " .. tostring(TRPS_setup14_var))
+								end
+								
+								if TRPS_setup15_var then
+									UTIL.inJectCode("TRPS_Setup15", "TRPS_Airlift_dropEnabled = " .. tostring(TRPS_setup15_var))
+								end
+
+								if TRPS_setup16_var then
+									UTIL.inJectCode("TRPS_setup16", "TRPS_displayMessageTime = " .. tostring(TRPS_setup16_var))
+								end
+
+								if TRPS_setup17_var then
+									UTIL.inJectCode("TRPS_setup17", "TRPSforceMoveCrate = " .. tostring(TRPS_setup17_var))
+								end
+
+								if TRPS_setup18_var then
+									UTIL.inJectCode("TRPS_setup18", "TRPScrateLargeToSmallRatio = " .. tostring(TRPS_setup18_var))
+								end
+								
+								if TRPS_setup19_var then
+									UTIL.inJectCode("TRPS_setup19", "TRPSbuildTimeFOB = " .. tostring(TRPS_setup19_var))
+								end
+								
+								if TRPS_setup20_var then
+									UTIL.inJectCode("TRPS_setup20", "TRPSspawnCrateOffset = " .. tostring(TRPS_setup20_var))
+								end
+								
+								if TRPS_setup21_var then
+									UTIL.inJectCode("TRPS_setup21", "TRPSdisableJTACSmoke = " .. tostring(TRPS_setup21_var))
+								end
+																
+								if TRPS_param01_var then
+									UTIL.inJectCode("TRPS_param01", "TRPSforcePilotTag = " .. tostring(TRPS_param01_var))
+								end
+
+								if TRPS_param02_var then
+									UTIL.inJectCode("TRPS_param02", "TRPSforceLogisticTag = " .. tostring(TRPS_param02_var))
+								end
+
+								if TRPS_param03_var then
+									UTIL.inJectCode("TRPS_param03", "TRPSforcePickzoneTag = " .. tostring(TRPS_param03_var))
+								end
+
+								if TRPS_param04_var then
+									UTIL.inJectCode("TRPS_param04", "TRPSforceDropzoneTag = " .. tostring(TRPS_param04_var))
+								end
+
+								if TRPS_param05_var then
+									UTIL.inJectCode("TRPS_param05", "TRPSforceWpzoneTag = " .. tostring(TRPS_param05_var))
+								end
+
 							end
 							
 							local t = io.open(DSMCdir .. "TRPS_inj.lua", "r")
@@ -754,9 +865,9 @@ function startDSMCprocess()
 						-- CSAR script
 						if DCSR_var then
 							if DCSR_setup_var == true then
-								UTIL.inJectCode("DCSR_Setup", "DSMC_DCSR_useCoalitionMessages_var = true")
+								UTIL.inJectCode("DCSR_Setup", "DSMC_CSAR_useCoalitionMessages_var = true")
 							else
-								UTIL.inJectCode("DCSR_Setup", "DSMC_DCSR_useCoalitionMessages_var = false")
+								UTIL.inJectCode("DCSR_Setup", "DSMC_CSAR_useCoalitionMessages_var = false")
 							end
 
 							if DCSR_setup2_var == true then
@@ -796,12 +907,12 @@ function startDSMCprocess()
 						end			
 						UTIL.inJectCode("Embeddedcode", Embeddedcode)
 
-						-- code from GOAP module
-						if GOAP_var then
+						-- code from PLAN module
+						if PLAN_var then
 							writeDebugDetail(DSMC_ModuleName .. ": activating automated AI")
-							GOAP.loadCode()
+							PLAN.initProcess()
 						else
-							writeDebugBase(DSMC_ModuleName .. ": GOAP not required")	
+							writeDebugBase(DSMC_ModuleName .. ": PLAN not required")	
 						end					
 
 						lfs.mkdir(DSMCtemp)
@@ -810,7 +921,7 @@ function startDSMCprocess()
 						UTIL.copyFile(loadedMissionPath, DSMCfiles .. "tempFile.miz")		
 						
 						local tmpSlots = DCS.getAvailableSlots("blue")
-						UTIL.dumpTable("slotsData.lua", tmpSlots)
+						--UTIL.dumpTable("slotsData.lua", tmpSlots)
 
 
 						
@@ -862,12 +973,15 @@ function desanitizer()
 				elseif string.find(line, "sanitizeModule%('lfs'%)") and not string.find(line, "%-%-sanitizeModule%('lfs'%)")  then
 					local newline = string.gsub(line, "sanitizeModule%('lfs'%)", "%-%-sanitizeModule%('lfs'%), commented by DSMC: if you won't desanitized environment, please disable the autosave option!")	
 					newText = newText .. tostring(newline) .. "\n"				
-				elseif string.find(line, "require = nil") and not string.find(line, "%-%-require = nil")  then
-					local newline = string.gsub(line, "require = nil", "%-%-require = nil, commented by DSMC: if you won't desanitized environment, please disable the autosave option!")	
+				elseif string.find(line, "%_G%['require'%] = nil") and not string.find(line, "%-%-%_G%['require'%] = nil")  then
+					local newline = string.gsub(line, "%_G%['require'%] = nil", "%-%-%_G%['require'%] = nil, commented by DSMC: if you won't desanitized environment, please disable the autosave option!")	
 					newText = newText .. tostring(newline) .. "\n"
-				elseif string.find(line, "loadlib = nil") and not string.find(line, "%-%-loadlib = nil")  then
-					local newline = string.gsub(line, "loadlib = nil", "%-%-loadlib = nil, commented by DSMC: if you won't desanitized environment, please disable the autosave option!")	
-					newText = newText .. tostring(newline) .. "\n"			
+				elseif string.find(line, "%_G%['loadlib'%] = nil") and not string.find(line, "%-%-%_G%['loadlib'%] = nil")  then
+					local newline = string.gsub(line, "%_G%['loadlib'%] = nil", "%-%-%_G%['loadlib'%] = nil, commented by DSMC: if you won't desanitized environment, please disable the autosave option!")	
+					newText = newText .. tostring(newline) .. "\n"	
+				elseif string.find(line, "%_G%['package'%] = nil") and not string.find(line, "%-%-%_G%['package'%] = nil")  then
+					local newline = string.gsub(line, "%_G%['package'%] = nil", "%-%-%_G%['package'%] = nil, commented by DSMC: if you won't desanitized environment, please disable the autosave option!")	
+					newText = newText .. tostring(newline) .. "\n"				
 				else
 					newText = newText .. line .. "\n"
 				end
@@ -953,7 +1067,7 @@ function makefirstmission(missionPath)
 					if sResFun then
 						setfenv(sResFun, serEnv)
 						sResFun()								
-						UTIL.dumpTable("serEnv.cfg.lua", serEnv.cfg)
+						--UTIL.dumpTable("serEnv.cfg.lua", serEnv.cfg)
 						if serEnv.cfg then
 							local mizList = serEnv.cfg["missionList"]
 							if #mizList < 2 then
@@ -1093,7 +1207,7 @@ function DSMC.onTriggerMessage(message)
 						UTIL.saveTable(tableName, tblConquer, DSMCfiles)
 						writeDebugDetail(DSMC_ModuleName .. ": recognized & saved " .. tostring(tableName))		
 					elseif tableName == "tblLogCollect" then
-						UTIL.dumpTable("tblLogCollect.lua", tblLogCollect)	
+						--UTIL.dumpTable("tblLogCollect.lua", tblLogCollect)	
 						writeDebugDetail(DSMC_ModuleName .. ": recognized & saved " .. tostring(tableName))									
 					end			
 					writeDebugDetail(DSMC_ModuleName .. ": table loaded")			

@@ -24,6 +24,6 @@ return {
 																					}),
 	ATRL						= DbOption.new():setValue(true):checkbox():setEnforceable(), 
 	ATRL_time 					= DbOption.new():setValue(1):slider(Range(1, 30)),
-	SLOT						= DbOption.new():setValue(true):checkbox():setEnforceable(), 
-	SLOT_ab						= DbOption.new():setValue(true):checkbox():setEnforceable(), 		
+	SLOT						= DbOption.new():setValue(false):checkbox():setEnforceable(), 
+	SLOT_ab						= DbOption.new():setValue(false):checkbox():setEnforceable(), 		
 }

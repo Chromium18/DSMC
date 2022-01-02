@@ -275,6 +275,7 @@ function inJectCode(Code_name, CodeString)
 	else
 		HOOK.writeDebugDetail(ModuleName .. ": inject worked: " .. tostring(strErr) .. ", " .. tostring(Code_name) .. " loaded in mission env" )
 	end
+	return str
 end
 
 function filterNamingTables(mission)	 -- DICTPROBLEM: dictionary
@@ -332,7 +333,7 @@ end
 -- #### UNITS DATA INFO UTILITIES
 function dbYearsBuilder()
 	if _G.dbYears then	
-		UTIL.dumpTable("dbYears.lua", _G.dbYears) 
+		--UTIL.dumpTable("dbYears.lua", _G.dbYears) 
 		-- funziona già così!
 	end
 end
@@ -573,7 +574,7 @@ if HOOK.SBEO_var == true then
 
 		else
 			basicPylonDB = basicPylonDB_builder(DB)
-			UTIL.dumpTable("basicPylonDB_fine.lua", basicPylonDB) 
+			--UTIL.dumpTable("basicPylonDB_fine.lua", basicPylonDB) 
 			local bName = "basicPylonDB.lua"
 			local bpath = HOOK.DSMCdirectory .. bName
 			local boutFile = io.open(bpath, "w");
@@ -582,15 +583,15 @@ if HOOK.SBEO_var == true then
 			io.close(boutFile);
 		end
 		wpnDB = wpnDB_builder(basicPylonDB)
-		UTIL.dumpTable("wpnDB_fine.lua", wpnDB) 
+		--UTIL.dumpTable("wpnDB_fine.lua", wpnDB) 
 		local fName = "wpnDB.lua"
 		local path = HOOK.DSMCdirectory .. fName
 		local outFile = io.open(path, "w");
 		local fStr = Integratedserialize("wpnDB", wpnDB)
 		outFile:write(fStr);
 		io.close(outFile);
-		UTIL.dumpTable("basicPylonDB_loaded.lua", basicPylonDB) 
-		UTIL.dumpTable("wpnDB_loaded.lua", wpnDB) 
+		--UTIL.dumpTable("basicPylonDB_loaded.lua", basicPylonDB) 
+		--UTIL.dumpTable("wpnDB_loaded.lua", wpnDB) 
 
 	end
 end
@@ -950,7 +951,7 @@ function whRestart(warehouse, airbases, mission)
 			end
 		end
 	end
-	UTIL.dumpTable("whnuovo_a.lua", warehouse)
+	--UTIL.dumpTable("whnuovo_a.lua", warehouse)
 
 	-- this will auto-add weapons & fuel to airports & FARP
 	for hCat, hIndex in pairs(warehouse) do
@@ -961,7 +962,7 @@ function whRestart(warehouse, airbases, mission)
 						if tonumber(hId) == tonumber(aData.id) then
 							HOOK.writeDebugDetail(ModuleName .. ": found airbase, id: " .. tostring(aData.id) .. ", name: " .. tostring(aData.desc.displayName))		
 							local update = setWeaponsAndFuel(hData, xEnv.wpnDB)
-							UTIL.dumpTable("update.lua", update)
+							--UTIL.dumpTable("update.lua", update)
 							hIndex[hId] = update
 							HOOK.writeDebugDetail(ModuleName .. ": airbase, id: " .. tostring(aData.id) .. " reset done")
 							supplynet.airports[#supplynet.airports+1] = {Id = hId, type = hCat}
@@ -987,7 +988,7 @@ function whRestart(warehouse, airbases, mission)
 			end
 		end
 	end
-	UTIL.dumpTable("whnuovo_b.lua", warehouse)
+	--UTIL.dumpTable("whnuovo_b.lua", warehouse)
 	
 	-- this will calculate the total amount of any resources in any coalition
 	local WhTotals = { blue = {weapons = {}, fuel = 0} , red = {weapons = {}, fuel = 0} , neutrals = {weapons = {}, fuel = 0}}
@@ -1026,8 +1027,8 @@ function whRestart(warehouse, airbases, mission)
 			end
 		end
 	end
-	UTIL.dumpTable("WhTotals.lua", WhTotals) 
-	UTIL.dumpTable("whnuovo_c.lua", warehouse)
+	--UTIL.dumpTable("WhTotals.lua", WhTotals) 
+	--UTIL.dumpTable("whnuovo_c.lua", warehouse)
 
 	-- this will automatically populate stock warehouses as deposit
 	for hCat, hIndex in pairs(warehouse) do
@@ -1145,8 +1146,8 @@ function whRestart(warehouse, airbases, mission)
 		end
 	end
 
-	UTIL.dumpTable("supplynet.lua", supplynet)
-	UTIL.dumpTable("whnuovo_d.lua", warehouse)
+	--UTIL.dumpTable("supplynet.lua", supplynet)
+	--UTIL.dumpTable("whnuovo_d.lua", warehouse)
 
 	-- create the supply net
 	HOOK.writeDebugDetail(ModuleName .. " creating supply net")
@@ -1213,7 +1214,7 @@ function whRestart(warehouse, airbases, mission)
 	end
 	HOOK.writeDebugDetail(ModuleName .. " c5")
 
-	UTIL.dumpTable("whnuovo_e.lua", warehouse) 
+	--UTIL.dumpTable("whnuovo_e.lua", warehouse) 
 end
 
 function getUnlimitedWhTbl(sourceWhMizFile, base_qty)

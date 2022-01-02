@@ -104,7 +104,7 @@ function checkLandingsLogistic(curr_tblLogistic, tblWarehouse)
 
 	local temp_tblLogistic ={}
 	local checkAbTbl = UTIL.deepCopy(tblAirbases)
-	UTIL.dumpTable("XX_curr_tblLogistic.lua", curr_tblLogistic)
+	--UTIL.dumpTable("XX_curr_tblLogistic.lua", curr_tblLogistic)
 
 	HOOK.writeDebugDetail(ModuleName .. ": checkLandingsLogistic started")
 	for oId, oData in pairs(curr_tblLogistic) do	
@@ -163,7 +163,7 @@ function checkLandingsLogistic(curr_tblLogistic, tblWarehouse)
 		temp_tblLogistic[#temp_tblLogistic+1] = xData
 	end
 
-	UTIL.dumpTable("XX_temp_tblLogistic.lua", temp_tblLogistic)
+	--UTIL.dumpTable("XX_temp_tblLogistic.lua", temp_tblLogistic)
 
 	return temp_tblLogistic
 end

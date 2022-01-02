@@ -1989,7 +1989,7 @@ function cleanSlots(missionEnv, warehouseEnv)
 																		if tonumber(pData.airdromeId) == tonumber(afbId) then	
 																			HOOK.writeDebugDetail(ModuleName .. ": cleanSlots. airbaseSlot is true, removing slots. Check: " .. tostring(airbaseSlot))				
 																			attr["group"][groupID]= nil
-																			HOOK.writeDebugDetail(ModuleName .. ": cleanSlots. it's linked to helipad, static removing, pData.airdromeId: " .. tostring(pData.airdromeId))
+																			HOOK.writeDebugDetail(ModuleName .. ": cleanSlots. it's linked to an airport, static removing, pData.airdromeId: " .. tostring(pData.airdromeId))
 																		end
 																	end
 																end
@@ -2111,7 +2111,7 @@ function checkParkings(missionEnv, airbaseTbl)
 
 	-- remove parkings
 	if #tblPrksRemove > 0 then
-		UTIL.dumpTable("tblPrksRemove.lua", tblPrksRemove)
+		--UTIL.dumpTable("tblPrksRemove.lua", tblPrksRemove)
 		HOOK.writeDebugDetail(ModuleName .. ": checkParkings tblPrksRemove has entries, n: " .. tostring(#tblPrksRemove))
 		for pId, pData in pairs(tblPrksRemove) do
 			for afId, afData in pairs(airbaseTbl) do
@@ -2202,7 +2202,7 @@ function buildHelipadSlot(missionEnv, warehouseEnv, tblSlots)
 
 																	local grNum = #group["units"]
 																	local posTbl = {}
-																	if grNum > 1 then
+																	if grNum >= 1 then
 																		for _, uData in pairs(group["units"]) do
 																			posTbl[#posTbl+1] = {x = uData.x, y = uData.x, l = uData.unitId, t = link_type_val}
 																		end
@@ -2374,7 +2374,7 @@ function buildAirbaseSlot(missionEnv, warehouseEnv, airbaseTbl, tblSlots, usedPa
 										for acfName, acfData in pairs(acfTbl) do
 											--HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, new plane check for : " .. tostring(acfName) .. ", parkings: " .. tostring(#parking_tbl))
 											if #parking_tbl > 0 then
-												if acfData.initialAmount > 1 then -- filtering at least 2 acf for 1 flight
+												if acfData.initialAmount > 0 then -- filtering at least 2 acf for 1 flight
 													
 													local isFlyable = false
 													for pName, pData in pairs(standardPlaneTypes) do
@@ -2401,21 +2401,38 @@ function buildAirbaseSlot(missionEnv, warehouseEnv, airbaseTbl, tblSlots, usedPa
 														end													
 														
 														-- update slotsToBuilt
-														for r=1, numGroups do
+														if numGroups > 0 and numGroups < 1 then -- single ship!
 															local assignedParkings = {}
-															for i=1, 2 do
-																local usedPname, usedPx, usedPy, revPark_tbl = getParkingForAircraftType(parking_tbl, acfName, acfCat)
-																if usedPname and usedPx and usedPy then
-																	assignedParkings[#assignedParkings+1] = {pname = usedPname, px = usedPx, py = usedPy}
-																	parking_tbl = revPark_tbl
-																end
+															local usedPname, usedPx, usedPy, revPark_tbl = getParkingForAircraftType(parking_tbl, acfName, acfCat)
+															if usedPname and usedPx and usedPy then
+																assignedParkings[#assignedParkings+1] = {pname = usedPname, px = usedPx, py = usedPy}
+																parking_tbl = revPark_tbl
 															end
 
-															if #assignedParkings > 1 then
+															if #assignedParkings == 1 then
 																HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, found 2 parkings for " .. tostring(acfName) .. ", parking left: " .. tostring(#parking_tbl))
 																slotsToBuilt[#slotsToBuilt+1] = {acf = acfName, prk = assignedParkings}
 															else
 																HOOK.writeDebugDetail(ModuleName .. ": no sufficient parkings assigned: " .. tostring(#assignedParkings)) 
+															end															
+														else
+															for r=1, numGroups do
+
+																local assignedParkings = {}
+																for i=1, 2 do
+																	local usedPname, usedPx, usedPy, revPark_tbl = getParkingForAircraftType(parking_tbl, acfName, acfCat)
+																	if usedPname and usedPx and usedPy then
+																		assignedParkings[#assignedParkings+1] = {pname = usedPname, px = usedPx, py = usedPy}
+																		parking_tbl = revPark_tbl
+																	end
+																end
+
+																if #assignedParkings > 1 then
+																	HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, found 2 parkings for " .. tostring(acfName) .. ", parking left: " .. tostring(#parking_tbl))
+																	slotsToBuilt[#slotsToBuilt+1] = {acf = acfName, prk = assignedParkings}
+																else
+																	HOOK.writeDebugDetail(ModuleName .. ": no sufficient parkings assigned: " .. tostring(#assignedParkings)) 
+																end
 															end
 														end
 													end
@@ -2459,7 +2476,10 @@ function buildAirbaseSlot(missionEnv, warehouseEnv, airbaseTbl, tblSlots, usedPa
 									end
 
 									if x_val and y_val and choose_coa then
-										if #sData.prk > 1 then
+										if #sData.prk == 1 then
+											HOOK.writeDebugDetail(ModuleName .. ": addSlot, adding 1 slots of " .. tostring(sData.acf))
+											tblSlots[#tblSlots+1] = {h= 0, x=x_val, y = y_val, airdrome = afbId, linkType = "Airport", parkings = sData.prk, cntyID = choose_ctry, coaID = choose_coa, acfType = sData.acf, numUnits = 1}										
+										elseif #sData.prk > 1 then
 											HOOK.writeDebugDetail(ModuleName .. ": addSlot, adding 2 slots of " .. tostring(sData.acf))
 											tblSlots[#tblSlots+1] = {h= 0, x=x_val, y = y_val, airdrome = afbId, linkType = "Airport", parkings = sData.prk, cntyID = choose_ctry, coaID = choose_coa, acfType = sData.acf, numUnits = 2}
 										else
@@ -2495,17 +2515,17 @@ function addSlot(m, w) --, dictEnv
 	-- function buildHelipadSlot(missionEnv, warehouseEnv, tblSlots)
 	if heloSlot then
 		buildHelipadSlot(m, w, tblSlots)
-		UTIL.dumpTable("tblSlots_heliport.lua", tblSlots)
+		--UTIL.dumpTable("tblSlots_heliport.lua", tblSlots)
 	end
 
 	if airbaseSlot then
 		buildAirbaseSlot(m, w, a, tblSlots, p)
-		UTIL.dumpTable("tblSlots_airbase.lua", tblSlots)
+		--UTIL.dumpTable("tblSlots_airbase.lua", tblSlots)
 	end
 
 	if tblSlots then
 		if table.getn(tblSlots) > 0 then
-			UTIL.dumpTable("tblSlots.lua", tblSlots)
+			--UTIL.dumpTable("tblSlots.lua", tblSlots)
 			local m = createPlaneGroups(m) -- , dictEnv -- , newdict
 			local m = createHeloGroups(m) -- , dictEnv -- , newdict
 			if m then -- and newdict
