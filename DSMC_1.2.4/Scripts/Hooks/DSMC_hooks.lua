@@ -244,6 +244,7 @@ function loadDSMCHooks()
 	TRPS_setup19_var					= DSMC_CTLD_buildTimeFOB
 	TRPS_setup20_var					= DSMC_CTLD_spawnCrateDistance
 	TRPS_setup21_var					= DSMC_CTLD_disableJTACSmoke
+	TRPS_setup22_var					= DSMC_CTLD_Limit_SAMs
 	TRPS_param01_var					= DSMC_CTLD_forcePilot
 	TRPS_param02_var					= DSMC_CTLD_forceLogistic
 	TRPS_param03_var					= DSMC_CTLD_forcePickzone
@@ -252,7 +253,7 @@ function loadDSMCHooks()
 	DCSR_var							= opt_DCSR_var or DSMC_automated_CSAR
 	DCSR_setup_var						= DSMC_CSAR_useCoalitionMessages
 	DCSR_setup2_var						= DSMC_CSAR_clientPilotOnly
-	PLAN_var							= false -- opt_PLAN_var or DSMC_AutomaticAI
+	PLAN_var							= true -- opt_PLAN_var or DSMC_AutomaticAI
 
 	-- debug call
 	debugProcessDetail = DEBUG_var
@@ -321,6 +322,7 @@ function loadDSMCHooks()
 	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup19_buildFOBtime = " ..tostring(TRPS_setup19_var))
 	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup20_crateDistance = " ..tostring(TRPS_setup20_var))
 	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup21_disableJTACSmoke = " ..tostring(TRPS_setup21_var))
+	writeDebugBase(DSMC_ModuleName .. ": TRPS_setup22_Limit_SAMs = " ..tostring(TRPS_setup22_var))
 	writeDebugBase(DSMC_ModuleName .. ": TRPS_param01_var = " ..tostring(TRPS_param01_var))
 	writeDebugBase(DSMC_ModuleName .. ": TRPS_param02_var = " ..tostring(TRPS_param02_var))
 	writeDebugBase(DSMC_ModuleName .. ": TRPS_param03_var = " ..tostring(TRPS_param03_var))
@@ -456,8 +458,9 @@ function loadDSMCHooks()
 		end
 	end
 	if UTIL.fileExist(DSMCdirectory .. "PLAN" .. ".lua") == true and UTIL.fileExist(DSMCdirectory .. "GOAP" .. ".lua") == true and PLAN_var == true then
+		DLNY 						= require("DLNY")
 		GOAP 						= require("GOAP")
-		PLAN 						= require("PLAN")
+		PLAN 						= require("PLAN")	
 		writeDebugBase(DSMC_ModuleName .. ": loaded in PLAN module")
 	end
 	if UTIL.fileExist(DSMCdirectory .. "ADTR" .. ".lua") == true then
@@ -604,7 +607,7 @@ function startDSMCprocess()
 		
 		if loadedMizFileName and loadedMissionPath then				
 			if string.sub(loadedMizFileName,1,4) == StartFilterCode then
-			
+				alreadyStarted = true
 				SAVE.getMizFiles(loadedMissionPath)
 				if SAVE.tempEnv.mission and SAVE.tempEnv.warehouses and SAVE.tempEnv.dictionary and SAVE.tempEnv.mapResource then
 					writeDebugDetail(DSMC_ModuleName .. ": tempEnv.files available")
@@ -826,7 +829,11 @@ function startDSMCprocess()
 								if TRPS_setup21_var then
 									UTIL.inJectCode("TRPS_setup21", "TRPSdisableJTACSmoke = " .. tostring(TRPS_setup21_var))
 								end
-																
+								
+								if TRPS_setup22_var then
+									UTIL.inJectCode("TRPS_setup22", "TRPSLimit_SAMs = " .. tostring(TRPS_setup22_var))
+								end
+
 								if TRPS_param01_var then
 									UTIL.inJectCode("TRPS_param01", "TRPSforcePilotTag = " .. tostring(TRPS_param01_var))
 								end
@@ -1011,15 +1018,15 @@ function loadtables()
 		if entry ~= "." and entry ~= ".." then
 			local attr = lfs.attributes(DSMCfiles .. entry)
 			if attr.mode == "file" then
-				writeDebugDetail(DSMC_ModuleName .. ".loadtables : checking file = " .. tostring(entry))
+				writeDebugDetail(DSMC_ModuleName .. ": loadtables : checking file = " .. tostring(entry))
 				if string.find(entry, ".lua") and string.sub(entry, 1, 3) == "tbl" then
 					local path = DSMCfiles .. entry
 					local tbl_fcn, tbl_err = dofile(path)
 					if tbl_err then
-						writeDebugDetail(DSMC_ModuleName .. " loadtables : tbl_fcn = " .. tostring(tbl_fcn))
-						writeDebugDetail(DSMC_ModuleName .. " loadtables : tbl_err = " .. tostring(tbl_err))
+						writeDebugDetail(DSMC_ModuleName .. ": loadtables : tbl_fcn = " .. tostring(tbl_fcn))
+						writeDebugDetail(DSMC_ModuleName .. ": loadtables : tbl_err = " .. tostring(tbl_err))
 					else
-						writeDebugDetail(DSMC_ModuleName .. " loadtables : imported table = " .. tostring(entry))
+						writeDebugDetail(DSMC_ModuleName .. ": loadtables : imported table = " .. tostring(entry))
 						os.remove(path)
 					end
 					
@@ -1146,7 +1153,8 @@ end
 -- callback to save on disconnect of last client
 function saveOnDisconnect()
 	local multy = DCS.isMultiplayer()
-	if multy == true then
+	local isServer 	= DCS.isServer()
+	if multy == true and isServer == true then
 		writeDebugDetail(DSMC_ModuleName .. ": onPlayerDisconnect checking for autosave")
 		local num_clients = false
 		local player_tbl = net.get_player_list()
@@ -1168,98 +1176,103 @@ end
 --## CALLBACKS
 function DSMC.onSimulationStart()
 	startDSMCprocess()
-	alreadyStarted = true
 end
 
 --## ALL EXTERNAL FUNCTIONS AND PROCESSES ARE ALWAYS ACTIVATED BY TRIGGER MESSAGE. ALSO MAIN INFORMATION ARE PASSED BY WITH TRIGGER MESSAGES
 function DSMC.onTriggerMessage(message)	
-	
-	local lmz = DCS.getMissionName()
-	if lmz then
-		if string.sub(lmz,1,4) == StartFilterCode then
-
-			if string.sub(message, 1, 3) == "tbl" then	-- this will import & save any table that starts with "tbl"					
-				local tableName = string.sub(message, 1, string.find(message, "=")-2)
-				writeDebugDetail(DSMC_ModuleName .. ": tableName = " .. tostring(tableName))
-				local str, str_err = loadstring(tostring(message))
-				if not str_err then -- check errors  -- == true 
-					str()
-					
-					if tableName == "tblAirbases" then
-						UTIL.saveTable(tableName, tblAirbases, DSMCfiles)
-						writeDebugDetail(DSMC_ModuleName .. ": recognized & saved " .. tostring(tableName))
-					elseif tableName == "tblDeadUnits" then
-						UTIL.saveTable(tableName, tblDeadUnits, DSMCfiles)
-						writeDebugDetail(DSMC_ModuleName .. ": recognized & saved " .. tostring(tableName))						
-					elseif tableName == "tblDeadScenObj" then
-						UTIL.saveTable(tableName, tblDeadScenObj, DSMCfiles)
-						writeDebugDetail(DSMC_ModuleName .. ": recognized & saved " .. tostring(tableName))						
-					elseif tableName == "tblUnitsUpdate" then
-						UTIL.saveTable(tableName, tblUnitsUpdate, DSMCfiles)
-						writeDebugDetail(DSMC_ModuleName .. ": recognized & saved " .. tostring(tableName))	
-					elseif tableName == "tblLogistic" then
-						UTIL.saveTable(tableName, tblLogistic, DSMCfiles)
-						writeDebugDetail(DSMC_ModuleName .. ": recognized & saved " .. tostring(tableName))					
-					elseif tableName == "tblSpawned" then
-						UTIL.saveTable(tableName, tblSpawned, DSMCfiles)
-						writeDebugDetail(DSMC_ModuleName .. ": recognized & saved " .. tostring(tableName))						
-					elseif tableName == "tblConquer" then
-						UTIL.saveTable(tableName, tblConquer, DSMCfiles)
-						writeDebugDetail(DSMC_ModuleName .. ": recognized & saved " .. tostring(tableName))		
-					elseif tableName == "tblLogCollect" then
-						--UTIL.dumpTable("tblLogCollect.lua", tblLogCollect)	
-						writeDebugDetail(DSMC_ModuleName .. ": recognized & saved " .. tostring(tableName))									
-					end			
-					writeDebugDetail(DSMC_ModuleName .. ": table loaded")			
-				else
-					writeDebugBase(DSMC_ModuleName .. ": error loading table")
-					writeDebugBase(DSMC_ModuleName .. ": table:\n" .. tostring(message) .. "\nError: " .. tostring(str))	
-				end
-
-			elseif message == "DSMC save..." then			
-				--command save actions
-				batchSaveProcess()
-
-			elseif message == "DSMC close..." then			
-				writeDebugBase(DSMC_ModuleName .. ": DCS is closing due to trigger message DSMC close")
-				DCS.exitProcess()
-
-			elseif message == "DSMC is trying to restart the server! land or disconnect as soon as you can: DSMC will try again in 10 minutes" then			
-				--command server closeup
-
-				if STOP_var_safe == true then
-
-					local num_clients = false
-					local player_tbl = net.get_player_list()
-					if player_tbl then
-						num_clients = tonumber(#player_tbl) - 1
-						writeDebugDetail(DSMC_ModuleName .. ": there are " .. tostring(num_clients) .. " clients connected")
-						if num_clients == 0 then
-							writeDebugBase(DSMC_ModuleName .. ": Closing DCS!")
-
-							DCS.stopMission()
-							DCSshouldCloseNow = true
-						else
-							writeDebugBase(DSMC_ModuleName .. ": there are " .. tostring(num_clients) .. " clients connected, can't close DCS: delayed 10 mins")	
+	local isServer 	= DCS.isServer()
+	if isServer == true then
+		local lmz = DCS.getMissionName()
+		if lmz then
+			if string.sub(lmz,1,4) == StartFilterCode then
+				if string.sub(message, 1, 3) == "tbl" then	-- this will import & save any table that starts with "tbl"					
+					local tableName = string.sub(message, 1, string.find(message, "=")-2)
+					writeDebugDetail(DSMC_ModuleName .. ": tableName = " .. tostring(tableName))
+					local str, str_err = loadstring(tostring(message))
+					if not str_err then -- check errors  -- == true 
+						str()
+						
+						if tableName == "tblAirbases" then
+							UTIL.saveTable(tableName, tblAirbases, DSMCfiles)
+							writeDebugDetail(DSMC_ModuleName .. ": recognized & saved " .. tostring(tableName))
+						elseif tableName == "tblDeadUnits" then
+							UTIL.saveTable(tableName, tblDeadUnits, DSMCfiles)
+							writeDebugDetail(DSMC_ModuleName .. ": recognized & saved " .. tostring(tableName))						
+						elseif tableName == "tblDeadScenObj" then
+							UTIL.saveTable(tableName, tblDeadScenObj, DSMCfiles)
+							writeDebugDetail(DSMC_ModuleName .. ": recognized & saved " .. tostring(tableName))						
+						elseif tableName == "tblUnitsUpdate" then
+							UTIL.saveTable(tableName, tblUnitsUpdate, DSMCfiles)
+							writeDebugDetail(DSMC_ModuleName .. ": recognized & saved " .. tostring(tableName))	
+						elseif tableName == "tblLogistic" then
+							UTIL.saveTable(tableName, tblLogistic, DSMCfiles)
+							writeDebugDetail(DSMC_ModuleName .. ": recognized & saved " .. tostring(tableName))					
+						elseif tableName == "tblSpawned" then
+							UTIL.saveTable(tableName, tblSpawned, DSMCfiles)
+							writeDebugDetail(DSMC_ModuleName .. ": recognized & saved " .. tostring(tableName))						
+						elseif tableName == "tblConquer" then
+							UTIL.saveTable(tableName, tblConquer, DSMCfiles)
+							writeDebugDetail(DSMC_ModuleName .. ": recognized & saved " .. tostring(tableName))		
+						elseif tableName == "tblLogCollect" then
+							--UTIL.dumpTable("tblLogCollect.lua", tblLogCollect)	
+							writeDebugDetail(DSMC_ModuleName .. ": recognized & saved " .. tostring(tableName))									
 						end			
-					end	
-				else
-					writeDebugBase(DSMC_ModuleName .. ": Closing DCS without checking clients!")
+						writeDebugDetail(DSMC_ModuleName .. ": table loaded")			
+					else
+						writeDebugBase(DSMC_ModuleName .. ": error loading table")
+						writeDebugBase(DSMC_ModuleName .. ": table:\n" .. tostring(message) .. "\nError: " .. tostring(str))	
+					end
 
-					DCS.stopMission()
-					DCSshouldCloseNow = true
+				elseif message == "DSMC save..." then			
+					--command save actions
+					batchSaveProcess()
 
+				elseif message == "DSMC close..." then			
+					writeDebugBase(DSMC_ModuleName .. ": DCS is closing due to trigger message DSMC close")
+					DCS.exitProcess()
+
+				elseif message == "DSMC is trying to restart the server! land or disconnect as soon as you can: DSMC will try again in 10 minutes" then			
+					--command server closeup
+
+					if STOP_var_safe == true then
+
+						local num_clients = false
+						local player_tbl = net.get_player_list()
+						if player_tbl then
+							num_clients = tonumber(#player_tbl) - 1
+							writeDebugDetail(DSMC_ModuleName .. ": there are " .. tostring(num_clients) .. " clients connected")
+							if num_clients == 0 then
+								writeDebugBase(DSMC_ModuleName .. ": Closing DCS!")
+
+								DCS.stopMission()
+								DCSshouldCloseNow = true
+							else
+								writeDebugBase(DSMC_ModuleName .. ": there are " .. tostring(num_clients) .. " clients connected, can't close DCS: delayed 10 mins")	
+							end			
+						end	
+					else
+						writeDebugBase(DSMC_ModuleName .. ": Closing DCS without checking clients!")
+
+						DCS.stopMission()
+						DCSshouldCloseNow = true
+
+					end
 				end
 			end
 		end
 	end
-	
 end
 
 function DSMC.onPlayerStart()
 	if alreadyStarted == true then
-		writeDebugDetail(DSMC_ModuleName .. ": client starting, DSMC_resetSceneryDestruction is resetting")
-		UTIL.inJectCode("DSMC_resetSceneryDestruction", "EMBD.sceneryDestroyRefreshRemote()")
+		local lmz = DCS.getMissionName()
+		local isServer 	= DCS.isServer()
+		if lmz and isServer == true then
+			if string.sub(lmz,1,4) == StartFilterCode then
+				writeDebugDetail(DSMC_ModuleName .. ": client starting, DSMC_resetSceneryDestruction is resetting")
+				UTIL.inJectCode("DSMC_resetSceneryDestruction", "EMBD.sceneryDestroyRefreshRemote()")
+			end
+		end
 	else
 		writeDebugDetail(DSMC_ModuleName .. ": client connecting before simulation start, DSMC_resetSceneryDestruction is skipped")
 	end
