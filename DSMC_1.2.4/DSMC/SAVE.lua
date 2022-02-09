@@ -492,8 +492,9 @@ function updateUnits(missionEnv)
 													if tonumber(updatedData.unitId) == tonumber(unit.unitId) then
 														
 														local posChanged = false
-														if math.floor(unit["x"]) ~= math.floor(updatedData.x) or math.floor(unit["y"]) ~= math.floor(updatedData.z) then
+														if math.floor(unit["x"]) ~= math.floor(updatedData.x) and math.floor(unit["y"]) ~= math.floor(updatedData.z) then
 															HOOK.writeDebugDetail(ModuleName .. ": updateUnits position is changed: x = " .. tostring(unit["x"]) .. ", new x = " .. tostring(updatedData.x))
+															HOOK.writeDebugDetail(ModuleName .. ": updateUnits position is changed: y = " .. tostring(unit["y"]) .. ", new y = " .. tostring(updatedData.z))
 															posChanged = true
 														end
 														if posChanged == true then
@@ -593,8 +594,9 @@ function updateUnits(missionEnv)
 													if updatedData.aircraft == false then
 													
 														local posChanged = false
-														if math.floor(unit["x"]) ~= math.floor(updatedData.x) or math.floor(unit["y"]) ~= math.floor(updatedData.z) then
+														if math.floor(unit["x"]) ~= math.floor(updatedData.x) and math.floor(unit["y"]) ~= math.floor(updatedData.z) then
 															HOOK.writeDebugDetail(ModuleName .. ": updateUnits position is changed: x = " .. tostring(unit["x"]) .. ", new x = " .. tostring(updatedData.x))
+															HOOK.writeDebugDetail(ModuleName .. ": updateUnits position is changed: y = " .. tostring(unit["y"]) .. ", new y = " .. tostring(updatedData.z))
 															posChanged = true
 														end
 														if posChanged == true then
@@ -1072,6 +1074,17 @@ function save()
 		
 		if HOOK.PLAN_var == true then
 			PLAN.loadtables()
+			local t = UTIL.deepCopy(tblTerrainDb)
+			tblTerrainDb = nil
+			local a, tblTerrainDb = PLAN.CreateTerrConnections(t)
+
+			
+			UTIL.dumpTable("PLAN.tblTerrainDb.lua", tblTerrainDb)
+			UTIL.dumpTable("PLAN.connections.lua", a)
+			
+			PLAN.createConnectionLines(env.mission, a)
+
+			HOOK.writeDebugDetail(ModuleName .. " plan lines ok")
 
 			--test
 			--PLAN.updateTerrDb(tblTerrainDb)
@@ -1088,7 +1101,7 @@ function save()
 			--PLAN.planAirGroup(16, env.mission, "CAS", {x = 6466, y = 0, z = 383469}, 300) -- , dict_env.dictionary
 
 			--PLAN.createColourZones(env.mission, tblTerrainDb)
-			PLAN.createConnectionLines(env.mission, tblTerrainDb)
+			
 			
 		end	
 
