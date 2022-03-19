@@ -1092,6 +1092,135 @@ local standardHeloTypes = {
 		}, -- end of ["payload"]
 	}, -- end of [1]
 
+	["AH-64D_BLK_II"] = 
+	{
+		["ropeLength"] = 15,
+		["AddPropAircraft"] = 
+		{
+			["CpgNVG"] = true,
+			["FlareSalvoInterval"] = 0,
+			["PltNVG"] = true,
+			["FCR_RFI_removed"] = true,
+			["NetCrewControlPriority"] = 0,
+			["FlareBurstCount"] = 0,
+			["AIDisabled"] = false,
+			["FlareBurstInterval"] = 0,
+			["FlareSalvoCount"] = 0,
+			["FlareProgramDelay"] = 0,
+		}, -- end of ["AddPropAircraft"]
+		["type"] = "AH-64D_BLK_II",
+		["payload"] = 
+		{
+			["pylons"] = 
+			{
+			}, -- end of ["pylons"]
+			["fuel"] = 1438,
+			["flare"] = 60,
+			["ammo_type"] = 1,
+			["chaff"] = 30,
+			["gun"] = 100,
+		}, -- end of ["payload"]
+		["Radio"] = 
+		{
+			[1] = 
+			{
+				["modulations"] = 
+				{
+					[7] = 0,
+					[1] = 0,
+					[2] = 0,
+					[4] = 0,
+					[8] = 0,
+					[9] = 0,
+					[5] = 0,
+					[10] = 0,
+					[3] = 0,
+					[6] = 0,
+				}, -- end of ["modulations"]
+				["channels"] = 
+				{
+					[7] = 141,
+					[1] = 127.5,
+					[2] = 135,
+					[4] = 127,
+					[8] = 128,
+					[9] = 126,
+					[5] = 125,
+					[10] = 137,
+					[3] = 136,
+					[6] = 121,
+				}, -- end of ["channels"]
+			}, -- end of [1]
+			[2] = 
+			{
+				["modulations"] = 
+				{
+					[7] = 0,
+					[1] = 0,
+					[2] = 0,
+					[4] = 0,
+					[8] = 0,
+					[9] = 0,
+					[5] = 0,
+					[10] = 0,
+					[3] = 0,
+					[6] = 0,
+				}, -- end of ["modulations"]
+				["channels"] = 
+				{
+					[7] = 325,
+					[1] = 127.5,
+					[2] = 240,
+					[4] = 270,
+					[8] = 350,
+					[9] = 375,
+					[5] = 285,
+					[10] = 390,
+					[3] = 255,
+					[6] = 300,
+				}, -- end of ["channels"]
+			}, -- end of [2]
+			[4] = 
+			{
+				["modulations"] = 
+				{
+				}, -- end of ["modulations"]
+				["channels"] = 
+				{
+					[7] = 30.035,
+					[1] = 30,
+					[2] = 30.01,
+					[4] = 30.02,
+					[8] = 30.04,
+					[9] = 30.045,
+					[5] = 30.025,
+					[10] = 30.05,
+					[3] = 30.015,
+					[6] = 30.03,
+				}, -- end of ["channels"]
+			}, -- end of [4]
+			[3] = 
+			{
+				["modulations"] = 
+				{
+				}, -- end of ["modulations"]
+				["channels"] = 
+				{
+					[7] = 30.035,
+					[1] = 30,
+					[2] = 30.01,
+					[4] = 30.02,
+					[8] = 30.04,
+					[9] = 30.045,
+					[5] = 30.025,
+					[10] = 30.05,
+					[3] = 30.015,
+					[6] = 30.03,
+				}, -- end of ["channels"]
+			}, -- end of [3]
+		}, -- end of ["Radio"]
+	}, -- end of [1]
+
 }
 
 local permitAll = false
@@ -1347,7 +1476,11 @@ function createHeloGroups(mission) -- , dictionary
 	local maxG, maxU = setMaxId(mission)
 	local MaxDict = mission.maxDictId
 
-	if #tblSlots > 0 then
+	HOOK.writeDebugDetail(ModuleName .. ": createHeloGroups, maxG: " .. tostring(maxG))
+	HOOK.writeDebugDetail(ModuleName .. ": createHeloGroups, maxU: " .. tostring(maxU))
+	HOOK.writeDebugDetail(ModuleName .. ": createHeloGroups, MaxDict: " .. tostring(MaxDict))
+
+	if #tblSlots > 0 and maxG and maxU then
 		HOOK.writeDebugDetail(ModuleName .. ": createHeloGroups, tblSlots entries: " .. tostring(#tblSlots))
 		for sId, sData in pairs(tblSlots) do
 			HOOK.writeDebugDetail(ModuleName .. ": createHeloGroups, checking slot: " .. tostring(sId))
@@ -1627,7 +1760,11 @@ function createPlaneGroups(mission) -- CHECK THIS
 	local maxG, maxU = setMaxId(mission)
 	local MaxDict = mission.maxDictId
 
-	if #tblSlots > 0 then
+	HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups, maxG: " .. tostring(maxG))
+	HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups, maxU: " .. tostring(maxU))
+	HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups, MaxDict: " .. tostring(MaxDict))
+
+	if #tblSlots > 0 and maxG and maxU then
 		HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups, tblSlots entries: " .. tostring(#tblSlots))
 		for sId, sData in pairs(tblSlots) do
 			if sData.linkType == "Airport" then
@@ -1914,23 +2051,30 @@ end
 
 -- set maxId number
 function setMaxId(mixfile)
-	local curvalG = 0
-	local curvalU = 0
+	--UTIL.dumpTable("mixfile.lua", mixfile)
+	local curvalG = 1
+	local curvalU = 1
 	for coalitionID,coalition in pairs(mixfile["coalition"]) do
+		HOOK.writeDebugBase(ModuleName .. ": setMaxId checking coa " .. tostring(coalitionID))
 		for countryID,country in pairs(coalition["country"]) do
+			HOOK.writeDebugBase(ModuleName .. ": setMaxId checking country " .. tostring(countryID))
 			for attrID,attr in pairs(country) do
 				if (type(attr)=="table") then		
+					HOOK.writeDebugBase(ModuleName .. ": setMaxId checking attr " .. tostring(attrID))
 					for groupID,group in pairs(attr["group"]) do
+						HOOK.writeDebugBase(ModuleName .. ": setMaxId checking group " .. tostring(groupID))
 						if (group) then
 							if group.groupId then
 								if curvalG < group.groupId then
 									curvalG = group.groupId
+									HOOK.writeDebugBase(ModuleName .. ": setMaxId checking curvalG " .. tostring(curvalG))
 								end
 							end
 
 							for unitID,unit in pairs(group["units"]) do
 								if unit.unitId then
 									if curvalU < unit.unitId then
+										HOOK.writeDebugBase(ModuleName .. ": setMaxId checking curvalU " .. tostring(curvalU))
 										curvalU = unit.unitId
 									end
 								end
@@ -1942,8 +2086,12 @@ function setMaxId(mixfile)
 		end
 	end
 
-	if curvalG > 0 and curvalU > 0 then
+	if curvalG > 1 and curvalU > 1 then
+		HOOK.writeDebugBase(ModuleName .. ": setMaxId failed curvalG and curvalU found")
 		return curvalG, curvalU
+	elseif curvalG == 1 and curvalU == 1 then
+		HOOK.writeDebugBase(ModuleName .. ": setMaxId failed curvalG and curvalU not found, going to 1 and 1. this should happen only if the mission does not have any unit but the clients")
+		return curvalG, curvalU		
 	else
 		HOOK.writeDebugBase(ModuleName .. ": setMaxId failed to get id results")
 		return nil

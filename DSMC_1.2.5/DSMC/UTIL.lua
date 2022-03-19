@@ -12,7 +12,6 @@ local require 		= _G.require
 local io 			= require('io')
 local lfs 			= require('lfs')
 local os 			= require('os')
-local os 			= require('os')
 local ME_DB   		= require('me_db_api')
 
 -- ## DEBUG
@@ -247,12 +246,26 @@ function dumpTable(fname, tabledata)
 	end
 end
 
-function saveTable(fname, tabledata, savedir)
+function saveTable(fname, tabledata, savedir, varInt)
 	local filespath = savedir
 	if io then
 		local fdir = filespath .. fname .. ".lua"
 		local f = io.open(fdir, 'w')
-		local str = IntegratedserializeWithCycles(fname, tabledata)
+		local str = nil
+		if varInt then
+			if varInt == "basic" then
+				str = IntegratedbasicSerialize(fname, tabledata)
+			elseif varInt == "cycles" then
+				str = IntegratedserializeWithCycles(fname, tabledata)
+			elseif varInt == "int" then
+				str = Integratedserialize(fname, tabledata)
+			else
+				str = IntegratedserializeWithCycles(fname, tabledata)
+			end
+		else
+			str = IntegratedserializeWithCycles(fname, tabledata)
+		end
+		
 		f:write(str)
 		f:close()
 	end
@@ -333,11 +346,42 @@ end
 -- #### UNITS DATA INFO UTILITIES
 function dbYearsBuilder()
 	if _G.dbYears then	
-		--UTIL.dumpTable("dbYears.lua", _G.dbYears) 
+		UTIL.dumpTable("dbYears.lua", _G.dbYears) 
 		-- funziona già così!
 	end
 end
 --dbYearsBuilder()
+
+function getThreatRanges()
+	local t = {}
+	for dbId, dbData in pairs(ME_DB) do
+		if dbId == "unit_by_type" then
+			for uType, uData in pairs(dbData) do
+				local tr = nil
+				local dt = nil
+				local sp = nil
+				local ir = nil
+				local at = nil
+				for cId, cData in pairs(uData) do
+					if cId == "ThreatRange" then
+						tr = cData
+					elseif cId == "DetectionRange" then
+						dt = cData
+					elseif cId == "IR_emission_coeff" then
+						ir = cData
+					elseif cId == "attribute" then
+						at = cData
+					end
+				end
+				if tr and tr > 0 then
+					t[uType] = {detection = dt, threat = tr, irsignature = ir, attr = at}
+				end
+			end
+		end
+	end
+
+	return t
+end
 
 -- #### CAMPAIGN BUILD UTILITIES, MANUAL CONTROLLED ####
 local DB = require('me_db_api')
@@ -2058,16 +2102,17 @@ end
 
 HOOK.writeDebugBase(ModuleName .. ": Loaded " .. MainVersion .. "." .. SubVersion .. "." .. Build .. ", released " .. Date)
 UTILloaded = true
---UTIL.dumpTable("_G.lua", _G) 
+--UTIL.dumpTable("_G_server.lua", _G) 
 --~=
 
-
+--
 local bName = "dbYears.lua"
 local bpath = HOOK.DSMCdirectory .. bName
 local boutFile = io.open(bpath, "w");
-local bStr = Integratedserialize("TRPS.dbYears", _G.dbYears)
+local bStr = Integratedserialize("ctld_c.dbYears", _G.dbYears)
 boutFile:write(bStr);
 io.close(boutFile);
+--]]--
 
 
 

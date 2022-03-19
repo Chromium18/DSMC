@@ -43,7 +43,7 @@ function createdbWeapon()
 				if #wsTable == 4 then
 					--HOOK.writeDebugDetail(ModuleName .. ": createdbWeapon, wsTable found for " .. tostring(uniID))
 					local wsString = wsTypeToString(wsTable)	
-					HOOK.writeDebugDetail(ModuleName .. ": createdbWeapon, wsString for  " .. tostring(uniID).. " is " .. tostring(wsString))
+					--HOOK.writeDebugDetail(ModuleName .. ": createdbWeapon, wsString for  " .. tostring(uniID).. " is " .. tostring(wsString))
 					dbWeapon[#dbWeapon+1] = {unique = uniID, name = uniData.name, wsData = wsString}
 					wpnAddnum = wpnAddnum + 1
 				end
@@ -266,7 +266,11 @@ function consolidateStandardLogistic(curr_tblLogistic)
 					if aId == oData.acf then
 						afound = true
 						HOOK.writeDebugDetail(ModuleName .. ": consolidateStandardLogistic, found acf in tmpAcf, remove action, curVal = " ..tostring(aNumber))
-						aNumber = aNumber - 1
+						if aNumber > 0 then
+							aNumber = aNumber - 1
+						else
+							HOOK.writeDebugDetail(ModuleName .. ": consolidateStandardLogistic, aNumber is zero, do not subtract. Something happened as a client disconnect after takeoff")
+						end
 						HOOK.writeDebugDetail(ModuleName .. ": consolidateStandardLogistic, found acf in tmpAcf, remove action, newVal = " ..tostring(aNumber))
 						tmpAcf[oData.acf] = aNumber
 					end

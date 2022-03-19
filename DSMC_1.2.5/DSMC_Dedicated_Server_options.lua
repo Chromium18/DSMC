@@ -16,8 +16,8 @@ DSMC_AutosaveProcess_min		= 2			-- minutes, number, from 2 to 480. DSMC_Autosave
 DSMC_automated_CTLD				= true	 	-- true / false. If true enable the inbuilt CTLD.
 DSMC_automated_CSAR         	= true      -- true / false. If true enable the inbuilt CSAR scritp. Works only if DSMC_automated_CTLD is true
 
-DSMC_CreateSlotHeliports    	= false     -- true / false. If true, helicopters slots will be automatically created on heliports. Check manual for details on how it works.
-DSMC_CreateSlotAirbases     	= false     -- true / false. If true, slots will be created in airbase also and with fixed wing type. BEWARE: REQUIRE CONSISTENT SCENERY DESIGN! CHECK MANUAL
+DSMC_CreateSlotHeliports    	= true      -- true / false. If true, helicopters slots will be automatically created on heliports. Check manual for details on how it works.
+DSMC_CreateSlotAirbases     	= true      -- true / false. If true, slots will be created in airbase also and with fixed wing type. BEWARE: REQUIRE CONSISTENT SCENERY DESIGN! CHECK MANUAL
 
 -- Debug. Leave this true only for bugtracking!!!
 DSMC_DebugMode					= false		-- true / false
@@ -57,46 +57,13 @@ DSMC_AutosaveExit_hours			= 25        -- value, 1->24 or 25. hours of simulation
 DSMC_AutosaveExit_time      	= 0         -- value, 1->23. hour at witch DCS will automatically close regardless of clients or other settings. works only if DSMC_AutosaveExit_hours is set to >24. Values out of the 1-23 range will be ignored.
 DSMC_AutosaveExit_safe      	= true      -- true / false. If false, the autosaveExit will kill DCS even if there are clients online, for those server admin who prefer to have a specific kill time.
 
-
 -- ##################################################################
--- INBUILT CTLD/ CSAR CUSTOMIZATION #################################
+-- EXTERNAL SCRIPT SUPPORT   ##  CTLD PERSISTENCY OPTIONS  ##########
 -- ##################################################################
 
--- main CTLD on/off options
-DSMC_CTLD_MessageDuration		= 20	 	-- number, from 10 to 120. Seconds of duration of the "standard" CTLD message. BEWARE: some message will be kept shorter and some other longer (as JTAC ones) depending on situation
-
--- crate operations options
-DSMC_CTLD_RealSlingload			= true	 	-- true / false
-DSMC_CTLD_ForceCrateToBeMoved   = false     -- true / false. a crate must be picked up at least once and moved before it can be unpacked. Helps to reduce crate spam
-DSMC_CTLD_buildTimeFOB          = 240       -- number, from 10 to 1200. Time needed for a FOB to be built once requested
-
-DSMC_CTLD_AllowCrates           = true      -- true / false. If set false, all subsequent crates ops will be disabled
-DSMC_CTLD_Allow_JTAC_Crates     = true      -- true / false. If set false, you won't be able to spawn JTAC crates
-DSMC_CTLD_Allow_SAM_Crates      = true      -- true / false. If set false, you won't be able to spawn SAM crates
-DSMC_CTLD_Allow_Supply_Crates   = true      -- true / false. If set false, you won't be able to spawn Airlift supplies crates
-DSMC_CTLD_longRangeSamCrates    = true      -- true / false. If set true, SA-10 and Patriots SAM system will be available. Beware: these sams require many crates! at least 6 launcher crates are required!
-DSMC_CTLD_crateLargeToSmallRto  = 3         -- number, from 1 to 10. this variable define how many small crates equals to large crates. "3" means that 3 small crates equals to 1 large crates.
-DSMC_CTLD_spawnCrateDistance    = 30        -- meters of distance at 12 o'clock where the crate is spawned. 30 is CTLD default. Shorter distance may help for frequent spawning on carrier
-
--- constructible crates custom parameters
-DSMC_CTLD_AllowPlatoon		    = true	 	-- true / false. BEWARE: using platoons mode will require you to set up some factories around. Check manual!
-DSMC_CTLD_crateReductionFactor  = 1.5       -- number, from 1 to 4 with fraction allowed. This is the required crate reduction factor number for platoons. 1 means about 8-12 crates/platoon, 1.5 means 5-8 crates/platoon, 2 means 2-6 crates/platoon, and so on.
-
--- tags to force an objects to a specific category
-DSMC_CTLD_forcePilot		    = "dsmc_helicargo_" -- text. Any unit with this specific tag inside its name, case sensitive, will be recognized as a CTLD pilot.
-DSMC_CTLD_forceLogistic		    = "dsmc_logistic_" -- text. Any unit with this specific tag inside its name, case sensitive, will be recognized as a logistic site.
-DSMC_CTLD_forcePickzone		    = "dsmc_pickZone_" -- text. Any unit with this specific tag inside its name, case sensitive, will be recognized as a pickup zone.
-DSMC_CTLD_forceDropzone		    = "dsmc_dropZone_" -- text. Any unit with this specific tag inside its name, case sensitive, will be recognized as a drop zone.
-DSMC_CTLD_forceWpzone		    = "dsmc_WpZone_" -- text. Any unit with this specific tag inside its name, case sensitive, will be recognized as a waypoint zone.
-
--- smoke option
-DSMC_CTLD_disableJTACSmoke      = false -- true / false. If True, only client 
-
--- CSAR script available options. BEWARE: lives and scoring system is disabled by design choice to avoid conflict with warehouse tracking
-DSMC_CSAR_useCoalitionMessages  = true	 	-- true / false
-DSMC_CSAR_clientPilotOnly       = false     -- true / false. If True, only client downed pilots will generate CSAR mission.
-
-
+-- these parameters will work with any ctld versions, with exception for the DSMC's customized CTLD script (non included)
+DSMC_ctld_recognizeHelos        = true     -- true / false. If true, any helicopter that spawns in the scenery will be added to ctld.transportPilotNames
+DSMC_ctld_recognizeVehicles     = true     -- true / false. If true, any Truck, IFV or APC vehicle from mission editor objects will be added to ctld.transportPilotNames (spawned won't be available)
 
 -- ##################################################################
 -- BETA NOT TESTED FEATURE ## THESE VARIABLES ARE NOT WORKING #######
@@ -113,12 +80,3 @@ DSMC_BuilderToolsBeta 		    = false		-- true / false -- // NOT WORKING YET Leave
 
 -- additional feature (not working leave as it is)
 DSMC_ExportDocuments        	= false      -- true / false
-
--- CTLD custom limit for adding platoons crates
-DSMC_CTLD_UnitNumLimits         = false     -- true / false. If False, the subsequent limit variable does not apply
-DSMC_CTLD_Limit_APC             = 200       -- number. if the limit is reached, you won't be able to unpack any crates in this category (also consider existing units)
-DSMC_CTLD_Limit_IFV             = 150       -- number. if the limit is reached, you won't be able to unpack any crates in this category (also consider existing units)
-DSMC_CTLD_Limit_Tanks           = 80        -- number. if the limit is reached, you won't be able to unpack any crates in this category (also consider existing units)
-DSMC_CTLD_Limit_ads             = 50        -- number. if the limit is reached, you won't be able to unpack any crates in this category (also consider existing units)
-DSMC_CTLD_Limit_Arty            = 60        -- number. if the limit is reached, you won't be able to unpack any crates in this category (also consider existing units)
-DSMC_CTLD_Limit_Trucks          = 100       -- number. if the limit is reached, you won't be able to unpack any crates in this category (also consider existing units)

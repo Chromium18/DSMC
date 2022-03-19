@@ -1029,12 +1029,12 @@ function save()
 			updateWeather(env.mission)
 		end				
 
-		updateBases(env.mission, wrhs_env.warehouses) -- moved before warehouses.
+		updateBases(env.mission, wrhs_env.warehouses) 
 
 		if HOOK.WRHS_var == true then
 
 			-- fix wh if necessary
-			local wh = UTIL.fixWarehouse(wrhs_env.warehouses) -- basequantity not used.
+			local wh = UTIL.fixWarehouse(wrhs_env.warehouses) 
 			if wh then
 				wrhs_env.warehouses = UTIL.deepCopy(wh)
 				wh = nil
@@ -1053,7 +1053,6 @@ function save()
 			
 			if sortieValue == "DSMC set warehouses" and sortieId then
 				HOOK.writeDebugDetail(ModuleName .. ": warehouse asking a pure restart")
-				--UTIL.getZeroedAirbase(wrhs_env.warehouses)
 				UTIL.getZeroedAirbase(wrhs_env.warehouses)
 				UTIL.whRestart(wrhs_env.warehouses, tblAirbases, env.mission)
 				dict_env.dictionary[sortieId] = ""
@@ -1069,40 +1068,17 @@ function save()
 		end		
 
 		if HOOK.SLOT_var == true or HOOK.SLOT_ab_var == true then
-			createSlots(env.mission, wrhs_env.warehouses) -- , dict_env.dictionary
+			createSlots(env.mission, wrhs_env.warehouses) 
 		end		
 		
-		if HOOK.PLAN_var == true then
-			PLAN.loadtables()
-			local t = UTIL.deepCopy(tblTerrainDb)
-			tblTerrainDb = nil
-			local a, tblTerrainDb = PLAN.CreateTerrConnections(t)
+		if HOOK.PLAN_var == true then -- PLAN MODULE ###################################################################################
+			HOOK.writeDebugDetail(ModuleName .. " starting PLAN...")
+			local m = UTIL.deepCopy(env.mission)
+			env.mission = PLAN.executePlanning(tblTerrainDb, tblIntelDb, tblORBATDb, m) -- m, tblTerrainDb
+			HOOK.writeDebugDetail(ModuleName .. " PLAN done")
 
-			
-			UTIL.dumpTable("PLAN.tblTerrainDb.lua", tblTerrainDb)
-			UTIL.dumpTable("PLAN.connections.lua", a)
-			
-			PLAN.createConnectionLines(env.mission, a)
+			-- executePlanning(terrain, intel, orbat)
 
-			HOOK.writeDebugDetail(ModuleName .. " plan lines ok")
-
-			--test
-			--PLAN.updateTerrDb(tblTerrainDb)
-			--PLAN.createTerrConnections(tblTerrainDb)
-
-			
-			--PLAN.checkRoadConnection("OZURGETI", "BATUMI")
-
-			--PLAN.Gtest() -- , dict_env.dictionary
-			--PLAN.planGroundGroup(6, "CHERKESSK", true, 600)
-			--planAirGroup(id, missionEnv, task, pos, delay)
-			--PLAN.planAirGroup(14, env.mission, "Strike", {x = 6466, y = 0, z = 383469}, 600) -- , dict_env.dictionary
-			--PLAN.planAirGroup(15, env.mission, "CAP", {x = 0, y = 6096, z = 0}, 900) -- , dict_env.dictionary
-			--PLAN.planAirGroup(16, env.mission, "CAS", {x = 6466, y = 0, z = 383469}, 300) -- , dict_env.dictionary
-
-			--PLAN.createColourZones(env.mission, tblTerrainDb)
-			
-			
 		end	
 
 		if ADTR.tblAddResources then
@@ -1113,7 +1089,6 @@ function save()
 			HOOK.writeDebugDetail(ModuleName .. " no external files available")
 		end			
 
-		--updateBases(env.mission, wrhs_env.warehouses)
 		HOOK.writeDebugDetail(ModuleName .. " d1")
 		if HOOK.UPAP_var == true then
 			updateBriefing(env.mission, dict_env.dictionary)
@@ -1125,12 +1100,10 @@ function save()
 		local fName = "mission"
 		local missName = HOOK.missionfilesdirectory .. "Temp/" .. fName
 		local outFile = io.open(missName, "w");
-		local newMissionStr = UTIL.Integratedserialize('mission', env.mission); -- IntegratedserializeWithCycles  --  UTIL.IntegratedserializeWithCycles('mission', env.mission)
+		local newMissionStr = UTIL.Integratedserialize('mission', env.mission);
 		outFile:write(newMissionStr);
 		io.close(outFile);
 		HOOK.writeDebugDetail(ModuleName .. " d3")
-		
-		--UTIL.dumpTable("wrhs_env.warehouses.lua", wrhs_env.warehouses)
 
 		--warehouses
 		local w_fName = "warehouses"
@@ -1745,7 +1718,11 @@ function buildNewMizFile(loadedMissionPath, loadedMizFileName, cpm_path)
 			end
 			
 			DSMC_NewSaveresourceFiles = nil
+			HOOK.writeDebugDetail(ModuleName .. ": buildNewMizFile - miz saved, sending message...")
 			net.dostring_in("mission", [[a_do_script("trigger.action.outText('scenery saved!', 10)")]])
+			--net.dostring_in("mission", [[EMBD.doMessage('scenery saved!')]])
+
+			HOOK.writeDebugDetail(ModuleName .. ": buildNewMizFile - miz saved, message sent!")
 			UTIL.inJectCode("DSMC_allowStop", "DSMC_allowStop = true")
 
 			return true

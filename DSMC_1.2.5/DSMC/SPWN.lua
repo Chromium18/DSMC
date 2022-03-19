@@ -146,7 +146,7 @@ function doSpawned(missionEnv, tblSpawned, whEnv) -- , dictEnv
 								end
 
 
-								if tonumber(sgData.gCat) == 3 then -- maybe add category 4 for FARPs and similar?
+								if tonumber(sgData.gCat) == 3 then 
 									sgUnits[#sgUnits + 1] =
 													{
 														["type"] = uData.uType,
