@@ -133,6 +133,8 @@ function updateAirbaseTable(missionEnv)
 			end
 		end
 
+
+
 		--[[ remove used parking from me -- IF YOU ENABLE, IT WILL BREAK SLOT CREATION
 		for coalitionID,coalition in pairs(missionEnv["coalition"]) do
 			for countryID,country in pairs(coalition["country"]) do
@@ -180,6 +182,18 @@ function updateAirbaseTable(missionEnv)
 		--]]--
 
 	end
+
+	-- rewrite the parking set for ME setup in airbaseSlot
+	for admId, admData in pairs(tblAirbases) do
+		if admData.parkings then
+			for pId, pData in pairs(admData.parkings) do
+				pData.nameME = tostring(pId)
+
+			end
+		end
+	end
+
+
 	--UTIL.dumpTable("tblAirbases_updated.lua", tblAirbases)
 end
 
