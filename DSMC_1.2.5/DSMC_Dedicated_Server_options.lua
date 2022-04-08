@@ -20,7 +20,7 @@ DSMC_CreateSlotHeliports    	= true      -- true / false. If true, helicopters s
 DSMC_CreateSlotAirbases     	= true      -- true / false. If true, slots will be created in airbase also and with fixed wing type. BEWARE: REQUIRE CONSISTENT SCENERY DESIGN! CHECK MANUAL
 
 -- Debug. Leave this true only for bugtracking!!!
-DSMC_DebugMode					= true		-- true / false
+DSMC_DebugMode					= false		-- true / false
 
 
 -- ##################################################################
