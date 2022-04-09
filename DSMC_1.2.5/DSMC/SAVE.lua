@@ -1085,7 +1085,8 @@ function save()
 			createSlots(env.mission, wrhs_env.warehouses) 
 		end		
 		
-		if HOOK.PLAN_var == true then -- PLAN MODULE ###################################################################################
+		-- plan module for DSMC 2.0
+		if UTIL.fileExist(DSMCdirectory .. "PLAN" .. ".lua") == true and UTIL.fileExist(DSMCdirectory .. "GOAP" .. ".lua") == true and UTIL.fileExist(DSMCdirectory .. "DLNY" .. ".lua") == true and HOOK.PLAN_var == true then
 			HOOK.writeDebugDetail(ModuleName .. " starting PLAN...")
 			local m = UTIL.deepCopy(env.mission)
 			env.mission = PLAN.executePlanning(tblTerrainDb, tblIntelDb, tblORBATDb, m) -- m, tblTerrainDb

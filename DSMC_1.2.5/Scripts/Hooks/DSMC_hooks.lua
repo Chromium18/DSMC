@@ -36,8 +36,8 @@ package.path =
 DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "2"
-DSMC_Build 			= "2078"
-DSMC_Date			= "29/03/2021"
+DSMC_Build 			= "2081"
+DSMC_Date			= "09/04/2021"
 
 -- ## DEBUG TO TEXT FUNCTION
 debugProcess	= true -- this should be left on for testers normal ops and test missions
@@ -603,6 +603,11 @@ function startDSMCprocess()
 						baseGcounter = baseGcounter + 1
 						baseUcounter = baseUcounter + 1
 
+						writeDebugDetail(DSMC_ModuleName .. ": creating temp folders...")
+						lfs.mkdir(DSMCtemp)
+						lfs.mkdir(DSMCfiles)
+						writeDebugDetail(DSMC_ModuleName .. ": created dir = " .. tostring(missionfilesdirectory .. "Temp/"))
+
 						-- filter units table
 						
 						UTIL.filterNamingTables(SAVE.tempEnv.mission) --SAVE.tempEnv.dictionary
@@ -709,8 +714,10 @@ function startDSMCprocess()
 						local tblThreats = UTIL.getThreatRanges()
 						if tblThreats then
 							UTIL.inJectTable("EMBD.tblThreatsRange", tblThreats)
+							writeDebugDetail(DSMC_ModuleName .. ": tblThreats injected")
+						else
+							writeDebugDetail(DSMC_ModuleName .. ": can't inject tblThreats")
 						end
-						writeDebugDetail(DSMC_ModuleName .. ": getThreatRanges injected")
 
 						-- code from PLAN module
 						if PLAN_var then
@@ -736,9 +743,11 @@ function startDSMCprocess()
 							writeDebugBase(DSMC_ModuleName .. ": RTAI not required")	
 						end		
 
-						lfs.mkdir(DSMCtemp)
-						lfs.mkdir(DSMCfiles)
-						writeDebugDetail(DSMC_ModuleName .. ": created dir = " .. tostring(missionfilesdirectory .. "Temp/"))
+						writeDebugDetail(DSMC_ModuleName .. ": loaded all variables")
+
+						--lfs.mkdir(DSMCtemp)
+						--lfs.mkdir(DSMCfiles)
+						--writeDebugDetail(DSMC_ModuleName .. ": created dir = " .. tostring(missionfilesdirectory .. "Temp/"))
 						
 						UTIL.copyFile(loadedMissionPath, DSMCfiles .. "tempFile.miz")		
 						writeDebugDetail(DSMC_ModuleName .. ": base file copied")
