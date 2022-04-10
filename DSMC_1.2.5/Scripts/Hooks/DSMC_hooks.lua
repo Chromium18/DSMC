@@ -897,15 +897,19 @@ function makefirstmission(missionPath)
 				
 				local serEnv = {}
 				if serSettingString then
+					writeDebugDetail(DSMC_ModuleName .. ": makefirstmission serSettingString table exist")
 					local sResFun, sErrStr 	= loadstring(serSettingString);
 					
 					if sResFun then
+						writeDebugDetail(DSMC_ModuleName .. ": makefirstmission sResFun table exist")
 						setfenv(sResFun, serEnv)
 						sResFun()								
 						--UTIL.dumpTable("serEnv.cfg.lua", serEnv.cfg)
 						if serEnv.cfg then
+							writeDebugDetail(DSMC_ModuleName .. ": makefirstmission serEnv is readable")
 							local mizList = serEnv.cfg["missionList"]
 							if #mizList < 2 then
+								writeDebugDetail(DSMC_ModuleName .. ": makefirstmission mizList is one mission only, replacing")
 								serEnv.cfg["missionList"][1] = future_file_path
 								serEnv.cfg["current"] = 1
 								writeDebugDetail(DSMC_ModuleName .. ": makefirstmission serSetting modified")
@@ -916,6 +920,9 @@ function makefirstmission(missionPath)
 										serEnv.cfg["missionList"][mId] = nil
 									end
 								end
+								serEnv.cfg["missionList"][1] = future_file_path
+								serEnv.cfg["current"] = 1
+								writeDebugDetail(DSMC_ModuleName .. ": makefirstmission serSetting modified")
 							end
 						end
 					end
@@ -924,6 +931,8 @@ function makefirstmission(missionPath)
 				local newSrvConfigStr = UTIL.IntegratedserializeWithCycles('cfg', serEnv.cfg);
 				outFile:write(newSrvConfigStr);
 				io.close(outFile);
+			else
+				writeDebugDetail(DSMC_ModuleName .. ": makefirstmission can't find serversettings")
 			end			
 		end
 		local stringOK = "trigger.action.outText('setup done!', 5)"
