@@ -36,8 +36,9 @@ package.path =
 DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "2"
-DSMC_Build 			= "2081"
-DSMC_Date			= "09/04/2021"
+DSMC_SubSubVersion 	= "5"
+DSMC_Build 			= "2082"
+DSMC_Date			= "10/04/2021"
 
 -- ## DEBUG TO TEXT FUNCTION
 debugProcess	= true -- this should be left on for testers normal ops and test missions
@@ -1190,6 +1191,6 @@ end
 local language, langCountry = lang.getLocale()
 writeDebugDetail(DSMC_ModuleName .. ": language = " .. tostring(language) .. ", langCountry = " .. tostring(langCountry))
 
-writeDebugBase(DSMC_ModuleName .. ": Loaded " .. DSMC_MainVersion .. "." .. DSMC_SubVersion .. "." .. DSMC_Build .. ", released " .. DSMC_Date)
+writeDebugBase(DSMC_ModuleName .. ": Loaded " .. DSMC_MainVersion .. "." .. DSMC_SubVersion .. "." .. DSMC_SubSubVersion .. "." .. DSMC_Build .. ", released " .. DSMC_Date)
 
 --~=
