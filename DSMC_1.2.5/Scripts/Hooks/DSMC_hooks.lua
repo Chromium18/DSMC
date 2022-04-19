@@ -37,8 +37,8 @@ DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "2"
 DSMC_SubSubVersion 	= "5"
-DSMC_Build 			= "2083"
-DSMC_Date			= "10/04/2021"
+DSMC_Build 			= "2085"
+DSMC_Date			= "19/04/2021"
 
 -- ## DEBUG TO TEXT FUNCTION
 debugProcess	= true -- this should be left on for testers normal ops and test missions

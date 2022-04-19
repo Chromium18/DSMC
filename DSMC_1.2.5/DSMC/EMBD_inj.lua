@@ -1212,7 +1212,7 @@ EMBD.oncallworkflow = function(sanivar, recall)
 		end		
 
 		local function saveProcess()
-			trigger.action.outText("DSMC save...", msg_duration)
+			trigger.action.outText("DSMC save...", 10)
 			--env.info(("EMBD.oncallworkflow called saveProcess function"))
 		end			
 
@@ -1781,7 +1781,7 @@ function EMBD.LogisticUnload:onEvent(event)
 			end
 		else
 			if DSMC_debugProcessDetail == true then
-				env.info(("EMBD.LogisticUnload no unit!"))
+				env.info(("EMBD.LogisticUnload no unit or ab!"))
 			end
 		end
 	end
@@ -2028,8 +2028,9 @@ EMBD.collectSpawned = {}
 function EMBD.collectSpawned:onEvent(event)
 	if event.id == world.event.S_EVENT_BIRTH and timer.getTime0() < timer.getAbsTime() then
 		env.info(("EMBD.collectSpawned started"))
-		if event.initiator:hasAttribute("Air") == false then
-			if Object.getCategory(event.initiator) == 1 then -- unit
+		
+		if Object.getCategory(event.initiator) == 1 then -- unit
+			if event.initiator:hasAttribute("Air") == false then
 				if not Unit.getPlayerName(event.initiator) then					
 					env.info(("EMBD.collectSpawned unit, non-player"))
 					local ei_gName = Unit.getGroup(event.initiator):getName()
@@ -2075,19 +2076,66 @@ function EMBD.collectSpawned:onEvent(event)
 					end
 					
 				end
+			else
+				env.info(("EMBD.collectSpawned unit is a flying thing, removed"))
+			end
 
-			elseif Object.getCategory(event.initiator) == 4 then -- FARP
-				env.info(("EMBD.collectSpawned FARP"))
-				local _eiUnitData = event.initiator
-				local ei_gName = Airbase.getName(event.initiator)
-				local ei = Airbase.getByName(ei_gName)
+		elseif Object.getCategory(event.initiator) == 4 then -- FARP
+			env.info(("EMBD.collectSpawned FARP"))
+			local _eiUnitData = event.initiator
+			local ei_gName = Airbase.getName(event.initiator)
+			local ei = Airbase.getByName(ei_gName)
+			local ei_pos = ei:getPosition().p
+			local ei_unitTable = {}
+			local ei_coalition = ei:getCoalition()
+			local ei_country = event.initiator:getCountry()
+			DSMC_baseGcounter = DSMC_baseGcounter + 1
+			local ei_ID = DSMC_baseGcounter -- ei:getID()
+			env.info(("EMBD.collectSpawned FARP data collected, ei_gName: " .. tostring(ei_gName)))
+			
+			if ei_gName then
+				ei_unitTable[#ei_unitTable+1] = {uID = tonumber(_eiUnitData:getID()), uName = _eiUnitData:getName(), uPos = _eiUnitData:getPosition().p, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true}
+			end
+
+			if ei and not tblSpawned[ei_gName] then
+				tblSpawnedcounter = tblSpawnedcounter + 1
+				env.info(("EMBD.collectSpawned airbase_farp added"))
+				tblSpawned[ei_gName] = {gID = tonumber(ei_ID), gCat = Object.getCategory(event.initiator), gAlt= ei_Altitude, gName = ei_gName, gCoalition = ei_coalition, gCountry = ei_country, gType = "static", gCounter = tblSpawnedcounter, gTable = ei, gPos = ei_pos, gUnits = ei_unitTable, gStaticAlive = true}
+			end
+		elseif Object.getCategory(event.initiator) == 6 then -- cargo
+			local _eiUnitData = event.initiator
+			local ei_gName = StaticObject.getName(event.initiator)
+			local ei = StaticObject.getByName(ei_gName)
+			local ei_pos = ei:getPosition().p
+			--local ei_unitTableSource = ei:getUnits()
+			local ei_unitTable = {}
+			local ei_coalition = ei:getCoalition()
+			local ei_country = event.initiator:getCountry()
+			DSMC_baseGcounter = DSMC_baseGcounter + 1
+			local ei_ID = DSMC_baseGcounter -- ei:getID()
+			local ei_Weight = event.initiator:getCargoWeight()
+			
+			if ei_gName then
+				ei_unitTable[#ei_unitTable+1] = {uID = tonumber(_eiUnitData:getID()), uName = _eiUnitData:getName(), uPos = _eiUnitData:getPosition().p, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true, uWeight = ei_Weight}
+			end
+
+			if ei and not tblSpawned[ei_gName] then
+				tblSpawnedcounter = tblSpawnedcounter + 1
+				tblSpawned[ei_gName] = {gID = tonumber(ei_ID), gCat = Object.getCategory(event.initiator), gAlt= ei_Altitude, gName = ei_gName, gCoalition = ei_coalition, gCountry = ei_country, gType = "static", gCounter = tblSpawnedcounter, gTable = ei, gPos = ei_pos, gUnits = ei_unitTable, gStaticAlive = true}					
+			end		
+		elseif Object.getCategory(event.initiator) == 3 then -- static
+			env.info(("EMBD.collectSpawned static"))
+			local _eiUnitData = event.initiator
+			local ei_gName = StaticObject.getName(event.initiator)
+			local ei = StaticObject.getByName(ei_gName)
+			if ei then
 				local ei_pos = ei:getPosition().p
 				local ei_unitTable = {}
 				local ei_coalition = ei:getCoalition()
 				local ei_country = event.initiator:getCountry()
 				DSMC_baseGcounter = DSMC_baseGcounter + 1
 				local ei_ID = DSMC_baseGcounter -- ei:getID()
-				env.info(("EMBD.collectSpawned FARP data collected, ei_gName: " .. tostring(ei_gName)))
+				env.info(("EMBD.collectSpawned static data collected, ei_gName: " .. tostring(ei_gName)))
 				
 				if ei_gName then
 					ei_unitTable[#ei_unitTable+1] = {uID = tonumber(_eiUnitData:getID()), uName = _eiUnitData:getName(), uPos = _eiUnitData:getPosition().p, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true}
@@ -2096,57 +2144,12 @@ function EMBD.collectSpawned:onEvent(event)
 				if ei and not tblSpawned[ei_gName] then
 					tblSpawnedcounter = tblSpawnedcounter + 1
 					env.info(("EMBD.collectSpawned static added"))
-					tblSpawned[ei_gName] = {gID = tonumber(ei_ID), gCat = Object.getCategory(event.initiator), gAlt= ei_Altitude, gName = ei_gName, gCoalition = ei_coalition, gCountry = ei_country, gType = "static", gCounter = tblSpawnedcounter, gTable = ei, gPos = ei_pos, gUnits = ei_unitTable, gStaticAlive = true}
+					tblSpawned[ei_gName] = {gID = tonumber(ei_ID), gCat = Object.getCategory(event.initiator), gAlt= ei_Altitude, gName = ei_gName, gCoalition = ei_coalition, gCountry = ei_country, gType = "static", gCounter = tblSpawnedcounter, gTable = ei, gPos = ei_pos, gUnits = ei_unitTable, gStaticAlive = true}			
 				end
-			elseif Object.getCategory(event.initiator) == 6 then -- cargo
-				local _eiUnitData = event.initiator
-				local ei_gName = StaticObject.getName(event.initiator)
-				local ei = StaticObject.getByName(ei_gName)
-				local ei_pos = ei:getPosition().p
-				--local ei_unitTableSource = ei:getUnits()
-				local ei_unitTable = {}
-				local ei_coalition = ei:getCoalition()
-				local ei_country = event.initiator:getCountry()
-				DSMC_baseGcounter = DSMC_baseGcounter + 1
-				local ei_ID = DSMC_baseGcounter -- ei:getID()
-				local ei_Weight = event.initiator:getCargoWeight()
-				
-				if ei_gName then
-					ei_unitTable[#ei_unitTable+1] = {uID = tonumber(_eiUnitData:getID()), uName = _eiUnitData:getName(), uPos = _eiUnitData:getPosition().p, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true, uWeight = ei_Weight}
-				end
-
-				if ei and not tblSpawned[ei_gName] then
-					tblSpawnedcounter = tblSpawnedcounter + 1
-					tblSpawned[ei_gName] = {gID = tonumber(ei_ID), gCat = Object.getCategory(event.initiator), gAlt= ei_Altitude, gName = ei_gName, gCoalition = ei_coalition, gCountry = ei_country, gType = "static", gCounter = tblSpawnedcounter, gTable = ei, gPos = ei_pos, gUnits = ei_unitTable, gStaticAlive = true}					
-				end			
-
 			end
 		else
-			if Object.getCategory(event.initiator) == 3 then -- static
-				env.info(("EMBD.collectSpawned static"))
-				local _eiUnitData = event.initiator
-				local ei_gName = StaticObject.getName(event.initiator)
-				local ei = StaticObject.getByName(ei_gName)
-				if ei then
-					local ei_pos = ei:getPosition().p
-					local ei_unitTable = {}
-					local ei_coalition = ei:getCoalition()
-					local ei_country = event.initiator:getCountry()
-					DSMC_baseGcounter = DSMC_baseGcounter + 1
-					local ei_ID = DSMC_baseGcounter -- ei:getID()
-					env.info(("EMBD.collectSpawned static data collected, ei_gName: " .. tostring(ei_gName)))
-					
-					if ei_gName then
-						ei_unitTable[#ei_unitTable+1] = {uID = tonumber(_eiUnitData:getID()), uName = _eiUnitData:getName(), uPos = _eiUnitData:getPosition().p, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true}
-					end
+			env.info(("EMBD.collectSpawned can't add object, category not found: " .. tostring(Object.getCategory(event.initiator))))
 
-					if ei and not tblSpawned[ei_gName] then
-						tblSpawnedcounter = tblSpawnedcounter + 1
-						env.info(("EMBD.collectSpawned static added"))
-						tblSpawned[ei_gName] = {gID = tonumber(ei_ID), gCat = Object.getCategory(event.initiator), gAlt= ei_Altitude, gName = ei_gName, gCoalition = ei_coalition, gCountry = ei_country, gType = "static", gCounter = tblSpawnedcounter, gTable = ei, gPos = ei_pos, gUnits = ei_unitTable, gStaticAlive = true}			
-					end
-				end
-			end
 		end
 	end
 end
