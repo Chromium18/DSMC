@@ -2649,6 +2649,8 @@ env.info((ModuleName .. ": Loaded " .. MainVersion .. "." .. SubVersion .. "." .
 
 
 local function dumpThreats()
-	dumpTable("EMBD.tblThreatsRange.lua", EMBD.tblThreatsRange)
+	if DSMC_io and DSMC_lfs then
+		dumpTable("EMBD.tblThreatsRange.lua", EMBD.tblThreatsRange)
+	end
 end
 timer.scheduleFunction(dumpThreats, {}, timer.getTime() + 2)
