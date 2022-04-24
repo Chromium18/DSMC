@@ -2055,7 +2055,7 @@ function EMBD.collectSpawned:onEvent(event)
 					env.info(("EMBD.collectSpawned unit data collected"))
 					if ei_unitTableSource and #ei_unitTableSource > 0 then
 						for _id, _eiUnitData in pairs(ei_unitTableSource) do
-							if DSMC_trackspawnedinfantry then
+							if DSMC_trackspawnedinfantry == true then
 								DSMC_baseUcounter = DSMC_baseUcounter + 1
 								ei_unitTable[#ei_unitTable+1] = {uID = DSMC_baseUcounter, uName = _eiUnitData:getName(), uPos = _eiUnitData:getPosition().p, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true}
 							else
@@ -2369,8 +2369,8 @@ EMBD.updateTimedCall = function()
 end
 
 -- CTLD support code
-EMBD.updatectld_cTables = function(addHelos, addVehicles)
-	env.info("DSMC:  updatectld_cTables looking for ME helo, IFV, APC for add transport table and infantry groups")
+EMBD.update_ctld_Tables = function(addHelos, addVehicles)
+	env.info("DSMC:  update_ctld_Tables looking for ME helo, IFV, APC for add transport table and infantry groups")
 	for _coalitionName, _coalitionData in pairs(env.mission.coalition) do		
 		if (_coalitionName == 'red' or _coalitionName == 'blue')
 				and type(_coalitionData) == 'table' then
@@ -2427,12 +2427,12 @@ EMBD.updatectld_cTables = function(addHelos, addVehicles)
 																				end
 																			end     
 
-																			env.info("DSMC:  updatectld_cTables: unit " .. tostring(unitName) .. " is an APC or IFV, ctld.transportPilotNames updated")																
+																			env.info("DSMC:  update_ctld_Tables: unit " .. tostring(unitName) .. " is an APC or IFV, ctld.transportPilotNames updated")																
 																		end
 
 																	elseif addHelos and unit:hasAttribute("Helicopters") then
 																		table.insert(ctld.transportPilotNames, unitName)
-																		env.info("DSMC:  updatectld_cTables: unit " .. tostring(unitName) .. " is an helo, ctld.transportPilotNames updated")																						
+																		env.info("DSMC:  update_ctld_Tables: unit " .. tostring(unitName) .. " is an helo, ctld.transportPilotNames updated")																						
 																	
 																	elseif unit:hasAttribute("Infantry") then
 																		infantryCount = infantryCount +1
@@ -2452,7 +2452,7 @@ EMBD.updatectld_cTables = function(addHelos, addVehicles)
 												if groupTable then												
 													if not ctld.extractableGroups[groupName] then
 														table.insert(ctld.extractableGroups, groupName)
-														env.info("DSMC:  updatectld_cTables: group ".. tostring(groupName) .. " of units added as extractable")													
+														env.info("DSMC:  update_ctld_Tables: group ".. tostring(groupName) .. " of units added as extractable")													
 													end
 												end
 											end
@@ -2477,12 +2477,12 @@ EMBD.updatectld_cTables = function(addHelos, addVehicles)
 														end
 
 														if _unit.category == "Fortifications" and _unit.type == "outpost" then           
-															env.info("DSMC:  updatectld_cTables: checking FOB, found outpost object:" .. tostring(unitName))	
+															env.info("DSMC:  update_ctld_Tables: checking FOB, found outpost object:" .. tostring(unitName))	
 															local stObject = StaticObject.getByName(unitName)
 															if stObject then																	
 																local centerposUnit = stObject:getPosition().p
 																if centerposUnit then
-																	env.info("DSMC:  updatectld_cTables: checking FOB, outpost has position")
+																	env.info("DSMC:  update_ctld_Tables: checking FOB, outpost has position")
 																	
 																	local foundUnits = {}
 																	local volS = {
@@ -2494,9 +2494,9 @@ EMBD.updatectld_cTables = function(addHelos, addVehicles)
 																	}
 																	
 																	local ifFound = function(foundItem, val)
-																		env.info("DSMC:  updatectld_cTables: checking FOB, proximity object found")	                                                            
+																		env.info("DSMC:  update_ctld_Tables: checking FOB, proximity object found")	                                                            
 																		if foundItem:getTypeName() == "TACAN_beacon" then
-																			env.info("DSMC:  updatectld_cTables: checking FOB, object is a beacon")	 
+																			env.info("DSMC:  update_ctld_Tables: checking FOB, object is a beacon")	 
 																			foundUnits[#foundUnits + 1] = foundItem:getName()
 																			return true
 																		end
@@ -2507,11 +2507,11 @@ EMBD.updatectld_cTables = function(addHelos, addVehicles)
 																		
 																		--adding FOB
 																		table.insert(ctld.logisticUnits, unitName)
-																		env.info("DSMC:  updatectld_cTables: checking FOB, outpost added as FOB")	 
+																		env.info("DSMC:  update_ctld_Tables: checking FOB, outpost added as FOB")	 
 																		--if ctld.troopPickupAtFOB == true then
 																		table.insert(ctld.builtFOBS, unitName)			
 																		--end							
-																		env.info("DSMC:  updatectld_cTables: unit " .. tostring(unitName) .. " is an outpost, ctld.logisticUnits updated")	                                                            
+																		env.info("DSMC:  update_ctld_Tables: unit " .. tostring(unitName) .. " is an outpost, ctld.logisticUnits updated")	                                                            
 																		
 																	end
 																end
@@ -2530,7 +2530,7 @@ EMBD.updatectld_cTables = function(addHelos, addVehicles)
 			end
 		end
 	end
-	env.info("DSMC:  updatectld_cTables done")
+	env.info("DSMC:  update_ctld_Tables done")
 end
 
 EMBD.scheduleCTLDsupport = function()
@@ -2545,7 +2545,7 @@ EMBD.scheduleCTLDsupport = function()
 				env.info(ModuleName .. " AddHeloOnBirth DSMC_ctld_var1 " .. tostring(a))
 				env.info(ModuleName .. " AddHeloOnBirth DSMC_ctld_var2 " .. tostring(b))
 
-				EMBD.updatectld_cTables(a, b)
+				EMBD.update_ctld_Tables(a, b)
 
 				EMBD.AddHeloOnBirth = {}
 				function EMBD.AddHeloOnBirth:onEvent(event)	
@@ -2558,13 +2558,13 @@ EMBD.scheduleCTLDsupport = function()
 								if a == true and unit:hasAttribute("Helicopters") then
 									table.insert(ctld.transportPilotNames, unitName)
 
-									env.info(ModuleName .. " AddHeloOnBirth unit " .. tostring(unitName) .. " is an helo, ctld_c.transportPilotNames updated")
+									env.info(ModuleName .. " AddHeloOnBirth unit " .. tostring(unitName) .. " is an helo, ctld.transportPilotNames updated")
 
 								elseif unit:hasAttribute("APC") or unit:hasAttribute("IFV") or unit:hasAttribute("Trucks") then
 									if b == true then
 										table.insert(ctld.transportPilotNames, unitName)
 
-										env.info(ModuleName .. " AddHeloOnBirth unit " .. tostring(unitName) .. " is an APC or IFV, ctld_c.transportPilotNames updated")
+										env.info(ModuleName .. " AddHeloOnBirth unit " .. tostring(unitName) .. " is an APC or IFV, ctld.transportPilotNames updated")
 
 									end
 								end	
@@ -2608,16 +2608,16 @@ EMBD.scheduleCTLDsupport = function()
 											local groupName = group:getName()
 											local placefree = true
 											if not ctld.extractableGroups[groupName] then
-												table.insert(ctld_c.extractableGroups, groupName)
+												table.insert(ctld.extractableGroups, groupName)
 				
 												if unitsCoa == 1 then
-													table.insert(ctld_c.droppedTroopsRED, groupName)
+													table.insert(ctld.droppedTroopsRED, groupName)
 													env.info(ModuleName .. " added group to RED dropped: " .. tostring(groupName))
 												elseif unitsCoa == 2 then
-													table.insert(ctld_c.droppedTroopsBLUE, groupName)
+													table.insert(ctld.droppedTroopsBLUE, groupName)
 													env.info(ModuleName .. " added group to BLUE dropped: " .. tostring(groupName))
 												else 
-													table.insert(ctld_c.droppedTroopsNEUTRAL, groupName)
+													table.insert(ctld.droppedTroopsNEUTRAL, groupName)
 													env.info(ModuleName .. " added group to RED dropped: " .. tostring(groupName))
 												end
 				
