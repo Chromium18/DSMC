@@ -1101,7 +1101,7 @@ local standardHeloTypes = {
 			["CpgNVG"] = true,
 			["FlareSalvoInterval"] = 0,
 			["PltNVG"] = true,
-			["FCR_RFI_removed"] = true,
+			["FCR_RFI_removed"] = false,
 			["NetCrewControlPriority"] = 0,
 			["FlareBurstCount"] = 0,
 			["AIDisabled"] = false,
@@ -1353,8 +1353,9 @@ function getFirstFreeParkingSpot(availParkList, parkListComplete)
 end
 --]]--
 
-function getParkingForAircraftType(a_listP, uType, uCat)
+function getParkingForAircraftType(pk_list, uType, uCat)
 	local keepList = {}
+	local a_listP = UTIL.deepCopy(pk_list)
 
 	HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType starting, a_listP pre:" .. tostring(#a_listP))
     local unitDesc = ME_DB.unit_by_type[uType]
@@ -2092,7 +2093,7 @@ function setMaxId(mixfile)
 	end
 
 	if curvalG > 1 and curvalU > 1 then
-		HOOK.writeDebugBase(ModuleName .. ": setMaxId failed curvalG and curvalU found")
+		HOOK.writeDebugBase(ModuleName .. ": setMaxId curvalG and curvalU found")
 		return curvalG, curvalU
 	elseif curvalG == 1 and curvalU == 1 then
 		HOOK.writeDebugBase(ModuleName .. ": setMaxId failed curvalG and curvalU not found, going to 1 and 1. this should happen only if the mission does not have any unit but the clients")
@@ -2524,6 +2525,7 @@ function buildAirbaseSlot(missionEnv, warehouseEnv, airbaseTbl, tblSlots, usedPa
 							local parking_tbl = {}
 							for _, aData in pairs(airbaseTbl) do 
 								if tonumber(aData.index) == tonumber(afbId) then
+									HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, found data in airbaseTbl, id: " .. tostring(aData.index))
 									if aData.parkings then
 										if #aData.parkings > 0 then
 											-- reindex parking to make an array
@@ -2539,124 +2541,132 @@ function buildAirbaseSlot(missionEnv, warehouseEnv, airbaseTbl, tblSlots, usedPa
 
 							if #parking_tbl > 0 then				
 								for acfCat, acfTbl in pairs(afbData.aircrafts) do
+									HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, checking aircraft category: " .. tostring(acfCat))
 									--if acfCat == "planes" then
 										for acfName, acfData in pairs(acfTbl) do
 											--HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, new plane check for : " .. tostring(acfName) .. ", parkings: " .. tostring(#parking_tbl))
-											if #parking_tbl > 0 then
-												if acfData.initialAmount > 0 then -- filtering at least 2 acf for 1 flight
+											if acfData.initialAmount > 0 then -- filtering at least 2 acf for 1 flight
+												HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, checking acf: " .. tostring(acfName) .. ", items: "  .. tostring(acfData.initialAmount))
+												local isFlyable = false
+												for pName, pData in pairs(standardPlaneTypes) do
+													if pName == acfName	then
+														HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, found Flyable plane: " .. tostring(acfName))
+														isFlyable = true
+													end				
+												end
+
+												for pName, pData in pairs(standardHeloTypes) do
+													if pName == acfName	then
+														HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, found Flyable helicopter: " .. tostring(acfName))
+														isFlyable = true
+													end				
+												end
+
+												if isFlyable then
+													HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, found flyable: " .. tostring(acfData.initialAmount) .. " " .. tostring(acfName))
 													
-													local isFlyable = false
-													for pName, pData in pairs(standardPlaneTypes) do
-														if pName == acfName	then
-															HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, found plane: " .. tostring(acfName))
-															isFlyable = true
-														end				
-													end
+													-- all single ship version
+													local numGroups = math.floor(acfData.initialAmount)																							
+													local nUnits = 1 -- fixed as single ship system
+													HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, numGroups: " .. tostring(numGroups))
 
-													for pName, pData in pairs(standardHeloTypes) do
-														if pName == acfName	then
-															HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, found helicopter: " .. tostring(acfName))
-															isFlyable = true
-														end				
-													end
-
-													if isFlyable then
-														HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, found flyable: " .. tostring(acfData.initialAmount) .. " " .. tostring(acfName))
+													--revert to maxSlots
+													if numGroups > maxSlots then
+														HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, reducing numGroups from: " .. tostring(numGroups) .. " to " .. tostring(maxSlots))
+														numGroups = maxSlots
 														
-														-- all single ship version
-														local numGroups = math.floor(acfData.initialAmount)																							
-														local nUnits = 1 -- fixed as single ship system
-														HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, numGroups: " .. tostring(numGroups))
+													end
 
-														--revert to maxSlots
-														if numGroups > maxSlots then
-															numGroups = maxSlots
-															HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, reducing numGroups from: " .. tostring(numGroups) .. " to " .. tostring(maxSlots))
+													--[[
+													local numGroups = math.floor(acfData.initialAmount/2)
+													if numGroups > maxFlights then
+														HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, reducing numGroups from: " .. tostring(numGroups) .. " to " .. tostring(maxFlights))
+														numGroups = maxFlights
+													end	
+																									
+													
+													local assignedParkings = {}
+													local usedPname, usedPx, usedPy, revPark_tbl = getParkingForAircraftType(parking_tbl, acfName, acfCat)
+													if usedPname and usedPx and usedPy then
+														assignedParkings[#assignedParkings+1] = {pname = usedPname, px = usedPx, py = usedPy}
+														parking_tbl = revPark_tbl
+													end
+													--]]--
+
+													for r=1, numGroups do
+
+														local assignedParkings = {}
+														--for i=1, 2 do
+															local usedPname, usedPx, usedPy, revPark_tbl, usedPMEname = getParkingForAircraftType(parking_tbl, acfName, acfCat)
+															if usedPname and usedPx and usedPy then
+																assignedParkings[#assignedParkings+1] = {pname = usedPname, px = usedPx, py = usedPy, pnameME = usedPMEname}
+																
+																-- parking_tbl = revPark_tbl -- this was wrong cause it was filtering out all the parkings not suitable for that type of aicraft, preventing the other to use them
+																
+																-- removing assigned parkings
+																for pId, pData in pairs(parking_tbl) do 
+																	if usedPname == pData.name then	-- maybe: usedPMEname == pData.nameME
+																		HOOK.writeDebugDetail(ModuleName .. ": removing assigned park: " .. tostring(usedPname)) 
+																		table.remove(parking_tbl, pId)
+																	end
+																end
+															end
+														--end
+
+														if #assignedParkings > 0 then
+															HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, found 1 parkings for " .. tostring(acfName) .. ", parking left: " .. tostring(#parking_tbl))
+															slotsToBuilt[#slotsToBuilt+1] = {acf = acfName, prk = assignedParkings}
+														else
+															HOOK.writeDebugDetail(ModuleName .. ": no sufficient parkings assigned: " .. tostring(#assignedParkings)) 
 														end
-
-														--[[
-														local numGroups = math.floor(acfData.initialAmount/2)
-														if numGroups > maxFlights then
-															HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, reducing numGroups from: " .. tostring(numGroups) .. " to " .. tostring(maxFlights))
-															numGroups = maxFlights
-														end	
-																										
-														
+													end	
+													
+													-- update slotsToBuilt
+													--[[
+													if numGroups > 0 and numGroups < 1 then -- single ship!
 														local assignedParkings = {}
 														local usedPname, usedPx, usedPy, revPark_tbl = getParkingForAircraftType(parking_tbl, acfName, acfCat)
 														if usedPname and usedPx and usedPy then
 															assignedParkings[#assignedParkings+1] = {pname = usedPname, px = usedPx, py = usedPy}
 															parking_tbl = revPark_tbl
 														end
-														--]]--
 
+														if #assignedParkings == 1 then
+															HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, found 2 parkings for " .. tostring(acfName) .. ", parking left: " .. tostring(#parking_tbl))
+															slotsToBuilt[#slotsToBuilt+1] = {acf = acfName, prk = assignedParkings}
+														else
+															HOOK.writeDebugDetail(ModuleName .. ": no sufficient parkings assigned: " .. tostring(#assignedParkings)) 
+														end															
+													else
 														for r=1, numGroups do
 
 															local assignedParkings = {}
-															--for i=1, 2 do
-																local usedPname, usedPx, usedPy, revPark_tbl, usedPMEname = getParkingForAircraftType(parking_tbl, acfName, acfCat)
+															for i=1, 2 do
+																local usedPname, usedPx, usedPy, revPark_tbl = getParkingForAircraftType(parking_tbl, acfName, acfCat)
 																if usedPname and usedPx and usedPy then
-																	assignedParkings[#assignedParkings+1] = {pname = usedPname, px = usedPx, py = usedPy, pnameME = usedPMEname}
+																	assignedParkings[#assignedParkings+1] = {pname = usedPname, px = usedPx, py = usedPy}
 																	parking_tbl = revPark_tbl
 																end
-															--end
-
-															if #assignedParkings > 0 then
-																HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, found 1 parkings for " .. tostring(acfName) .. ", parking left: " .. tostring(#parking_tbl))
-																slotsToBuilt[#slotsToBuilt+1] = {acf = acfName, prk = assignedParkings}
-															else
-																HOOK.writeDebugDetail(ModuleName .. ": no sufficient parkings assigned: " .. tostring(#assignedParkings)) 
-															end
-														end	
-														
-														-- update slotsToBuilt
-														--[[
-														if numGroups > 0 and numGroups < 1 then -- single ship!
-															local assignedParkings = {}
-															local usedPname, usedPx, usedPy, revPark_tbl = getParkingForAircraftType(parking_tbl, acfName, acfCat)
-															if usedPname and usedPx and usedPy then
-																assignedParkings[#assignedParkings+1] = {pname = usedPname, px = usedPx, py = usedPy}
-																parking_tbl = revPark_tbl
 															end
 
-															if #assignedParkings == 1 then
+															if #assignedParkings > 1 then
 																HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, found 2 parkings for " .. tostring(acfName) .. ", parking left: " .. tostring(#parking_tbl))
 																slotsToBuilt[#slotsToBuilt+1] = {acf = acfName, prk = assignedParkings}
 															else
 																HOOK.writeDebugDetail(ModuleName .. ": no sufficient parkings assigned: " .. tostring(#assignedParkings)) 
-															end															
-														else
-															for r=1, numGroups do
-
-																local assignedParkings = {}
-																for i=1, 2 do
-																	local usedPname, usedPx, usedPy, revPark_tbl = getParkingForAircraftType(parking_tbl, acfName, acfCat)
-																	if usedPname and usedPx and usedPy then
-																		assignedParkings[#assignedParkings+1] = {pname = usedPname, px = usedPx, py = usedPy}
-																		parking_tbl = revPark_tbl
-																	end
-																end
-
-																if #assignedParkings > 1 then
-																	HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, found 2 parkings for " .. tostring(acfName) .. ", parking left: " .. tostring(#parking_tbl))
-																	slotsToBuilt[#slotsToBuilt+1] = {acf = acfName, prk = assignedParkings}
-																else
-																	HOOK.writeDebugDetail(ModuleName .. ": no sufficient parkings assigned: " .. tostring(#assignedParkings)) 
-																end
 															end
 														end
-														--]]--
-
 													end
-												end
-											else
+													--]]--
 
+												end
 											end
 										end
 									--end
 								end
 							end
 
+							HOOK.writeDebugDetail(ModuleName .. ": buildAirbaseSlot, total slots to built: " .. tostring(#slotsToBuilt))
 							if #slotsToBuilt > 0 then
 								--UTIL.dumpTable("slotsToBuilt.lua", slotsToBuilt)
 								
