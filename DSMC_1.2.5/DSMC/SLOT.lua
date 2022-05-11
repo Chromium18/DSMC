@@ -1086,7 +1086,7 @@ local standardHeloTypes = {
 			["pylons"] = 
 			{
 			}, -- end of ["pylons"]
-			["fuel"] = 1701,
+			["fuel"] = 0,
 			["flare"] = 192,
 			["chaff"] = 0,
 			["gun"] = 100,
@@ -1115,7 +1115,7 @@ local standardHeloTypes = {
 			["pylons"] = 
 			{
 			}, -- end of ["pylons"]
-			["fuel"] = 1438,
+			["fuel"] = 0,
 			["flare"] = 60,
 			["ammo_type"] = 1,
 			["chaff"] = 30,
