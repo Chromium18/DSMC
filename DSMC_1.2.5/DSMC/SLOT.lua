@@ -1086,7 +1086,7 @@ local standardHeloTypes = {
 			["pylons"] = 
 			{
 			}, -- end of ["pylons"]
-			["fuel"] = 1701,
+			["fuel"] = 0,
 			["flare"] = 192,
 			["chaff"] = 0,
 			["gun"] = 100,
@@ -1115,7 +1115,7 @@ local standardHeloTypes = {
 			["pylons"] = 
 			{
 			}, -- end of ["pylons"]
-			["fuel"] = 1438,
+			["fuel"] = 0,
 			["flare"] = 60,
 			["ammo_type"] = 1,
 			["chaff"] = 30,
@@ -1500,7 +1500,7 @@ function createHeloGroups(mission) -- , dictionary
 							for attrID,attr in pairs(country) do
 								if (type(attr)=="table") then
 									if attrID == "helicopter" then
-										HOOK.writeDebugDetail(ModuleName .. ": createHeloGroups, helicopter table found")
+										--HOOK.writeDebugDetail(ModuleName .. ": createHeloGroups, helicopter table found")
 										there_are_helos = true
 									end
 								end
@@ -1615,7 +1615,7 @@ function createHeloGroups(mission) -- , dictionary
 												["communication"] = true,
 												["start_time"] = 0,
 												["uncontrollable"] = false,
-												["frequency"] = 124,
+												["frequency"] = 251,
 											}
 
 											-- now check standard unit
@@ -1699,7 +1699,7 @@ function createHeloGroups(mission) -- , dictionary
 														--dictionary[UnitDictEntry] = tostring(revCls["name"])
 
 														HOOK.writeDebugDetail(ModuleName .. ": createHeloGroups adding unit, uname: " .. tostring(cls["name"]))
-														uTbl.name = tostring(cls["name"]) -- UnitDictEntry
+														uTbl.name = tostring(cls["name"] .. "_" .. sData.acfType .. "_DSMC_" .. tostring(addedGroups)) -- UnitDictEntry
 
 														-- retrieve from standard
 														uTbl.alt = 0
@@ -1734,7 +1734,7 @@ function createHeloGroups(mission) -- , dictionary
 												groupTable.units = unitData
 
 												attr.group[#attr.group+1] = groupTable
-												HOOK.writeDebugDetail(ModuleName .. ": createHeloGroups adding unit, group added")
+												--HOOK.writeDebugDetail(ModuleName .. ": createHeloGroups adding unit, group added")
 												--UTIL.dumpTable("groupTable_" .. tostring(addedGroups) .. ".lua", groupTable)
 											else
 												HOOK.writeDebugDetail(ModuleName .. ": createHeloGroups unable to add unit, skip")
@@ -1776,21 +1776,21 @@ function createPlaneGroups(mission) -- PROBLEMA QUI, ASSENGNA IL PARK ID INVECE 
 			if sData.linkType == "Airport" then
 				if sData.parkings and #sData.parkings > 0 then
 
-					HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups, checking slot: " .. tostring(sId))
+					--HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups, checking slot: " .. tostring(sId))
 					-- looking for right address to insert the group
 					for coalitionID,coalition in pairs(mission["coalition"]) do
 						if string.lower(sData.coaID) == string.lower(coalitionID) then
-							HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups, coalition found: " .. tostring(coalitionID))
+							--HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups, coalition found: " .. tostring(coalitionID))
 							for countryID,country in pairs(coalition["country"]) do
-								HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups, sData.cntyID: " .. tostring(sData.cntyID) .. ", country.id: " .. tostring(country.id))
+								--HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups, sData.cntyID: " .. tostring(sData.cntyID) .. ", country.id: " .. tostring(country.id))
 								if sData.cntyID == country.id then			
-									HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups, country found: " .. tostring(country.name))
+									--HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups, country found: " .. tostring(country.name))
 
 									local there_are_planes = false
 									for attrID,attr in pairs(country) do
 										if (type(attr)=="table") then
 											if attrID == "plane" then
-												HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups, plane table found")
+												--HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups, plane table found")
 												there_are_planes = true
 											end
 										end
@@ -1829,7 +1829,7 @@ function createPlaneGroups(mission) -- PROBLEMA QUI, ASSENGNA IL PARK ID INVECE 
 													-- set route first point
 													local wptData = {}
 
-													HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups, linkType: " .. tostring(sData.linkType))
+													--HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups, linkType: " .. tostring(sData.linkType))
 													wptData.alt = 0
 													wptData.x = sData.x
 													wptData.y = sData.y
@@ -1840,7 +1840,7 @@ function createPlaneGroups(mission) -- PROBLEMA QUI, ASSENGNA IL PARK ID INVECE 
 													--local WptDictEntry = "DictKey_WptName_" .. MaxDict
 													--dictionary[WptDictEntry] = ""
 													wptData.name = "" -- WptDictEntry
-													HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups, wptData updated")
+													--HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups, wptData updated")
 
 													-- wp action
 													wptData.action = "From Parking Area"
@@ -1868,7 +1868,7 @@ function createPlaneGroups(mission) -- PROBLEMA QUI, ASSENGNA IL PARK ID INVECE 
 
 													if sData.linkType == "Airport" then
 														wptData.airdromeId = sData.airdrome
-														HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups, airport type found")
+														--HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups, airport type found")
 													else
 														HOOK.writeDebugBase(ModuleName .. ": createPlaneGroups, airport not found! error")
 														return false
@@ -1918,7 +1918,7 @@ function createPlaneGroups(mission) -- PROBLEMA QUI, ASSENGNA IL PARK ID INVECE 
 																local uTbl = {}
 
 																maxU = maxU + 1
-																HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups adding unit, maxId: " .. tostring(maxU))
+																--HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups adding unit, maxId: " .. tostring(maxU))
 																uTbl.unitId = maxU
 														
 																--[[ set unit name
@@ -1940,11 +1940,11 @@ function createPlaneGroups(mission) -- PROBLEMA QUI, ASSENGNA IL PARK ID INVECE 
 																			uTbl.parking = tostring(data.pnameME)
 																			uTbl.parking_id = tostring(data.pname) --tostring(tonumber(data.pname) + 1)
 																			--ParkFARP = false
-																			HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups adding unit, park: " .. tostring(uTbl.parking))
+																			--HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups adding unit, park: " .. tostring(uTbl.parking))
 																		end
 																	end		
 																else
-																	HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups error on airport linktype")
+																	HOOK.writeDebugBase(ModuleName .. ": createPlaneGroups error on airport linktype")
 																	return false
 																end
 																
@@ -1986,7 +1986,8 @@ function createPlaneGroups(mission) -- PROBLEMA QUI, ASSENGNA IL PARK ID INVECE 
 																--dictionary[UnitDictEntry] = tostring(revCls["name"])
 
 																HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups adding unit, uname: " .. tostring(cls["name"]))
-																uTbl.name = tostring(cls["name"]) -- UnitDictEntry
+																uTbl.name = tostring(cls["name"] .. "_" .. sData.acfType .. "_DSMC_" .. tostring(addedGroups)) -- UnitDictEntry
+																
 
 																-- retrieve from standard
 																uTbl.alt = 0
@@ -2020,10 +2021,10 @@ function createPlaneGroups(mission) -- PROBLEMA QUI, ASSENGNA IL PARK ID INVECE 
 														groupTable.units = unitData
 
 														attr.group[#attr.group+1] = groupTable
-														HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups adding unit, group added")
+														--HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups adding unit, group added")
 														--UTIL.dumpTable("groupTable_" .. tostring(addedGroups) .. ".lua", groupTable)
 													else
-														HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups unable to add unit, skip")
+														HOOK.writeDebugBase(ModuleName .. ": createPlaneGroups unable to add unit, skip")
 													end
 												end
 											end
@@ -2035,11 +2036,11 @@ function createPlaneGroups(mission) -- PROBLEMA QUI, ASSENGNA IL PARK ID INVECE 
 					end
 
 				else
-					HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups skips, table parks is > 0 or nil")
+					HOOK.writeDebugBase(ModuleName .. ": createPlaneGroups skips, table parks is > 0 or nil")
 				end
 			else
 				--if sData.linkType == "Airport" then
-				HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups skips, it's not airport slots")
+				HOOK.writeDebugBase(ModuleName .. ": createPlaneGroups skips, it's not airport slots")
 			end
 
 		end
@@ -2061,26 +2062,26 @@ function setMaxId(mixfile)
 	local curvalG = 1
 	local curvalU = 1
 	for coalitionID,coalition in pairs(mixfile["coalition"]) do
-		HOOK.writeDebugBase(ModuleName .. ": setMaxId checking coa " .. tostring(coalitionID))
+		--HOOK.writeDebugDetail(ModuleName .. ": setMaxId checking coa " .. tostring(coalitionID))
 		for countryID,country in pairs(coalition["country"]) do
-			HOOK.writeDebugBase(ModuleName .. ": setMaxId checking country " .. tostring(countryID))
+			--HOOK.writeDebugDetail(ModuleName .. ": setMaxId checking country " .. tostring(countryID))
 			for attrID,attr in pairs(country) do
 				if (type(attr)=="table") then		
-					HOOK.writeDebugBase(ModuleName .. ": setMaxId checking attr " .. tostring(attrID))
+					--HOOK.writeDebugDetail(ModuleName .. ": setMaxId checking attr " .. tostring(attrID))
 					for groupID,group in pairs(attr["group"]) do
-						HOOK.writeDebugBase(ModuleName .. ": setMaxId checking group " .. tostring(groupID))
+						--HOOK.writeDebugDetail(ModuleName .. ": setMaxId checking group " .. tostring(groupID))
 						if (group) then
 							if group.groupId then
 								if curvalG < group.groupId then
 									curvalG = group.groupId
-									HOOK.writeDebugBase(ModuleName .. ": setMaxId checking curvalG " .. tostring(curvalG))
+									HOOK.writeDebugDetail(ModuleName .. ": setMaxId setting curvalG " .. tostring(curvalG))
 								end
 							end
 
 							for unitID,unit in pairs(group["units"]) do
 								if unit.unitId then
 									if curvalU < unit.unitId then
-										HOOK.writeDebugBase(ModuleName .. ": setMaxId checking curvalU " .. tostring(curvalU))
+										HOOK.writeDebugDetail(ModuleName .. ": setMaxId setting curvalU " .. tostring(curvalU))
 										curvalU = unit.unitId
 									end
 								end
@@ -2705,7 +2706,7 @@ function buildAirbaseSlot(missionEnv, warehouseEnv, airbaseTbl, tblSlots, usedPa
 											HOOK.writeDebugDetail(ModuleName .. ": addSlot, adding 2 slots of " .. tostring(sData.acf))
 											tblSlots[#tblSlots+1] = {h= 0, x=x_val, y = y_val, airdrome = afbId, linkType = "Airport", parkings = sData.prk, cntyID = choose_ctry, coaID = choose_coa, acfType = sData.acf, numUnits = 2}
 										else
-											HOOK.writeDebugDetail(ModuleName .. ": addSlot, prk is less than 2")
+											HOOK.writeDebugDetail(ModuleName .. ": addSlot, prk is less than 1")
 										end
 									else
 										HOOK.writeDebugDetail(ModuleName .. ": addSlot, missed x_val and y_val")
@@ -2720,6 +2721,33 @@ function buildAirbaseSlot(missionEnv, warehouseEnv, airbaseTbl, tblSlots, usedPa
 			end
 		end
 	end
+end
+
+function fixGroupList(m)
+
+	for coalitionID,coalition in pairs(m["coalition"]) do
+		for countryID,country in pairs(coalition["country"]) do
+			for attrID,attr in pairs(country) do
+				if (type(attr)=="table") then
+					for attrID,attr in pairs(country) do
+						if (type(attr)=="table") then
+							if attr.group then
+								local cur_group = UTIL.deepCopy(attr.group)
+								local new_group = {}
+								for gId, gData in pairs(cur_group) do
+									new_group[#new_group+1] = gData
+								end
+
+								attr.group = new_group
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+
+	return m
 end
 
 
@@ -2747,9 +2775,10 @@ function addSlot(m, w) --, dictEnv
 
 	if tblSlots then
 		if table.getn(tblSlots) > 0 then
-			--UTIL.dumpTable("tblSlots.lua", tblSlots)
+			UTIL.dumpTable("tblSlots.lua", tblSlots)
 			local m = createPlaneGroups(m) -- , dictEnv -- , newdict
 			local m = createHeloGroups(m) -- , dictEnv -- , newdict
+			local m = fixGroupList(m)
 			if m then -- and newdict
 				missionEnv = m
 				--dictEnv = newdict

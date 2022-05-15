@@ -402,7 +402,7 @@ function killStatics(missionEnv) -- remove static units wreckages created by DSC
 				if (type(attr)=="table") and (attrID == "static") then
 					
 					for i = #attr.group, 1, -1 do
-						HOOK.writeDebugDetail(ModuleName .. ": killStatics, i: " .. tostring(i))
+						--HOOK.writeDebugDetail(ModuleName .. ": killStatics, i: " .. tostring(i))
 						
 
 						if string.find(attr.group[i].name, "_dsmc_dd_") then
@@ -412,10 +412,10 @@ function killStatics(missionEnv) -- remove static units wreckages created by DSC
 							HOOK.writeDebugDetail(ModuleName .. ": killStatics, code2: " .. tostring(code2))
 
 							if string.find(code2, "%-") then
-								HOOK.writeDebugDetail(ModuleName .. ": killStatics, code check a")
+								--HOOK.writeDebugDetail(ModuleName .. ": killStatics, code check a")
 								code = string.sub(code2, 1, string.find(code2, "%-")-1)
 							else
-								HOOK.writeDebugDetail(ModuleName .. ": killStatics, code check b")
+								--HOOK.writeDebugDetail(ModuleName .. ": killStatics, code check b")
 								code = code2
 							end
 
@@ -435,7 +435,7 @@ function killStatics(missionEnv) -- remove static units wreckages created by DSC
 								end
 							end
 
-							HOOK.writeDebugDetail(ModuleName .. ": killStatics, subDateFilter: " .. tostring(subDateFilter) .. ", dayValue:" .. tostring(dayValue))
+							--HOOK.writeDebugDetail(ModuleName .. ": killStatics, subDateFilter: " .. tostring(subDateFilter) .. ", dayValue:" .. tostring(dayValue))
 
 							if dayValue > subDateFilter then
 								HOOK.writeDebugDetail(ModuleName .. ": killStatics filter is passed, attr.group[i] removed")
@@ -604,7 +604,7 @@ function updateUnits(missionEnv)
 											--HOOK.writeDebugDetail(ModuleName .. ": updateUnits updating unit")
 											for id, updatedData in pairs (tblUnitsUpdate) do
 												if tonumber(updatedData.unitId) == tonumber(unit.unitId) then	
-													HOOK.writeDebugDetail(ModuleName .. ": updateUnits updating unit: found update data ")							
+													--HOOK.writeDebugDetail(ModuleName .. ": updateUnits updating unit: found update data ")							
 													if updatedData.aircraft == false then
 													
 														local posChanged = false
@@ -627,12 +627,12 @@ function updateUnits(missionEnv)
 
 																group["x"] = unit["x"];
 																group["y"] = unit["y"];
-																HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 position")
+																--HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 position")
 
 																group.route.points[1]["x"] = unit["x"];
 																group.route.points[1]["y"] = unit["y"];
 
-																HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 route")
+																--HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 route")
 																group.route.spans = {
 																						[1] = 
 																						{
@@ -648,7 +648,7 @@ function updateUnits(missionEnv)
 																							}, -- end of [2]
 																						}, -- end of [1]													
 																					} -- end of ["spans"]
-																HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 spans")													
+																--HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 spans")													
 															end
 															
 															for id, pointData in pairs (group.route.points) do
@@ -657,7 +657,7 @@ function updateUnits(missionEnv)
 																end
 															end
 															
-															--if group.route.spans then
+															--if group.route.spans then 
 															--	group.route.spans = nil 
 															--end
 															HOOK.writeDebugDetail(ModuleName .. ": updateUnits unit updated")

@@ -27,7 +27,6 @@ tblAddResources = {
     [1] = {path = bDir_1, cat = "sound", file = "beacon.ogg"},
     [2] = {path = bDir_2, cat = "sound", file = "beaconsilent.ogg"},
 
-
 }
 
 --UTIL.dumpTable("tblAddResources.lua", tblAddResources)
@@ -35,9 +34,11 @@ tblAddResources = {
 -- ## ELAB FUNCTION
 function updateMapResources(missionEnv, mapEnv, tblAddResources)	
 	if table.getn(tblAddResources) > 0 then
-
+		HOOK.writeDebugDetail(ModuleName .. ": checking map resources... ")
 		local maxId = missionEnv.maxDictId
 		if maxId and SAVE.DSMC_NewSaveresourceFiles then
+
+			HOOK.writeDebugDetail(ModuleName .. ": DSMC_NewSaveresourceFiles and maxId filter passed... ")
 
 			-- ## RESOURCE ADDITION
 			for _, ds_data in pairs(tblAddResources) do
@@ -60,8 +61,10 @@ function updateMapResources(missionEnv, mapEnv, tblAddResources)
 			end
 
 			missionEnv.maxDictId = maxId
+			HOOK.writeDebugDetail(ModuleName .. ": set new maxId")
 
 			-- ## MOVE FILES
+			HOOK.writeDebugDetail(ModuleName .. ": adding new resources")
 			for _, ds_data in pairs(tblAddResources) do
 				local newPath = HOOK.NewFilesDir .. tostring(ds_data.file)
 				HOOK.writeDebugDetail(ModuleName .. ": newPath: " .. tostring(newPath))
@@ -72,8 +75,10 @@ function updateMapResources(missionEnv, mapEnv, tblAddResources)
 				local fileIsThere = UTIL.fileExist(newPath)
 				HOOK.writeDebugDetail(ModuleName .. ": fileIsThere: " .. tostring(fileIsThere))
 			end
+			HOOK.writeDebugDetail(ModuleName .. ": new resources added")
 
 			-- ## TRIGGER ADDITION
+			HOOK.writeDebugDetail(ModuleName .. ": checking trigger")
 
 			local currentTrigNum = nil
 			local actionStr = ""
@@ -105,6 +110,8 @@ function updateMapResources(missionEnv, mapEnv, tblAddResources)
 			missionEnv.trig.actions[currentTrigNum] = actionStr  -- void cause it will be changed after
 			missionEnv.trig.funcStartup[currentTrigNum] = "if mission.trig.conditions[" .. currentTrigNum .. "]() then mission.trig.actions[" .. currentTrigNum .. "]() end"
 
+			HOOK.writeDebugDetail(ModuleName .. ": trigger checked")
+
 			-- add files
 			for ds_id, ds_data in pairs(tblAddResources) do
 				local key = nil
@@ -131,6 +138,7 @@ function updateMapResources(missionEnv, mapEnv, tblAddResources)
 				end
 				
 			end
+			
 
 			local tblTrigRules = {}
 			-- add rules
@@ -178,6 +186,7 @@ function updateMapResources(missionEnv, mapEnv, tblAddResources)
 				end
 			end
 			tblTrigRules["actions"] = actList
+			HOOK.writeDebugDetail(ModuleName .. ": trigger done")
 			
 			missionEnv.trigrules[currentTrigNum] = tblTrigRules -- reset all files loaded before. Every mission have to re-load its file!!!
 

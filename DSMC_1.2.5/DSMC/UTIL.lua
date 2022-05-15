@@ -1920,7 +1920,7 @@ function reBuildSupplyNet(warehouse, mission)
 
 														local un_fuel = afbData.unlimitedFuel
 														local un_muni = afbData.unlimitedMunitions
-														HOOK.writeDebugDetail(ModuleName .. ": reBuildSupplyNet: checking un_fuel: " .. tostring(un_fuel) .. ", un_muni:" .. tostring(un_muni))
+														--HOOK.writeDebugDetail(ModuleName .. ": reBuildSupplyNet: checking un_fuel: " .. tostring(un_fuel) .. ", un_muni:" .. tostring(un_muni))
 
 														if c_w then
 															-- check type!

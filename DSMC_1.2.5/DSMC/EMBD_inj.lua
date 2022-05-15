@@ -461,23 +461,35 @@ function EMBD.sendUnitsData(missionEnv)	--what does it do with statics??
 											--DICTPROBLEM
 											--local uName 		= env.getValueDictByKey(unit.name)
 											local uName 		= unit.name
-											local curUnit 		= Unit.getByName(uName)
-											
-											if curUnit then
-												curUnitPos 		= curUnit:getPosition().p
-												curUnitCarrier	= curUnit:hasAttribute("Aircraft Carriers")
-												if curUnitPos then
-													tblUnitsUpdate[#tblUnitsUpdate + 1] = {unitId = unit.unitId, x = curUnitPos.x, y = curUnitPos.y, z = curUnitPos.z, aircraft = false, carrier = curUnitCarrier}
+											if uName then
+												local curUnit 		= Unit.getByName(uName)
+												
+												if curUnit then
+													curUnitPos 		= curUnit:getPosition().p
+													curUnitCarrier	= curUnit:hasAttribute("Aircraft Carriers")
+													if curUnitPos then
+														tblUnitsUpdate[#tblUnitsUpdate + 1] = {unitId = unit.unitId, x = curUnitPos.x, y = curUnitPos.y, z = curUnitPos.z, aircraft = false, carrier = curUnitCarrier}
 
-													if DSMC_debugProcessDetail == true then
-														env.info(("EMBD.sendUnitsData add a record in tblUnitsUpdate, unit"))
-													end				
+														if DSMC_debugProcessDetail == true then
+															env.info(("EMBD.sendUnitsData add a record in tblUnitsUpdate, unit"))
+														end				
+													else
+														--if DSMC_debugProcessDetail == true then
+														--	env.info(("EMBD.sendUnitsData can't find the unit position, assuming dead as infantry to prevent spawning wreckage!"))
+														--end		
+														--tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unit.unitId), unitInfantry = true}
+
+														if DSMC_debugProcessDetail == true then
+															env.info(("EMBD.sendUnitsData can't find the unit position, assuming dead due to ed dead tracking"))
+														end		
+														tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unit.unitId), unitInfantry = false}
+
+													end
 												else
 													if DSMC_debugProcessDetail == true then
-														env.info(("EMBD.sendUnitsData can't find the unit position, assuming dead as infantry to prevent spawning wreckage!"))
+														env.info(("EMBD.sendUnitsData can't find the unit, assuming dead due to ed dead tracking"))
 													end		
-													tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unit.unitId), unitInfantry = true}
-
+													tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unit.unitId), unitInfantry = false}
 												end
 											end
 										end
@@ -2643,7 +2655,7 @@ EMBD.scheduleCTLDsupport()
 
 
 env.info((ModuleName .. ": Loaded " .. MainVersion .. "." .. SubVersion .. "." .. Build .. ", released " .. Date))
---~=
+
 
 --timer.scheduleFunction(EMBD.executeSAVE, {}, timer.getTime() + 30)
 
@@ -2654,3 +2666,7 @@ local function dumpThreats()
 	end
 end
 timer.scheduleFunction(dumpThreats, {}, timer.getTime() + 2)
+
+
+
+--~=

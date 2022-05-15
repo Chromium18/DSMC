@@ -95,7 +95,7 @@ function updateMapObject(missionEnv, tblDeadScenObj)
 			if ds_data.objId then
 				local ExplosionPower = BaseExplosionPower 
 
-				HOOK.writeDebugDetail(ModuleName .. ": Objects life : " .. tostring(ds_data.SOdesc.life))
+				--HOOK.writeDebugDetail(ModuleName .. ": Objects life : " .. tostring(ds_data.SOdesc.life))
 
 				if tonumber(ds_data.SOdesc.life) then
 					if ds_data.SOdesc.life < 5 then
@@ -126,7 +126,7 @@ function updateMapObject(missionEnv, tblDeadScenObj)
 				local okLifeFilter = true
 				if tonumber(ds_data.SOdesc.life) then
 					if tonumber(ds_data.SOdesc.life) < smallObjectFilter then	
-						HOOK.writeDebugDetail(ModuleName .. ": object is too small: " .. tostring(ds_data.objId))			
+						--HOOK.writeDebugDetail(ModuleName .. ": object is too small: " .. tostring(ds_data.objId))			
 						okLifeFilter = false
 					end
 				end
@@ -199,7 +199,7 @@ function updateMapObject(missionEnv, tblDeadScenObj)
 						HOOK.writeDebugDetail(ModuleName .. ": created zone name " .. tostring("DSMC_ScenDest_" .. tostring(ds_data.objId)))
 					end
 				else
-					HOOK.writeDebugDetail(ModuleName .. ": zone skipped, already there or life is less than filter!")
+					--HOOK.writeDebugDetail(ModuleName .. ": zone skipped, already there or life is less than filter!")
 				end
 			end
 		end
