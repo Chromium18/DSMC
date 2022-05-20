@@ -1,5 +1,5 @@
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "2"
 DSMC_SubSubVersion 	= "5"
-DSMC_Build 		= "2095"
-DSMC_Date		= "15/05/2022"
+DSMC_Build 		= "2096"
+DSMC_Date		= "21/05/2022"

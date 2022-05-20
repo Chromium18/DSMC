@@ -471,7 +471,7 @@ function EMBD.sendUnitsData(missionEnv)	--what does it do with statics??
 														tblUnitsUpdate[#tblUnitsUpdate + 1] = {unitId = unit.unitId, x = curUnitPos.x, y = curUnitPos.y, z = curUnitPos.z, aircraft = false, carrier = curUnitCarrier}
 
 														if DSMC_debugProcessDetail == true then
-															env.info(("EMBD.sendUnitsData add a record in tblUnitsUpdate, unit"))
+															env.info(("EMBD.sendUnitsData add a record in tblUnitsUpdate, unit id " .. tostring(unit.unitId) ))
 														end				
 													else
 														--if DSMC_debugProcessDetail == true then
@@ -480,16 +480,44 @@ function EMBD.sendUnitsData(missionEnv)	--what does it do with statics??
 														--tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unit.unitId), unitInfantry = true}
 
 														if DSMC_debugProcessDetail == true then
-															env.info(("EMBD.sendUnitsData can't find the unit position, assuming dead due to ed dead tracking"))
-														end		
-														tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unit.unitId), unitInfantry = false}
+															env.info(("EMBD.sendUnitsData can't find the unit position, assuming dead due to ed dead tracking, unit id " .. tostring(unit.unitId)))
+														end	
 
+														-- check if already there, registered with a standard kill or death
+														local proceed = true
+														for dId, dData in pairs(tblDeadUnits) do 
+															if dData.unitId == unit.unitId then
+																if DSMC_debugProcessDetail == true then
+																	env.info(("EMBD.sendUnitsData unit identified as already in the table due to death event, unit id " .. tostring(unit.unitId)))
+																end
+																proceed = false
+															end
+														end
+
+														if proceed == true then
+															tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unit.unitId), unitInfantry = false}
+														end
 													end
 												else
+
 													if DSMC_debugProcessDetail == true then
-														env.info(("EMBD.sendUnitsData can't find the unit, assuming dead due to ed dead tracking"))
-													end		
-													tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unit.unitId), unitInfantry = false}
+														env.info(("EMBD.sendUnitsData can't find the unit, assuming dead due to ed dead tracking, unit id " .. tostring(unit.unitId)))
+													end	
+
+													-- check if already there, registered with a standard kill or death
+													local proceed = true
+													for dId, dData in pairs(tblDeadUnits) do 
+														if dData.unitId == unit.unitId then
+															if DSMC_debugProcessDetail == true then
+																env.info(("EMBD.sendUnitsData unit identified as already in the table due to death event, unit id " .. tostring(unit.unitId)))
+															end
+															proceed = false
+														end
+													end
+
+													if proceed == true then
+														tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unit.unitId), unitInfantry = false}
+													end
 												end
 											end
 										end
@@ -1609,7 +1637,7 @@ function EMBD.deathRecorder:onEvent(event)
 							if DSMC_debugProcessDetail == true then
 								env.info(("EMBD.deathRecorder dead unit name: " .. tostring(unitName)))	
 							end					
-							unitTable 			= Unit.getByName(unitName)
+							unitTable 			= event.initiator -- Unit.getByName(unitName)
 							if unitTable then
 								unitPos 		= SOpos
 								unitCategory 	= unitTable:getDesc().category
