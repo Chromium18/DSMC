@@ -586,23 +586,23 @@ function EMBD.changeWarehouseCoalition(missionEnv)
 																local o_coa = _obj:getCoalition()
 																o_ctry = _obj:getCountry()
 																if DSMC_debugProcessDetail == true then
-																	env.info(("EMBD.changeWarehouseCoalition, o_coa: " .. tostring(o_coa) ))
+																	--env.info(("EMBD.changeWarehouseCoalition, o_coa: " .. tostring(o_coa) ))
 																end
 
 																if o_coa == 0 then
 																	t_coa["neutral"] = true
 																	if DSMC_debugProcessDetail == true then
-																		env.info(("EMBD.changeWarehouseCoalition, t_coa neutral"))
+																		--env.info(("EMBD.changeWarehouseCoalition, t_coa neutral"))
 																	end	
 																elseif o_coa == 1 then
 																	t_coa["red"] = true
 																	if DSMC_debugProcessDetail == true then
-																		env.info(("EMBD.changeWarehouseCoalition, t_coa red"))
+																		--env.info(("EMBD.changeWarehouseCoalition, t_coa red"))
 																	end	
 																elseif o_coa == 2 then
 																	t_coa["blue"] = true
 																	if DSMC_debugProcessDetail == true then
-																		env.info(("EMBD.changeWarehouseCoalition, t_coa blue"))
+																		--env.info(("EMBD.changeWarehouseCoalition, t_coa blue"))
 																	end	
 																end
 															end
@@ -2450,7 +2450,7 @@ EMBD.update_ctld_Tables = function(addHelos, addVehicles)
 																	unitCount = unitCount + 1
 																	local unitID = unit:getID()
 																	if unit:hasAttribute("APC") or unit:hasAttribute("IFV") or unit:hasAttribute("Trucks") then -- preload a ground group in everyone
-																		if addVehicles then
+																		if addVehicles == true then
 																			table.insert(ctld.transportPilotNames, unitName)
 																			
 																			local unit_typeName = unit:getTypeName()
@@ -2470,7 +2470,7 @@ EMBD.update_ctld_Tables = function(addHelos, addVehicles)
 																			env.info("DSMC:  update_ctld_Tables: unit " .. tostring(unitName) .. " is an APC or IFV, ctld.transportPilotNames updated")																
 																		end
 
-																	elseif addHelos and unit:hasAttribute("Helicopters") then
+																	elseif addHelos == true and unit:hasAttribute("Helicopters") then
 																		table.insert(ctld.transportPilotNames, unitName)
 																		env.info("DSMC:  update_ctld_Tables: unit " .. tostring(unitName) .. " is an helo, ctld.transportPilotNames updated")																						
 																	
@@ -2487,7 +2487,7 @@ EMBD.update_ctld_Tables = function(addHelos, addVehicles)
 												end
 											end
 											
-											if infantryCount == unitCount and infantryCount > 0 then -- make group with only infantry transportable by default
+											if infantryCount == unitCount and infantryCount > 0 and addVehicles == true then -- make group with only infantry transportable by default
 												local groupTable = Group.getByName(groupName)
 												if groupTable then												
 													if not ctld.extractableGroups[groupName] then
@@ -2616,7 +2616,7 @@ EMBD.scheduleCTLDsupport = function()
 
 				EMBD.AddInfantriesOnBirth = {}
 				function EMBD.AddInfantriesOnBirth:onEvent(event)	
-					if event.id == world.event.S_EVENT_BIRTH and event.initiator then
+					if event.id == world.event.S_EVENT_BIRTH and event.initiator and b == true then
 						if Object.getCategory(event.initiator) == 1 then	
 							local unit = event.initiator
 							if unit then
