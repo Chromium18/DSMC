@@ -462,6 +462,10 @@ HOOK.writeDebugDetail(ModuleName .. ": killStatics loaded")
 function updateUnits(missionEnv)	
 	local unitsUpdatePreview = table.getn(tblUnitsUpdate)
 	local unitsUpdateNumber = 0 
+
+	tblToBeKilled = {} -- added 2022.06.26, check if ok
+
+
 	--usedParkings = {}
 	for coalitionID,coalition in pairs(missionEnv["coalition"]) do
 		for countryID,country in pairs(coalition["country"]) do
@@ -1086,11 +1090,11 @@ function save()
 		end		
 		
 		-- plan module for DSMC 2.0
-		if UTIL.fileExist(HOOK.DSMCdirectory .. "PLAN" .. ".lua") == true and UTIL.fileExist(HOOK.DSMCdirectory .. "GOAP" .. ".lua") == true and UTIL.fileExist(HOOK.DSMCdirectory .. "DLNY" .. ".lua") == true and HOOK.PLAN_var == true then
-			HOOK.writeDebugDetail(ModuleName .. " starting PLAN...")
+		if UTIL.fileExist(HOOK.DSMCdirectory .. "DGWS" .. ".lua") == true and UTIL.fileExist(HOOK.DSMCdirectory .. "GOAP" .. ".lua") == true and UTIL.fileExist(HOOK.DSMCdirectory .. "DLNY" .. ".lua") == true and HOOK.DGWS_var == true then
+			HOOK.writeDebugDetail(ModuleName .. " starting DGWS...")
 			local m = UTIL.deepCopy(env.mission)
-			env.mission = PLAN.executePlanning(tblTerrainDb, tblIntelDb, tblORBATDb, m) -- m, tblTerrainDb
-			HOOK.writeDebugDetail(ModuleName .. " PLAN done")
+			env.mission = DGWS.executePlanning(DGWS_terrain, DGWS_intel, DGWS_orbat, DGWS_staticassets, m) -- m, tblTerrainDb
+			HOOK.writeDebugDetail(ModuleName .. " DGWS done")
 
 			-- executePlanning(terrain, intel, orbat)
 

@@ -34,6 +34,8 @@ local playerShutEngine			= false
 local firstNeutralCountry		= 2	
 local nearestAFBonLand			= 5000 -- this should be really improved, but atm no other solution than a fixed number.
 
+local ExclusionTag				= DSMC_EMBD_var or "DSMC_NoUp"
+
 strAirbases						= ""
 completeStringstrAirbases		= ""
 strDeadUnits					= ""
@@ -51,6 +53,7 @@ completeStringstrlogisticUnits	= ""
 
 EMBD 							= {}
 tblDeadUnits					= {}
+tblMissingUnits					= {}
 tblDeadScenObj					= {}
 tblUnitsUpdate					= {}
 tblAirbases						= {}
@@ -389,7 +392,7 @@ function EMBD.sendUnitsData(missionEnv)	--what does it do with statics??
 								--gName = env.getValueDictByKey(group.name)
 								gName = group.name
 								if gName and type(gName) == "string" then
-									if string.find(gName, "NoUp") then
+									if string.find(gName, ExclusionTag) then
 										exclude = true
 									end
 								end
@@ -399,12 +402,12 @@ function EMBD.sendUnitsData(missionEnv)	--what does it do with statics??
 								for unitID, unit in pairs(group["units"]) do																			
 									local isAlive = true
 
-									-- filter dead units
-									for id, deadData in pairs (tblDeadUnits) do
-										if tonumber(deadData.unitId) == tonumber(unit.unitId) then
-											isAlive = false
-										end
-									end																
+									-- filter dead units // REMOVED CHECK 2022.06.26 due to death units bug
+									--for id, deadData in pairs (tblDeadUnits) do
+									--	if tonumber(deadData.unitId) == tonumber(unit.unitId) then
+									--		isAlive = false
+									--	end
+									--end																
 									
 									if isAlive == true and group and unit then							
 										if attrID == "plane" then	--or attrID == "plane" 	
@@ -440,6 +443,13 @@ function EMBD.sendUnitsData(missionEnv)	--what does it do with statics??
 													curUnitPos 		= curUnit:getPosition().p
 													if curUnitPos then
 														tblUnitsUpdate[#tblUnitsUpdate + 1] = {unitId = unit.unitId, x = curUnitPos.x, y = curUnitPos.y, z = curUnitPos.z, aircraft = false, carrier = false}
+														
+														for dId, dData in pairs(tblDeadUnits) do
+															if dData.unitId == unit.unitId then
+																tblDeadUnits[dId] = nil
+															end
+														end
+														
 														if DSMC_debugProcessDetail == true then
 															env.info(("EMBD.sendUnitsData add a record in tblUnitsUpdate, cargo"))
 														end
@@ -469,10 +479,21 @@ function EMBD.sendUnitsData(missionEnv)	--what does it do with statics??
 													curUnitCarrier	= curUnit:hasAttribute("Aircraft Carriers")
 													if curUnitPos then
 														tblUnitsUpdate[#tblUnitsUpdate + 1] = {unitId = unit.unitId, x = curUnitPos.x, y = curUnitPos.y, z = curUnitPos.z, aircraft = false, carrier = curUnitCarrier}
-
 														if DSMC_debugProcessDetail == true then
 															env.info(("EMBD.sendUnitsData add a record in tblUnitsUpdate, unit id " .. tostring(unit.unitId) ))
-														end				
+														end	
+
+														for dId, dData in pairs(tblDeadUnits) do
+															if dData.unitId == unit.unitId then
+																if DSMC_debugProcessDetail == true then
+																	env.info(("EMBD.sendUnitsData unit was recorded death, removing from table, unit id " .. tostring(unit.unitId) ))
+																end
+																table.remove(tblDeadUnits, dId)
+																--tblDeadUnits[dId] = nil
+															end
+														end
+
+			
 													else
 														--if DSMC_debugProcessDetail == true then
 														--	env.info(("EMBD.sendUnitsData can't find the unit position, assuming dead as infantry to prevent spawning wreckage!"))
