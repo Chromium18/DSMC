@@ -37,11 +37,11 @@ DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "2"
 DSMC_SubSubVersion 	= "5"
-DSMC_Build 			= "2102"
-DSMC_Date			= "26/06/2022"
+DSMC_Build 			= "2104"
+DSMC_Date			= "28/06/2022"
 
 -- ## DEBUG TO TEXT FUNCTION
-debugProcess	= true -- this should be left on for testers normal ops and test missions
+local forceServerMode 	= false
 
 -- keep old DSMC.log file as "old"
 local cur_debuglogfile  = io.open(lfs.writedir() .. "Logs/" .. "DSMC.log", "r")
@@ -56,7 +56,7 @@ end
 debuglogfile 	= io.open(lfs.writedir() .. "Logs/" .. "DSMC.log", "w")
 debuglogfile:close()
 function writeDebugBase(debuglog, othervar)
-	if debuglog and debugProcess then
+	if debuglog then
 		f = io.open(lfs.writedir() .. "Logs/" .. "DSMC.log", "r")		
 		oldDebug = f:read("*all")
 		f:close()
@@ -153,7 +153,7 @@ end
 -- loading proper options from custom file (if dedicated server) or options menù (if standard)
 function loadDSMCHooks()
 
-	local forceServerMode = false -- debug purpose
+	 -- debug purpose
 
 	if DSMC_ServerMode == true or forceServerMode == true then
 		writeDebugBase(DSMC_ModuleName .. ": Server mode active")
@@ -187,7 +187,7 @@ function loadDSMCHooks()
 							--opt_UPAP_var		= pl_data.UPAP			
 							opt_SLOT_var		= pl_data.SLOT
 							opt_SLOT_ab_var		= pl_data.SLOT_ab
-							opt_PLAN_var		= pl_data.PLAN
+							--opt_PLAN_var		= pl_data.PLAN
 							--opt_SBEO			= pl_data.SBEO
 
 							--opt_SLOT			= pl_data.SLOT
@@ -223,10 +223,12 @@ function loadDSMCHooks()
 	UMLS_var							= DSMC_updateMissionList
 	S247_var							= DSMC_24_7_serverStandardSetup
 	SBEO_var							= DSMC_BuilderToolsBeta or false -- opt_SBEO or    NOT USED NOW if true some mess may happen
-	PLAN_var							= false -- opt_PLAN_var or DSMC_AutomaticAI
+	DGWS_var							= false -- opt_PLAN_var or DSMC_AutomaticAI
+	--PLAN_var							= false -- opt_PLAN_var or DSMC_AutomaticAI
 	RTAI_var							= false -- opt_PLAN_var or DSMC_AutomaticAI
 	CTLD1_var							= DSMC_ctld_recognizeHelos or false
 	CTLD2_var							= DSMC_ctld_recognizeVehicles or false
+	EMBD_var							= DSMC_ExclusionTag
 
 	-- debug call
 	debugProcessDetail = DEBUG_var
@@ -273,8 +275,10 @@ function loadDSMCHooks()
 	writeDebugBase(DSMC_ModuleName .. ": SBEO_var = " ..tostring(SBEO_var))
 	writeDebugBase(DSMC_ModuleName .. ": CTLD1_var = " ..tostring(CTLD1_var))
 	writeDebugBase(DSMC_ModuleName .. ": CTLD2_var = " ..tostring(CTLD2_var))
+	writeDebugBase(DSMC_ModuleName .. ": EMBD_var = " ..tostring(EMBD_var))
 
-	writeDebugBase(DSMC_ModuleName .. ": PLAN_var = " ..tostring(PLAN_var))
+	--writeDebugBase(DSMC_ModuleName .. ": PLAN_var = " ..tostring(PLAN_var))
+	--writeDebugBase(DSMC_ModuleName .. ": DGWS_var = " ..tostring(DGWS_var))
 
 	-- debug call check (doesn't print if debugProcessDetail is false!)
 	writeDebugDetail(DSMC_ModuleName .. ": debugProcessDetail = " .. tostring(debugProcessDetail))
@@ -402,12 +406,18 @@ function loadDSMCHooks()
 			writeDebugBase(DSMC_ModuleName .. ": loaded in SLOT module")
 		end
 	end
-	if UTIL.fileExist(DSMCdirectory .. "PLAN" .. ".lua") == true and UTIL.fileExist(DSMCdirectory .. "GOAP" .. ".lua") == true and UTIL.fileExist(DSMCdirectory .. "DLNY" .. ".lua") == true and PLAN_var == true then
-		DLNY 						= require("DLNY")
-		GOAP 						= require("GOAP")
-		PLAN 						= require("PLAN")	
-		writeDebugBase(DSMC_ModuleName .. ": loaded in PLAN module")
-	end
+
+	--if UTIL.fileExist(DSMCdirectory .. "DGWS" .. ".lua") == true then
+	--	DGWS 						= require("DGWS")
+	--end
+
+	--if UTIL.fileExist(DSMCdirectory .. "PLAN" .. ".lua") == true and UTIL.fileExist(DSMCdirectory .. "GOAP" .. ".lua") == true and UTIL.fileExist(DSMCdirectory .. "DLNY" .. ".lua") == true and PLAN_var == true then
+		--DLNY 						= require("DLNY")
+		--GOAP 						= require("GOAP")
+		--PLAN 						= require("PLAN")	
+		--writeDebugBase(DSMC_ModuleName .. ": loaded in PLAN module")
+	--end
+
 	if UTIL.fileExist(DSMCdirectory .. "ADTR" .. ".lua") == true then
 		ADTR 						= require("ADTR")
 		writeDebugBase(DSMC_ModuleName .. ": loaded in ADTR module")
@@ -710,6 +720,7 @@ function startDSMCprocess()
 							writeDebugBase(DSMC_ModuleName .. ": EMBD_inj.lua not found")
 						end			
 						UTIL.inJectCode("Embeddedcode", Embeddedcode)
+						UTIL.inJectCode("EMBD_var", "DSMC_EMBD_var = " .. tostring(EMBD_var))
 						writeDebugDetail(DSMC_ModuleName .. ": EMBD injected")
 
 						local tblThreats = UTIL.getThreatRanges()
@@ -720,14 +731,28 @@ function startDSMCprocess()
 							writeDebugDetail(DSMC_ModuleName .. ": can't inject tblThreats")
 						end
 
+						if DGWS_var then
+							if DGWS then
+								writeDebugDetail(DSMC_ModuleName .. ": activating dynamic ground war system")
+								DGWS.initProcess()
+								writeDebugDetail(DSMC_ModuleName .. ": dynamic ground war system activated")
+							else
+								writeDebugBase(DSMC_ModuleName .. ": DGWS not available")									
+							end	
+						else
+							writeDebugBase(DSMC_ModuleName .. ": DGWS not required")								
+						end
+
 						-- code from PLAN module
+						--[[
 						if PLAN_var then
 							writeDebugDetail(DSMC_ModuleName .. ": activating tactical AI planning (PLAN)")
 							PLAN.initProcess()
 							writeDebugDetail(DSMC_ModuleName .. ": tactical AI planning activated")
 						else
 							writeDebugBase(DSMC_ModuleName .. ": PLAN not required")	
-						end		
+						end	
+						--]]--
 						
 						if RTAI_var then
 							writeDebugDetail(DSMC_ModuleName .. ": activating real time AI enhancement")
@@ -767,6 +792,9 @@ function startDSMCprocess()
 						else
 							writeDebugBase(DSMC_ModuleName .. ": STOP_var is false, no autorestart required")
 						end
+
+						writeDebugBase(DSMC_ModuleName .. ": Initial loop done, loading testfunctions if there")
+						DGWS.testFunctions()
 
 						writeDebugBase(DSMC_ModuleName .. ": Initial loop done, mission is started now!")
 					else
@@ -872,9 +900,12 @@ function loadtables()
 		UTIL.dumpTable("tblSpawned.lua", tblSpawned)
 		UTIL.dumpTable("tblConquer.lua", tblConquer)
 		UTIL.dumpTable("tblWarehouseChangeCoa.lua", tblWarehouseChangeCoa)
-		UTIL.dumpTable("tblIntelDb.lua", tblIntelDb)
-		UTIL.dumpTable("tblORBATDb.lua", tblORBATDb)
-		UTIL.dumpTable("tblTerrainDb.lua", tblTerrainDb)
+
+		--UTIL.dumpTable("DGWS_terrain.lua", DGWS_terrain)
+		--UTIL.dumpTable("DGWS_orbat.lua", DGWS_orbat)
+		--UTIL.dumpTable("DGWS_intel.lua", DGWS_intel)
+		--UTIL.dumpTable("DGWS_staticassets.lua", DGWS_staticassets)
+
 	end
 	--]]--
 end
@@ -968,7 +999,7 @@ function batchSaveProcess()
 		end
 
 		-- update serverSettings.lua
-		if ATRL_var then
+		if UMLS_var then
 			if SAVE.NewMizPath then
 				makefirstmission(SAVE.NewMizPath)
 			else
