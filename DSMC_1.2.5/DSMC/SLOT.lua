@@ -570,6 +570,99 @@ local standardPlaneTypes = {
 		["hardpoint_racks"] = true,
 	},
 
+
+	["Mirage-F1CE"] = {
+		["type"] = "Mirage-F1CE",
+		["payload"] = 
+		{
+			["pylons"] = 
+			{
+			}, -- end of ["pylons"]
+			["fuel"] = "0", -- "0"
+			["flare"] = 15,
+			["chaff"] = 30,
+			["gun"] = 100,
+		}, -- end of ["payload"]
+		["Radio"] = 
+		{
+			[1] = 
+			{
+				["modulations"] = 
+				{
+				}, -- end of ["modulations"]
+				["channels"] = 
+				{
+					[1] = 127.5,
+					[2] = 119.25,
+					[3] = 122,
+					[4] = 126.5,
+					[5] = 127,
+					[6] = 129,
+					[7] = 131,
+					[8] = 133,
+					[9] = 141,
+					[10] = 250.5,
+					[11] = 251,
+					[12] = 253,
+					[13] = 254,
+					[14] = 257,
+					[15] = 260,
+					[16] = 261,
+					[17] = 262,
+					[18] = 263,
+					[19] = 267,
+					[20] = 270,
+				}, -- end of ["channels"]
+			}, -- end of [1]
+			[2] = 
+			{
+				["modulations"] = 
+				{
+				}, -- end of ["modulations"]
+				["channels"] = 
+				{
+					[1] = 127.5,
+					[2] = 230,
+					[3] = 240,
+					[4] = 250.5,
+					[5] = 251,
+					[6] = 256,
+					[7] = 257,
+					[8] = 262,
+					[9] = 263,
+					[10] = 267,
+					[11] = 270,
+					[12] = 254,
+					[13] = 264,
+					[14] = 266,
+					[15] = 265,
+					[16] = 252,
+					[17] = 268,
+					[18] = 271,
+					[19] = 275,
+					[20] = 360,
+				}, -- end of ["channels"]
+			}, -- end of [2]
+		}, -- end of ["Radio"]
+		["AddPropAircraft"] = 
+		{
+			["RocketSalvoF1"] = 1,
+			["ChaffMultiTime"] = 1,
+			["FlareMultiNumber"] = 1,
+			["ChaffMultiNumber"] = 1,
+			["LaserCode1"] = 8,
+			["ChaffProgramNumber"] = 1,
+			["LaserCode100"] = 6,
+			["FlareMultiTime"] = 1,
+			["ChaffProgramTime"] = 1,
+			["LaserCode10"] = 8,
+			["RocketSalvoF4"] = 1,
+			["GunBurstSettings"] = 1,
+			["RadarCoverSettings"] = 1,
+		}, -- end of ["AddPropAircraft"]
+		["hardpoint_racks"] = true,
+	},
+
 	["MiG-19P"] = {
 		["type"] = "MiG-19P",
 		["payload"] = 
@@ -695,6 +788,8 @@ local standardPlaneTypes = {
 			["gun"] = 100,
 		}, -- end of ["payload"]
 	},
+
+
 }
 
 local standardHeloTypes = {
