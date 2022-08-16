@@ -72,8 +72,14 @@ meanMapBaseHeight =
 	["MarianaIslands"] = 
 	{
 		["Tbase"] = 50,
-		["Umax"] = 85,
-		["Umin"] = 25,
+		["Umax"] = 40,
+		["Umin"] = 15,
+	},
+	["Falklands"] = 
+	{
+		["Tbase"] = 50,
+		["Umax"] = 10,
+		["Umin"] = 5,
 	},
 }
 
@@ -533,8 +539,8 @@ staticWeatherDb =  -- theatre, date.Month, probability data
 			["WD_day"] = 270, 
 			["WD_night"] = 90,
 			["WD_speed"] = 5.5, -- https://rp5.ru/Weather_archive_in_Kutaisi -> 2/3
-			["Pmax"] = 764, -- https://rp5.ru/Weather_archive_in_Kutaisi
-			["Pmin"] = 740,
+			["Pmax"] = 784, -- https://rp5.ru/Weather_archive_in_Kutaisi
+			["Pmin"] = 767,
 			["fogAllowed"] = true,
 			["sandAllowed"] = true,
 			["windVar"] = 0.5,
@@ -551,8 +557,8 @@ staticWeatherDb =  -- theatre, date.Month, probability data
 			["WD_day"] = 270, 
 			["WD_night"] = 90,
 			["WD_speed"] = 5.2, -- https://rp5.ru/Weather_archive_in_Kutaisi -> 2/3
-			["Pmax"] = 745, -- https://rp5.ru/Weather_archive_in_Kutaisi
-			["Pmin"] = 738,
+			["Pmax"] = 772, -- https://rp5.ru/Weather_archive_in_Kutaisi
+			["Pmin"] = 764,
 			["fogAllowed"] = true,
 			["sandAllowed"] = true,
 			["windVar"] = 0.5,
@@ -569,8 +575,8 @@ staticWeatherDb =  -- theatre, date.Month, probability data
 			["WD_day"] = 270, 
 			["WD_night"] = 90,
 			["WD_speed"] = 5.2, -- https://rp5.ru/Weather_archive_in_Kutaisi -> 2/3
-			["Pmax"] = 745, -- https://rp5.ru/Weather_archive_in_Kutaisi
-			["Pmin"] = 738,
+			["Pmax"] = 772, -- https://rp5.ru/Weather_archive_in_Kutaisi
+			["Pmin"] = 764,
 			["fogAllowed"] = true,
 			["sandAllowed"] = true,
 			["windVar"] = 0.5,
@@ -587,8 +593,8 @@ staticWeatherDb =  -- theatre, date.Month, probability data
 			["WD_day"] = 270, 
 			["WD_night"] = 90,
 			["WD_speed"] = 7, -- https://rp5.ru/Weather_archive_in_Kutaisi -> 2/3
-			["Pmax"] = 740, -- https://rp5.ru/Weather_archive_in_Kutaisi
-			["Pmin"] = 733,
+			["Pmax"] = 767, -- https://rp5.ru/Weather_archive_in_Kutaisi
+			["Pmin"] = 760,
 			["fogAllowed"] = false,
 			["sandAllowed"] = true,
 			["windVar"] = 0.5,
@@ -605,8 +611,8 @@ staticWeatherDb =  -- theatre, date.Month, probability data
 			["WD_day"] = 270, 
 			["WD_night"] = 90,
 			["WD_speed"] = 8.5, -- https://rp5.ru/Weather_archive_in_Kutaisi -> 2/3
-			["Pmax"] = 740, -- https://rp5.ru/Weather_archive_in_Kutaisi
-			["Pmin"] = 733,
+			["Pmax"] = 767, -- https://rp5.ru/Weather_archive_in_Kutaisi
+			["Pmin"] = 760,
 			["fogAllowed"] = false,
 			["sandAllowed"] = true,
 			["windVar"] = 0.5,
@@ -623,8 +629,8 @@ staticWeatherDb =  -- theatre, date.Month, probability data
 			["WD_day"] = 270, 
 			["WD_night"] = 90,
 			["WD_speed"] = 5.5, -- https://rp5.ru/Weather_archive_in_Kutaisi -> 2/3
-			["Pmax"] = 733, -- https://rp5.ru/Weather_archive_in_Kutaisi
-			["Pmin"] = 729,
+			["Pmax"] = 760, -- https://rp5.ru/Weather_archive_in_Kutaisi
+			["Pmin"] = 756,
 			["fogAllowed"] = false,
 			["sandAllowed"] = true,
 			["windVar"] = 0.5,
@@ -641,8 +647,8 @@ staticWeatherDb =  -- theatre, date.Month, probability data
 			["WD_day"] = 270, 
 			["WD_night"] = 90,
 			["WD_speed"] = 5.5, -- https://rp5.ru/Weather_archive_in_Kutaisi -> 2/3
-			["Pmax"] = 729, -- https://rp5.ru/Weather_archive_in_Kutaisi
-			["Pmin"] = 727,
+			["Pmax"] = 756, -- https://rp5.ru/Weather_archive_in_Kutaisi
+			["Pmin"] = 754,
 			["fogAllowed"] = false,
 			["sandAllowed"] = true,
 			["windVar"] = 0.5,
@@ -659,8 +665,8 @@ staticWeatherDb =  -- theatre, date.Month, probability data
 			["WD_day"] = 270, 
 			["WD_night"] = 90,
 			["WD_speed"] = 5.5, -- https://rp5.ru/Weather_archive_in_Kutaisi -> 2/3
-			["Pmax"] = 733, -- https://rp5.ru/Weather_archive_in_Kutaisi
-			["Pmin"] = 731,
+			["Pmax"] = 760, -- https://rp5.ru/Weather_archive_in_Kutaisi
+			["Pmin"] = 758,
 			["fogAllowed"] = false,
 			["sandAllowed"] = true,
 			["windVar"] = 0.5,
@@ -677,8 +683,8 @@ staticWeatherDb =  -- theatre, date.Month, probability data
 			["WD_day"] = 270, 
 			["WD_night"] = 90,
 			["WD_speed"] = 5.5, -- https://rp5.ru/Weather_archive_in_Kutaisi -> 2/3
-			["Pmax"] = 734, -- https://rp5.ru/Weather_archive_in_Kutaisi
-			["Pmin"] = 731,
+			["Pmax"] = 761, -- https://rp5.ru/Weather_archive_in_Kutaisi
+			["Pmin"] = 758,
 			["fogAllowed"] = false,
 			["sandAllowed"] = true,
 			["windVar"] = 0.5,
@@ -695,8 +701,8 @@ staticWeatherDb =  -- theatre, date.Month, probability data
 			["WD_day"] = 270, 
 			["WD_night"] = 90,
 			["WD_speed"] = 5.1, -- https://rp5.ru/Weather_archive_in_Kutaisi -> 2/3
-			["Pmax"] = 734, -- https://rp5.ru/Weather_archive_in_Kutaisi
-			["Pmin"] = 731,
+			["Pmax"] = 761, -- https://rp5.ru/Weather_archive_in_Kutaisi
+			["Pmin"] = 758,
 			["fogAllowed"] = false,
 			["sandAllowed"] = true,
 			["windVar"] = 0.5,
@@ -713,8 +719,8 @@ staticWeatherDb =  -- theatre, date.Month, probability data
 			["WD_day"] = 270, 
 			["WD_night"] = 90,
 			["WD_speed"] = 7.1, -- https://rp5.ru/Weather_archive_in_Kutaisi -> 2/3
-			["Pmax"] = 734, -- https://rp5.ru/Weather_archive_in_Kutaisi
-			["Pmin"] = 731,
+			["Pmax"] = 761, -- https://rp5.ru/Weather_archive_in_Kutaisi
+			["Pmin"] = 758,
 			["fogAllowed"] = false,
 			["sandAllowed"] = true,
 			["windVar"] = 0.5,
@@ -731,13 +737,13 @@ staticWeatherDb =  -- theatre, date.Month, probability data
 			["WD_day"] = 270, 
 			["WD_night"] = 90,
 			["WD_speed"] = 7.1, -- https://rp5.ru/Weather_archive_in_Kutaisi -> 2/3
-			["Pmax"] = 743, -- https://rp5.ru/Weather_archive_in_Kutaisi
-			["Pmin"] = 739,
+			["Pmax"] = 770, -- https://rp5.ru/Weather_archive_in_Kutaisi
+			["Pmin"] = 766,
 			["fogAllowed"] = false,
 			["sandAllowed"] = true,
 			["windVar"] = 0.5,
 		},	
-	},	
+	},
 	["Nevada"] = 
 	{
 		[1] = 
@@ -1396,6 +1402,226 @@ staticWeatherDb =  -- theatre, date.Month, probability data
 		},
 
 	},
+	["Falklands"] = -- Andersen AFB -- https://weatherspark.com/y/149437/Average-Weather-at-USAF-Andersen-Air-Force-Base-Guam-Year-Round
+	{
+		[1] = 
+		{
+			["Tmax"] = 16, 
+			["Tmin"] = 6,
+			["CL4_6"] = 0.2,
+			["CL7_8"] = 0.47,
+			["CL9_10"] = 0.6,
+			["Rain"] = 0.7,
+			["Storm"] = 0.95,
+			["WD_day"] = 270, 
+			["WD_night"] = 0,
+			["WD_speed"] = 8, 
+			["Pmax"] = 765, 
+			["Pmin"] = 750,
+			["fogAllowed"] = false,		
+			["sandAllowed"] = false,
+			["windVar"] = 0.1,				
+		},
+		[2] = 
+		{
+			["Tmax"] = 15, 
+			["Tmin"] = 5,
+			["CL4_6"] = 0.2,
+			["CL7_8"] = 0.47,
+			["CL9_10"] = 0.6,
+			["Rain"] = 0.7,
+			["Storm"] = 0.95,
+			["WD_day"] = 270, 
+			["WD_night"] = 0,
+			["WD_speed"] = 8, 
+			["Pmax"] = 765, 
+			["Pmin"] = 750,
+			["fogAllowed"] = false,		
+			["sandAllowed"] = false,
+			["windVar"] = 0.1,		
+		},	
+		[3] = 
+		{
+			["Tmax"] = 14, 
+			["Tmin"] = 5,
+			["CL4_6"] = 0.15,
+			["CL7_8"] = 0.4,
+			["CL9_10"] = 0.55,
+			["Rain"] = 0.6,
+			["Storm"] = 0.92,
+			["WD_day"] = 270, 
+			["WD_night"] = 0,
+			["WD_speed"] = 8, 
+			["Pmax"] = 765, 
+			["Pmin"] = 750,
+			["fogAllowed"] = false,		
+			["sandAllowed"] = false,
+			["windVar"] = 0.1,			
+		},		
+		[4] = 
+		{
+			["Tmax"] = 11, 
+			["Tmin"] = 4,
+			["CL4_6"] = 0.15,
+			["CL7_8"] = 0.4,
+			["CL9_10"] = 0.55,
+			["Rain"] = 0.75,
+			["Storm"] = 0.97,
+			["WD_day"] = 270, 
+			["WD_night"] = 0,
+			["WD_speed"] = 8, 
+			["Pmax"] = 765, 
+			["Pmin"] = 750,
+			["fogAllowed"] = false,		
+			["sandAllowed"] = false,	
+			["windVar"] = 0.1,		
+		},			
+		[5] = 
+		{
+			["Tmax"] = 9, 
+			["Tmin"] = 1,
+			["CL4_6"] = 0.10,
+			["CL7_8"] = 0.32,
+			["CL9_10"] = 0.5,
+			["Rain"] = 0.75,
+			["Storm"] = 0.97,
+			["WD_day"] = 270, 
+			["WD_night"] = 0,
+			["WD_speed"] = 8, 
+			["Pmax"] = 765, 
+			["Pmin"] = 750,
+			["fogAllowed"] = false,		
+			["sandAllowed"] = false,	
+			["windVar"] = 0.1,		
+		},		
+		[6] = 
+		{
+			["Tmax"] = 7, 
+			["Tmin"] = 0,
+			["CL4_6"] = 0.10,
+			["CL7_8"] = 0.32,
+			["CL9_10"] = 0.5,
+			["Rain"] = 0.75,
+			["Storm"] = 0.97,
+			["WD_day"] = 270, 
+			["WD_night"] = 0,
+			["WD_speed"] = 8, 
+			["Pmax"] = 765, 
+			["Pmin"] = 750,
+			["fogAllowed"] = false,		
+			["sandAllowed"] = false,	
+			["windVar"] = 0.1,	
+		},	
+		[7] = 
+		{
+			["Tmax"] = 6, 
+			["Tmin"] = 0,
+			["CL4_6"] = 0.10,
+			["CL7_8"] = 0.32,
+			["CL9_10"] = 0.5,
+			["Rain"] = 0.75,
+			["Storm"] = 0.97,
+			["WD_day"] = 270, 
+			["WD_night"] = 0,
+			["WD_speed"] = 8,  
+			["Pmax"] = 765, 
+			["Pmin"] = 750,
+			["fogAllowed"] = false,		
+			["sandAllowed"] = false,		
+			["windVar"] = 0.2,
+		},	
+		[8] = 
+		{
+			["Tmax"] = 7, 
+			["Tmin"] = 1,
+			["CL4_6"] = 0.10,
+			["CL7_8"] = 0.32,
+			["CL9_10"] = 0.5,
+			["Rain"] = 0.75,
+			["Storm"] = 0.97,
+			["WD_day"] = 270, 
+			["WD_night"] = 0,
+			["WD_speed"] = 9, 
+			["Pmax"] = 765, 
+			["Pmin"] = 750,
+			["fogAllowed"] = false,		
+			["sandAllowed"] = false,
+			["windVar"] = 0.2,		
+		},	
+		[9] = 
+		{
+			["Tmax"] = 9, 
+			["Tmin"] = 1,
+			["CL4_6"] = 0.15,
+			["CL7_8"] = 0.4,
+			["CL9_10"] = 0.55,
+			["Rain"] = 0.75,
+			["Storm"] = 0.97,
+			["WD_day"] = 270, 
+			["WD_night"] = 0,
+			["WD_speed"] = 8, 
+			["Pmax"] = 765, 
+			["Pmin"] = 750,
+			["fogAllowed"] = false,		
+			["sandAllowed"] = false,
+			["windVar"] = 0.2,		
+		},	
+		[10] = 
+		{
+			["Tmax"] = 11, 
+			["Tmin"] = 3,
+			["CL4_6"] = 0.2,
+			["CL7_8"] = 0.47,
+			["CL9_10"] = 0.6,
+			["Rain"] = 0.75,
+			["Storm"] = 0.97,
+			["WD_day"] = 270, 
+			["WD_night"] = 0,
+			["WD_speed"] = 8, 
+			["Pmax"] = 765, 
+			["Pmin"] = 750,
+			["fogAllowed"] = false,		
+			["sandAllowed"] = false,
+			["windVar"] = 0.2,		
+		},
+		[11] = 
+		{
+			["Tmax"] = 14, 
+			["Tmin"] = 5,
+			["CL4_6"] = 0.2,
+			["CL7_8"] = 0.47,
+			["CL9_10"] = 0.6,
+			["Rain"] = 0.7,
+			["Storm"] = 0.95,
+			["WD_day"] = 270, 
+			["WD_night"] = 0,
+			["WD_speed"] = 8, 
+			["Pmax"] = 765, 
+			["Pmin"] = 750,
+			["fogAllowed"] = false,		
+			["sandAllowed"] = false,
+			["windVar"] = 0.2,			
+		},
+		[12] = 
+		{
+			["Tmax"] = 15, 
+			["Tmin"] = 5,
+			["CL4_6"] = 0.2,
+			["CL7_8"] = 0.47,
+			["CL9_10"] = 0.6,
+			["Rain"] = 0.7,
+			["Storm"] = 0.95,
+			["WD_day"] = 270, 
+			["WD_night"] = 0,
+			["WD_speed"] = 8, 
+			["Pmax"] = 765, 
+			["Pmin"] = 750,
+			["fogAllowed"] = false,		
+			["sandAllowed"] = false,
+			["windVar"] = 0.1,			
+		},
+
+	},	
 }
 
 newWeatherPresets = {}
