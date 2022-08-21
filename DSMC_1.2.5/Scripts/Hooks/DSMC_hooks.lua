@@ -37,8 +37,8 @@ DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "2"
 DSMC_SubSubVersion 	= "5"
-DSMC_Build 			= "2106"
-DSMC_Date			= "16/08/2022"
+DSMC_Build 			= "2107"
+DSMC_Date			= "22/08/2022"
 
 -- ## DEBUG TO TEXT FUNCTION
 local forceServerMode 	= false
@@ -401,7 +401,7 @@ function loadDSMCHooks()
 		writeDebugBase(DSMC_ModuleName .. ": loaded in UPAP module")
 	end
 	if UTIL.fileExist(DSMCdirectory .. "SLOT" .. ".lua") == true then
-		if SLOT_var == true or SLOT_ab_var == true then
+		if SLOT_var == true or SLOT_add_ab == true then
 			SLOT 						= require("SLOT")
 			writeDebugBase(DSMC_ModuleName .. ": loaded in SLOT module")
 		end

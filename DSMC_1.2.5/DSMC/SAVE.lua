@@ -1085,7 +1085,7 @@ function save()
 			end
 		end		
 
-		if HOOK.SLOT_var == true or HOOK.SLOT_ab_var == true then
+		if HOOK.SLOT_var == true or HOOK.SLOT_add_ab == true then
 			createSlots(env.mission, wrhs_env.warehouses) 
 		end		
 		
