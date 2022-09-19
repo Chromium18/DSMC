@@ -169,6 +169,7 @@ function checkLandingsLogistic(curr_tblLogistic, tblWarehouse)
 end
 
 function consolidateStandardLogistic(curr_tblLogistic)
+	--UTIL.dumpTable("curr_tblLogistic.lua", curr_tblLogistic)
 	local temp_tblLogistic ={}
 	HOOK.writeDebugDetail(ModuleName .. ": consolidateStandardLogistic started")
 	for oId, oData in pairs(curr_tblLogistic) do
@@ -266,11 +267,11 @@ function consolidateStandardLogistic(curr_tblLogistic)
 					if aId == oData.acf then
 						afound = true
 						HOOK.writeDebugDetail(ModuleName .. ": consolidateStandardLogistic, found acf in tmpAcf, remove action, curVal = " ..tostring(aNumber))
-						if aNumber > 0 then
-							aNumber = aNumber - 1
-						else
-							HOOK.writeDebugDetail(ModuleName .. ": consolidateStandardLogistic, aNumber is zero, do not subtract. Something happened as a client disconnect after takeoff")
-						end
+						--if aNumber > 0 then
+						aNumber = aNumber - 1
+						--else
+						--	HOOK.writeDebugDetail(ModuleName .. ": consolidateStandardLogistic, aNumber is zero, do not subtract. Something happened as a client disconnect after takeoff")
+						--end
 						HOOK.writeDebugDetail(ModuleName .. ": consolidateStandardLogistic, found acf in tmpAcf, remove action, newVal = " ..tostring(aNumber))
 						tmpAcf[oData.acf] = aNumber
 					end
@@ -319,6 +320,7 @@ function consolidateStandardLogistic(curr_tblLogistic)
 
 	--UTIL.dumpTable("WRHS.consolidateStandardLogistic.lua", temp_tblLogistic)
 	HOOK.writeDebugDetail(ModuleName .. ": consolidateStandardLogistic done")
+	UTIL.dumpTable("temp_tblLogistic.lua", temp_tblLogistic)
 	return temp_tblLogistic
 
 end
@@ -442,6 +444,11 @@ function elabStandardLogistic(inj_tblLogistic, inj_tempWarehouses)
 										if acName == aName then
 											acData.initialAmount = acData.initialAmount + aNumber
 											HOOK.writeDebugDetail(ModuleName .. ": elabStandardLogistic adjusted acf type: " .. tostring(aName) .. ", qty: " .. tostring(aNumber) .. "\n")	
+											if acData.initialAmount < 0 then
+												HOOK.writeDebugDetail(ModuleName .. ": elabStandardLogistic adjusted acf type reset to 0")	
+												acData.initialAmount = 0
+											end
+											--HOOK.writeDebugDetail(ModuleName .. ": elabStandardLogistic adjusted acf type: " .. tostring(aName) .. ", qty: " .. tostring(aNumber) .. "\n")	
 										end
 									end
 								end
