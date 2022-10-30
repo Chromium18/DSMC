@@ -37,11 +37,12 @@ DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "2"
 DSMC_SubSubVersion 	= "5"
-DSMC_Build 			= "2112"
-DSMC_Date			= "30/10/2022"
+DSMC_Build 			= "2113"
+DSMC_Date			= "30/10/2012"
 
 -- ## DEBUG TO TEXT FUNCTION
 local forceServerMode 	= false
+local forceDebug 		= false
 
 -- keep old DSMC.log file as "old"
 local cur_debuglogfile  = io.open(lfs.writedir() .. "Logs/" .. "DSMC.log", "r")
@@ -146,8 +147,11 @@ writeDebugDetail(DSMC_ModuleName .. ": paths variable loaded")
 -- REMEMBER!!!!! for temp save into the SSE, EMBD.saveTable has DSMCfiles path hardcoded into the function!!!!
 
 DSMC_ServerMode = true
-if _G.panel_aircraft then
+if _G.dxguiWin then -- dxguiWin    -- _G.dxguiWin
+	writeDebugDetail(DSMC_ModuleName .. ": _G.dxguiWin available, server mode false")
 	DSMC_ServerMode = false
+else
+	writeDebugDetail(DSMC_ModuleName .. ": _G.dxguiWin not available!, server mode true")
 end
 
 -- loading proper options from custom file (if dedicated server) or options menù (if standard)
@@ -157,6 +161,7 @@ function loadDSMCHooks()
 
 	if DSMC_ServerMode == true or forceServerMode == true then
 		writeDebugBase(DSMC_ModuleName .. ": Server mode active")
+		writeDebugBase(DSMC_ModuleName .. ": forceServerMode: " .. tostring(forceServerMode))
 		local dso_fcn, dso_err = dofile(DSOdir .. "DSMC_Dedicated_Server_options.lua")
 		if dso_err then
 			writeDebugBase(DSMC_ModuleName .. ": dso_fcn error = " .. tostring(dso_fcn))
@@ -196,6 +201,10 @@ function loadDSMCHooks()
 				end
 			end
 		end		
+	end
+
+	if forceDebug then
+		opt_DEBUG_var = true
 	end
 
 	-- assign variables

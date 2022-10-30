@@ -2102,7 +2102,7 @@ end
 
 HOOK.writeDebugBase(ModuleName .. ": Loaded " .. MainVersion .. "." .. SubVersion .. "." .. Build .. ", released " .. Date)
 UTILloaded = true
---UTIL.dumpTable("_G_server.lua", _G) 
+---UTIL.dumpTable("_G_server.lua", _G) 
 --~=
 
 --
