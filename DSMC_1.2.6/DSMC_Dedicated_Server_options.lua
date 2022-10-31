@@ -16,11 +16,11 @@ DSMC_AutosaveProcess_min		= 2			-- minutes, number, from 2 to 480. DSMC_Autosave
 DSMC_automated_CTLD				= true	 	-- true / false. If true enable the inbuilt CTLD.
 DSMC_automated_CSAR         	= true      -- true / false. If true enable the inbuilt CSAR scritp. Works only if DSMC_automated_CTLD is true
 
-DSMC_CreateSlotHeliports    	= true      -- true / false. If true, helicopters slots will be automatically created on heliports. Check manual for details on how it works.
-DSMC_CreateSlotAirbases     	= true      -- true / false. If true, slots will be created in airbase also and with fixed wing type. BEWARE: REQUIRE CONSISTENT SCENERY DESIGN! CHECK MANUAL
+DSMC_CreateSlotHeliports    	= false      -- true / false. If true, helicopters slots will be automatically created on heliports. Check manual for details on how it works.
+DSMC_CreateSlotAirbases     	= false      -- true / false. If true, slots will be created in airbase also and with fixed wing type. BEWARE: REQUIRE CONSISTENT SCENERY DESIGN! CHECK MANUAL
 
 -- Debug. Leave this true only for bugtracking!!!
-DSMC_DebugMode					= true		-- true / false
+DSMC_DebugMode					= false		-- true / false
 
 
 -- ##################################################################

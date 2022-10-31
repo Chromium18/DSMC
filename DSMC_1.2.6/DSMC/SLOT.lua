@@ -789,6 +789,31 @@ local standardPlaneTypes = {
 		}, -- end of ["payload"]
 	},
 
+	["MB-339A"] = {
+		["type"] = "MB-339A",
+		["payload"] = 
+		{
+			["pylons"] = 
+			{
+			}, -- end of ["pylons"]
+			["fuel"] = "0",
+			["flare"] = 0,
+			["chaff"] = 0,
+			["gun"] = 100,
+		}, -- end of ["payload"]
+		["AddPropAircraft"] = 
+		{
+			["SAAB_RGS-2_Gunsight"] = true,
+			["SoloFlight"] = false,
+			["DEFA_553_Burst"] = 0.5,
+			["MountBlindHood"] = false,
+			["EnableCutOff"] = false,
+			["PilotEquipment"] = 1,
+		}, -- end of ["AddPropAircraft"]
+		["hardpoint_racks"] = true,
+	},
+
+
 
 }
 
