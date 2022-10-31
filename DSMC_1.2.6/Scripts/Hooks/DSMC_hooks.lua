@@ -37,8 +37,8 @@ DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "2"
 DSMC_SubSubVersion 	= "6"
-DSMC_Build 			= "2120"
-DSMC_Date			= "31/10/2022"
+DSMC_Build 			= "2121"
+DSMC_Date			= "01/11/2022"
 
 -- ## DEBUG TO TEXT FUNCTION
 local forceServerMode 	= false
@@ -147,12 +147,12 @@ writeDebugDetail(DSMC_ModuleName .. ": paths variable loaded")
 -- REMEMBER!!!!! for temp save into the SSE, EMBD.saveTable has DSMCfiles path hardcoded into the function!!!!
 
 DSMC_ServerMode = true
-if _G.dxguiWin then -- dxguiWin    -- _G.dxguiWin
-	writeDebugDetail(DSMC_ModuleName .. ": _G.dxguiWin available, server mode false")
-	DSMC_ServerMode = false
-else
-	writeDebugDetail(DSMC_ModuleName .. ": _G.dxguiWin not available!, server mode true")
-end
+--if _G.VertLayout then 
+--	writeDebugDetail(DSMC_ModuleName .. ": _G.VertLayout available, server mode false")
+--	DSMC_ServerMode = false
+--else
+--	writeDebugDetail(DSMC_ModuleName .. ": _G.VertLayout not available!, server mode true")
+--end
 
 -- loading proper options from custom file (if dedicated server) or options menù (if standard)
 function loadDSMCHooks()
