@@ -37,8 +37,8 @@ DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "2"
 DSMC_SubSubVersion 	= "6"
-DSMC_Build 			= "2120"
-DSMC_Date			= "31/10/2022"
+DSMC_Build 			= "2125"
+DSMC_Date			= "05/11/2022"
 
 -- ## DEBUG TO TEXT FUNCTION
 local forceServerMode 	= false
@@ -147,6 +147,16 @@ writeDebugDetail(DSMC_ModuleName .. ": paths variable loaded")
 -- REMEMBER!!!!! for temp save into the SSE, EMBD.saveTable has DSMCfiles path hardcoded into the function!!!!
 
 DSMC_ServerMode = true
+local function is_norender()
+    return DCS.getConfigValue("norender")
+end
+if is_norender() == 0 then
+	DSMC_ServerMode = false
+end
+
+--local logTable = DCS.getLogHistory(0)
+--UTIL.dumpTable("log.lua", logTable)
+
 --if _G.VertLayout then 
 --	writeDebugDetail(DSMC_ModuleName .. ": _G.VertLayout available, server mode false")
 --	DSMC_ServerMode = false
@@ -157,7 +167,7 @@ DSMC_ServerMode = true
 -- loading proper options from custom file (if dedicated server) or options menù (if standard)
 function loadDSMCHooks()
 
-	 -- debug purpose
+	-- debug purpose
 
 	if DSMC_ServerMode == true or forceServerMode == true then
 		writeDebugBase(DSMC_ModuleName .. ": Server mode active")

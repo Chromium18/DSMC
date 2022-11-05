@@ -1480,71 +1480,76 @@ function getParkingForAircraftType(pk_list, uType, uCat)
 	HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType starting, a_listP pre:" .. tostring(#a_listP))
     local unitDesc = ME_DB.unit_by_type[uType]
 
-    local HEIGHT = unitDesc.height
-    local WIDTH  = unitDesc.wing_span or unitDesc.rotor_diameter
-    local LENGTH = unitDesc.length
+	if unitDesc then
+		local HEIGHT = unitDesc.height
+		local WIDTH  = unitDesc.wing_span or unitDesc.rotor_diameter
+		local LENGTH = unitDesc.length
 
-    for k, v in pairs(a_listP) do
-		if (not((WIDTH < v.params.WIDTH) 
-                and (LENGTH < v.params.LENGTH)
-                and (HEIGHT < (v.params.HEIGHT or 1000)))) 
-			or ((uCat == 'helicopters') and (v.params.FOR_HELICOPTERS == 0)) -- MODIFICATO PER LEGGERE WH
-            or ((uCat == 'planes') and (v.params.FOR_AIRPLANES == 0))    then -- MODIFICATO PER LEGGERE WH
-			table.insert(keepList, k)
+		for k, v in pairs(a_listP) do
+			if (not((WIDTH < v.params.WIDTH) 
+					and (LENGTH < v.params.LENGTH)
+					and (HEIGHT < (v.params.HEIGHT or 1000)))) 
+				or ((uCat == 'helicopters') and (v.params.FOR_HELICOPTERS == 0)) -- MODIFICATO PER LEGGERE WH
+				or ((uCat == 'planes') and (v.params.FOR_AIRPLANES == 0))    then -- MODIFICATO PER LEGGERE WH
+				table.insert(keepList, k)
 
-		end
-	end
-	
-	for k,v in pairs(keepList) do
-		a_listP[tonumber(v)] = nil
-	end
-
-	HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType, a_listP post type filter:" .. tostring(#a_listP))
-
-	if #a_listP > 0 then
-		-- get latest park position
-		local usedPname = nil
-		local usedPMEname = nil
-		local usedPx = nil
-		local usedPy = nil
-		local max_pId = 0
-		--UTIL.dumpTable("availParkList.lua", availParkList)
-		for pId, pData in pairs(a_listP) do
-			--HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType c5")
-			if pId > max_pId then
-				--HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType c6")
-				max_pId		= pId
-				usedPname 	= pData.name
-				usedPx	 	= pData.x
-				usedPy	  	= pData.y
-				usedPMEname = pData.nameME
 			end
 		end
 		
-		HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType, max_pId: " .. tostring(max_pId) .. ", usedPname: " .. tostring(usedPname) .. ", usedPMEname: " .. tostring(usedPMEname) .. ", usedPx: " .. tostring(usedPx) .. ", usedPy: " .. tostring(usedPy))
-		if usedPname and usedPx and usedPy then
-			for pkId, pkData in pairs(a_listP) do		
-				if pkData.name == usedPname then
-					HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType deleting park: " .. tostring(usedPname))
-					--table.insert(remList, pkId)
-					--table.remove(a_listP, pkId)
-					a_listP[pkId] = nil
+		for k,v in pairs(keepList) do
+			a_listP[tonumber(v)] = nil
+		end
+
+		HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType, a_listP post type filter:" .. tostring(#a_listP))
+
+		if #a_listP > 0 then
+			-- get latest park position
+			local usedPname = nil
+			local usedPMEname = nil
+			local usedPx = nil
+			local usedPy = nil
+			local max_pId = 0
+			--UTIL.dumpTable("availParkList.lua", availParkList)
+			for pId, pData in pairs(a_listP) do
+				--HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType c5")
+				if pId > max_pId then
+					--HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType c6")
+					max_pId		= pId
+					usedPname 	= pData.name
+					usedPx	 	= pData.x
+					usedPy	  	= pData.y
+					usedPMEname = pData.nameME
 				end
 			end
+			
+			HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType, max_pId: " .. tostring(max_pId) .. ", usedPname: " .. tostring(usedPname) .. ", usedPMEname: " .. tostring(usedPMEname) .. ", usedPx: " .. tostring(usedPx) .. ", usedPy: " .. tostring(usedPy))
+			if usedPname and usedPx and usedPy then
+				for pkId, pkData in pairs(a_listP) do		
+					if pkData.name == usedPname then
+						HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType deleting park: " .. tostring(usedPname))
+						--table.insert(remList, pkId)
+						--table.remove(a_listP, pkId)
+						a_listP[pkId] = nil
+					end
+				end
 
-			local revList = {}
-			for k,v in pairs(a_listP) do
-				revList[#revList+1] = v
+				local revList = {}
+				for k,v in pairs(a_listP) do
+					revList[#revList+1] = v
+				end
+
+				--HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType added used parking spot to " ..tostring(airportID) .. ", park num = " ..tostring(usedPname))
+				HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType, a_listP post:" .. tostring(#revList))
+				return usedPname, usedPx, usedPy, revList, usedPMEname
+			else
+				--HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType no parking available")	
+				return false
 			end
-
-			--HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType added used parking spot to " ..tostring(airportID) .. ", park num = " ..tostring(usedPname))
-			HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType, a_listP post:" .. tostring(#revList))
-			return usedPname, usedPx, usedPy, revList, usedPMEname
 		else
-			--HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType no parking available")	
 			return false
 		end
 	else
+		HOOK.writeDebugBase(ModuleName .. ": getParkingForAircraftType, uType does not exist in DB:" .. tostring(uType))
 		return false
 	end
 end
