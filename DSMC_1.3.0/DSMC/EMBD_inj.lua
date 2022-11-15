@@ -69,8 +69,6 @@ if not DSMC_DisableF10save then
 	trigger.action.outText("to save scenery progress, you can use the communication F10 menù and choose DSMC - save mission", 5)
 end
 
-
-
 if not DSMC_multy then
 	trigger.action.outText("DSMC is in single player mode: you must remember to save the mission on your own!", 5)
 end
@@ -1419,12 +1417,7 @@ EMBD.oncallworkflow = function(sanivar, recall)
 		cur_Stack = cur_Stack + msg_Stack		
 		timer.scheduleFunction(funcStaticChange, {}, timer.getTime() + cur_Stack)
 		cur_Stack = cur_Stack + msg_Stack	
-		if DSMC_debugProcessDetail == true then
-			timer.scheduleFunction(funcLogCollect, {}, timer.getTime() + cur_Stack)
-			cur_Stack = cur_Stack + msg_Stack
-		end
 
-		
 		if recall == "recall" then
 			timer.scheduleFunction(saveProcess, {}, timer.getTime() + cur_Stack)
 		end
@@ -2702,11 +2695,15 @@ EMBD.scheduleCTLDsupport = function()
 end
 EMBD.scheduleCTLDsupport()
 
-
 env.info((ModuleName .. ": Loaded " .. MainVersion .. "." .. SubVersion .. "." .. Build .. ", released " .. Date))
 
 
 --timer.scheduleFunction(EMBD.executeSAVE, {}, timer.getTime() + 30)
+if DSMC_lfs and DSMC_io then
+	EMBD.oncallworkflow("desanitized")
+else
+	EMBD.oncallworkflow("sanitized")
+end	
 
 
 local function dumpThreats()

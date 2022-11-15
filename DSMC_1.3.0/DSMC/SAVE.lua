@@ -1412,6 +1412,7 @@ function getMizFiles(loadedMissionPath)
 				break
 			end
 		end
+		zipFile:unzClose()
 		return NewSaveresourceFiles
 	end
 	Unpack() -- execute the unpacking	
@@ -1467,6 +1468,7 @@ end
 HOOK.writeDebugDetail(ModuleName .. ": getMizFiles loaded")
 
 function getNewMissionName(currentName)
+
 	if currentName then
 		local lenght 		= string.len(currentName)
 		local initLenght 	= lenght - 2

@@ -1,6 +1,0 @@
-
-DSMC_MainVersion 	= "1"
-DSMC_SubVersion 	= "2"
-DSMC_SubSubVersion 	= "6"
-DSMC_Build 			= "2125"
-DSMC_Date			= "05/11/2022"

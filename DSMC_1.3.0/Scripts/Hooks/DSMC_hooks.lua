@@ -35,14 +35,14 @@ package.path =
 
 DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
-DSMC_SubVersion 	= "2"
-DSMC_SubSubVersion 	= "6"
-DSMC_Build 			= "2125"
-DSMC_Date			= "05/11/2022"
+DSMC_SubVersion 	= "3"
+DSMC_SubSubVersion 	= "0"
+DSMC_Build 			= "2201"
+DSMC_Date			= "13/11/2022"
 
 -- ## DEBUG TO TEXT FUNCTION
 local forceServerMode 	= false
-local forceDebug 		= false
+local forceDebug 		= true
 
 -- keep old DSMC.log file as "old"
 local cur_debuglogfile  = io.open(lfs.writedir() .. "Logs/" .. "DSMC.log", "r")
@@ -146,301 +146,14 @@ missionscriptingluaPath		= lfs.currentdir() .. "Scripts/" .. "MissionScripting.l
 writeDebugDetail(DSMC_ModuleName .. ": paths variable loaded")
 -- REMEMBER!!!!! for temp save into the SSE, EMBD.saveTable has DSMCfiles path hardcoded into the function!!!!
 
-DSMC_ServerMode = true
-local function is_norender()
-    return DCS.getConfigValue("norender")
-end
-if is_norender() == 0 then
-	DSMC_ServerMode = false
-end
-
---local logTable = DCS.getLogHistory(0)
---UTIL.dumpTable("log.lua", logTable)
-
---if _G.VertLayout then 
---	writeDebugDetail(DSMC_ModuleName .. ": _G.VertLayout available, server mode false")
---	DSMC_ServerMode = false
---else
---	writeDebugDetail(DSMC_ModuleName .. ": _G.VertLayout not available!, server mode true")
---end
-
 -- loading proper options from custom file (if dedicated server) or options menù (if standard)
 function loadDSMCHooks()
-
-	-- debug purpose
-
-	if DSMC_ServerMode == true or forceServerMode == true then
-		writeDebugBase(DSMC_ModuleName .. ": Server mode active")
-		writeDebugBase(DSMC_ModuleName .. ": forceServerMode: " .. tostring(forceServerMode))
-		local dso_fcn, dso_err = dofile(DSOdir .. "DSMC_Dedicated_Server_options.lua")
-		if dso_err then
-			writeDebugBase(DSMC_ModuleName .. ": dso_fcn error = " .. tostring(dso_fcn))
-			writeDebugBase(DSMC_ModuleName .. ": dso_err error = " .. tostring(dso_err))
-		end
-	else
-		writeDebugBase(DSMC_ModuleName .. ": Standard mode active")	
-		local opt_fcn, opt_err = dofile(lfs.writedir() .. "Config/options.lua")
-		if opt_err then
-			writeDebugBase(DSMC_ModuleName .. ": opt_fcn error = " .. tostring(opt_fcn))
-			writeDebugBase(DSMC_ModuleName .. ": opt_err error = " .. tostring(opt_err))
-		end
-		if options then
-			for opt_id, opt_data in pairs(options) do
-				if opt_id == "plugins" then
-					for pl_id, pl_data in pairs (opt_data) do
-						if pl_id == "DSMC" then						
-							opt_MOBJ_var 		= true -- pl_data.MOBJ
-							opt_CRST_var 		= pl_data.CRST	
-							opt_WTHR_var 		= true -- pl_data.WTHR		
-							opt_TMUP_var		= true -- pl_data.TMUP
-							opt_TMUP_cont_var	= pl_data.timer_options	or 2
-							opt_WRHS_var		= true -- pl_data.WRHS
-							opt_SPWN_var		= true -- pl_data.SPWN
-							opt_DEBUG_var		= pl_data.DEBUG
-							opt_ATRL_var		= pl_data.ATRL
-							opt_ATRL_time_var	= pl_data.ATRL_time
-							--opt_UPAP_var		= pl_data.UPAP			
-							opt_SLOT_var		= pl_data.SLOT
-							opt_SLOT_ab_var		= pl_data.SLOT_ab
-							--opt_PLAN_var		= pl_data.PLAN
-							--opt_SBEO			= pl_data.SBEO
-
-							--opt_SLOT			= pl_data.SLOT
-						end
-					end
-				end
-			end
-		end		
-	end
-
-	if forceDebug then
-		opt_DEBUG_var = true
-	end
-
-	-- assign variables
-	MOBJ_var 							= true -- opt_MOBJ_var or DSMC_MapPersistence
-	CRST_var 							= opt_CRST_var or DSMC_StaticDeadUnits		
-	WTHR_var 							= true -- opt_WTHR_var or DSMC_WeatherUpdate	
-	WTHR_fog							= DSMC_DisableFog or false	
-	TMUP_var							= true -- opt_TMUP_var or DSMC_UpdateStartTime		
-	TMUP_cont_var						= opt_TMUP_cont_var or DSMC_UpdateStartTime_mode	
-	WRHS_var							= true -- opt_WRHS_var or DSMC_TrackWarehouses
-	WRHS_rblt							= DSMC_WarehouseAutoSetup or false
-	SPWN_var							= true -- opt_SPWN_var or DSMC_TrackSpawnedUnits
-	DEBUG_var							= opt_DEBUG_var or DSMC_DebugMode
-	ATRL_var							= opt_ATRL_var or DSMC_AutosaveProcess 
-	ATRL_time_var						= opt_ATRL_time_var or DSMC_AutosaveProcess_min 
-	UPAP_var							= DSMC_ExportDocuments or false -- opt_UPAP_var or    NOT USED NOW if true mission briefings will be updated from a mission to another
-	--TAIR_var							= opt_TAIR_var or DSMC_SaveLastPlanePosition
-	SLOT_var							= opt_SLOT_var or DSMC_CreateSlotHeliports
-	SLOT_coa_var						= DSMC_CreateSlotCoalition or "all" -- to test, set this "blue" or "red"
-	SLOT_add_ab							= opt_SLOT_ab_var or DSMC_CreateSlotAirbases -- to test, set this "blue" or "red"
-	STOP_var							= DSMC_AutosaveExit_hours
-	STOP_var_time						= DSMC_AutosaveExit_time
-	STOP_var_safe						= DSMC_AutosaveExit_safe
-	RSTS_var							= DSMC_AutoRestart_active
-	UMLS_var							= DSMC_updateMissionList
-	S247_var							= DSMC_24_7_serverStandardSetup
-	SBEO_var							= DSMC_BuilderToolsBeta or false -- opt_SBEO or    NOT USED NOW if true some mess may happen
-	DGWS_var							= false -- opt_PLAN_var or DSMC_AutomaticAI
-	--PLAN_var							= false -- opt_PLAN_var or DSMC_AutomaticAI
-	RTAI_var							= false -- opt_PLAN_var or DSMC_AutomaticAI
-	CTLD1_var							= DSMC_ctld_recognizeHelos or false
-	CTLD2_var							= DSMC_ctld_recognizeVehicles or false
-	EMBD_var							= DSMC_ExclusionTag
-
-	-- debug call
-	debugProcessDetail = DEBUG_var
-
-	-- reset variable depending from DSMC_24_7_serverStandardSetup
-	if S247_var and S247_var > 0 then
-		writeDebugBase(DSMC_ModuleName .. ": S247_var is a valid setting: " ..tostring(S247_var))
-		if S247_var > 24 then S247_var = 0 end
-		writeDebugBase(DSMC_ModuleName .. ": S247_var filtered: " ..tostring(S247_var))
-		
-		if S247_var > 0 then
-			writeDebugBase(DSMC_ModuleName .. ": S247_var filtered child variables")
-			UMLS_var = true
-			STOP_var = S247_var
-			STOP_var_time = 0
-			STOP_var_safe = true
-			RSTS_var = false
-		end
-	end
-
-	-- debug call
-	writeDebugBase(DSMC_ModuleName .. ": S247_var = " ..tostring(S247_var))
-	writeDebugBase(DSMC_ModuleName .. ": MOBJ_var = " ..tostring(MOBJ_var))
-	writeDebugBase(DSMC_ModuleName .. ": CRST_var = " ..tostring(CRST_var))
-	writeDebugBase(DSMC_ModuleName .. ": WTHR_var = " ..tostring(WTHR_var))
-	writeDebugBase(DSMC_ModuleName .. ": WTHR_fog = " ..tostring(WTHR_fog))
-	writeDebugBase(DSMC_ModuleName .. ": TMUP_var = " ..tostring(TMUP_var))
-	writeDebugBase(DSMC_ModuleName .. ": TMUP_cont_var = " ..tostring(TMUP_cont_var))
-	writeDebugBase(DSMC_ModuleName .. ": WRHS_var = " ..tostring(WRHS_var))
-	writeDebugBase(DSMC_ModuleName .. ": SPWN_var = " ..tostring(SPWN_var))
-	writeDebugBase(DSMC_ModuleName .. ": DEBUG_var = " ..tostring(DEBUG_var))
-	writeDebugBase(DSMC_ModuleName .. ": ATRL_var = " ..tostring(ATRL_var))
-	writeDebugBase(DSMC_ModuleName .. ": ATRL_time_var = " ..tostring(ATRL_time_var))
-	--writeDebugBase(DSMC_ModuleName .. ": TAIR_var = " ..tostring(TAIR_var))
-	writeDebugBase(DSMC_ModuleName .. ": SLOT_var = " ..tostring(SLOT_var))
-	writeDebugBase(DSMC_ModuleName .. ": SLOT_coa_var = " ..tostring(SLOT_coa_var))
-	writeDebugBase(DSMC_ModuleName .. ": SLOT_add_ab = " ..tostring(SLOT_add_ab))	
-	writeDebugBase(DSMC_ModuleName .. ": UPAP_var = " ..tostring(UPAP_var))
-	writeDebugBase(DSMC_ModuleName .. ": STOP_var = " ..tostring(STOP_var))
-	writeDebugBase(DSMC_ModuleName .. ": STOP_var_time = " ..tostring(STOP_var_time))
-	writeDebugBase(DSMC_ModuleName .. ": STOP_var_safe = " ..tostring(STOP_var_safe))
-	writeDebugBase(DSMC_ModuleName .. ": RSTS_var = " ..tostring(RSTS_var))
-	writeDebugBase(DSMC_ModuleName .. ": UMLS_var = " ..tostring(UMLS_var))
-	writeDebugBase(DSMC_ModuleName .. ": SBEO_var = " ..tostring(SBEO_var))
-	writeDebugBase(DSMC_ModuleName .. ": CTLD1_var = " ..tostring(CTLD1_var))
-	writeDebugBase(DSMC_ModuleName .. ": CTLD2_var = " ..tostring(CTLD2_var))
-	writeDebugBase(DSMC_ModuleName .. ": EMBD_var = " ..tostring(EMBD_var))
-
-	--writeDebugBase(DSMC_ModuleName .. ": PLAN_var = " ..tostring(PLAN_var))
-	--writeDebugBase(DSMC_ModuleName .. ": DGWS_var = " ..tostring(DGWS_var))
-
-	-- debug call check (doesn't print if debugProcessDetail is false!)
-	writeDebugDetail(DSMC_ModuleName .. ": debugProcessDetail = " .. tostring(debugProcessDetail))
-
-	-- assign auto save frequency in minutes
-	if ATRL_var then
-		autosavefrequency = tonumber(ATRL_time_var) * 60
-	end
-	
-	-- check STOP_var
-	if STOP_var then
-		if type(STOP_var) == 'number' then
-			if STOP_var > 24 then
-				STOP_var = nil
-			end
-		else
-			STOP_var = nil
-		end
-	end
-
-	-- check STOP_var_time
-	if STOP_var_time then
-		if not STOP_var then
-			if type(STOP_var_time) == 'number' then
-				if STOP_var_time > 23 or STOP_var_time < 1 then
-					STOP_var_time = nil
-				end
-			else
-				STOP_var_time = nil
-			end
-		else
-			STOP_var_time = nil
-		end
-	end
-
-	-- ## DSMC LOCAL MODULES
-
-	function cleanTemp()
-
-		local deletedir
-		deletedir = function(dir)
-			for file in lfs.dir(dir) do
-				if file then
-					local file_path = dir..'/'..file
-					if file ~= "." and file ~= ".." then
-						if lfs.attributes(file_path, 'mode') == 'file' then
-							os.remove(file_path)
-							--print('remove file',file_path)
-						elseif lfs.attributes(file_path, 'mode') == 'directory' then
-							--print('dir', file_path)
-							deletedir(file_path)
-						end
-					end
-				end
-			end
-			lfs.rmdir(dir)
-			--print('remove dir',dir)
-		end
-
-
-		deletedir(DSMCtemp)
-	end
-
-	-- this will decide the saved name in case of server mode and autosave on.
-	function getNewMizFile(curPath)
-		if curPath then
-			if string.find(curPath, "DSMC_ServerReload_") then
-				local start, stop = string.find(curPath, "DSMC_ServerReload_")
-				local start2, stop2 = string.find(curPath, ".miz")
-				local progNum = string.sub(curPath, stop+1, start2-1)
-				writeDebugDetail(DSMC_ModuleName .. ": progNum = " .. tostring(progNum))
-				local numVal = tonumber(progNum)
-				local numVal2 = string.format("%03d", progNum+1)
-				local path = missionfilesdirectory .. "DSMC_ServerReload_" .. numVal2 .. ".miz"
-				writeDebugDetail(DSMC_ModuleName .. ": path = " .. tostring(path))
-			
-				return path
-			else
-				writeDebugDetail(DSMC_ModuleName .. ": returning, DSMC_ServerReload_001.miz")
-				return missionfilesdirectory .. "DSMC_ServerReload_001.miz"
-			end
-		else
-			writeDebugDetail(DSMC_ModuleName .. ": getNewMizFile, curPath non available")
-		end
-	end
 
 	-- ## DSMC CORE MODULES
 	UTIL						= require("UTIL")
 	writeDebugBase(DSMC_ModuleName .. ": loaded UTIL module")
 	SAVE 						= require("SAVE")
 	writeDebugBase(DSMC_ModuleName .. ": loaded SAVE module")
-
-	-- ## DSMC ADDITIONAL MODULES
-	if UTIL.fileExist(DSMCdirectory .. "MOBJ" .. ".lua") == true and MOBJ_var == true then
-		MOBJ 						= require("MOBJ")
-		writeDebugBase(DSMC_ModuleName .. ": loaded MOBJ module")
-	end
-	if UTIL.fileExist(DSMCdirectory .. "CRST" .. ".lua") == true and CRST_var == true then
-		CRST 						= require("CRST")
-		writeDebugBase(DSMC_ModuleName .. ": loaded in CRST module")
-	end
-	if UTIL.fileExist(DSMCdirectory .. "WTHR" .. ".lua") == true and WTHR_var == true then
-		WTHR 						= require("WTHR")
-		writeDebugBase(DSMC_ModuleName .. ": loaded in WTHR module")
-	end
-	if UTIL.fileExist(DSMCdirectory .. "WRHS" .. ".lua") == true and WRHS_var == true then
-		WRHS 						= require("WRHS")
-		writeDebugBase(DSMC_ModuleName .. ": loaded in WRHS module")
-	end
-	if UTIL.fileExist(DSMCdirectory .. "TMUP" .. ".lua") == true and TMUP_var == true then
-		TMUP 						= require("TMUP")
-		writeDebugBase(DSMC_ModuleName .. ": loaded in TMUP module")
-	end
-	if UTIL.fileExist(DSMCdirectory .. "SPWN" .. ".lua") == true and SPWN_var == true then
-		SPWN 						= require("SPWN")
-		writeDebugBase(DSMC_ModuleName .. ": loaded in SPWN module")
-	end
-	if UTIL.fileExist(DSMCdirectory .. "UPAP" .. ".lua") == true and UPAP_var == true then
-		UPAP 						= require("UPAP")
-		writeDebugBase(DSMC_ModuleName .. ": loaded in UPAP module")
-	end
-	if UTIL.fileExist(DSMCdirectory .. "SLOT" .. ".lua") == true then
-		if SLOT_var == true or SLOT_add_ab == true then
-			SLOT 						= require("SLOT")
-			writeDebugBase(DSMC_ModuleName .. ": loaded in SLOT module")
-		end
-	end
-
-	--if UTIL.fileExist(DSMCdirectory .. "DGWS" .. ".lua") == true then
-	--	DGWS 						= require("DGWS")
-	--end
-
-	--if UTIL.fileExist(DSMCdirectory .. "PLAN" .. ".lua") == true and UTIL.fileExist(DSMCdirectory .. "GOAP" .. ".lua") == true and UTIL.fileExist(DSMCdirectory .. "DLNY" .. ".lua") == true and PLAN_var == true then
-		--DLNY 						= require("DLNY")
-		--GOAP 						= require("GOAP")
-		--PLAN 						= require("PLAN")	
-		--writeDebugBase(DSMC_ModuleName .. ": loaded in PLAN module")
-	--end
-
-	if UTIL.fileExist(DSMCdirectory .. "ADTR" .. ".lua") == true then
-		ADTR 						= require("ADTR")
-		writeDebugBase(DSMC_ModuleName .. ": loaded in ADTR module")
-	end
 
 	-- check minimum settings to create callbacks
 	if UTIL and SAVE then
@@ -490,81 +203,35 @@ function recoverAutosave()
 	end
 end
 
-writeDebugDetail(DSMC_ModuleName .. ": loading loadrestart function..")
+function cleanTemp()
 
-function loadRestart()
-
-
-	writeDebugDetail(DSMC_ModuleName .. ": loadRestart, started")
-
-	-- WARNING: DO NOT INDENT LINES BELOW OR THE BATCH FILE WON'T WORK ANYMORE PROPERLY!!!!
-
-local code = [[echo Checking DCS process...
-@echo off
-REM this script is done to provide restart automation
-set "titleWhileRunning=DSMC_DCS_Server_Monitor"
-]] .. "\n"
-code = code .. 'set DCS_PATH=' .. '"' .. lfs.currentdir() .. [[bin\]] .. '"' .. "\n"
-code = code .. [[for /f "tokens=2 delims=," %%a in ('
-tasklist /fi "imagename eq cmd.exe" /v /fo:csv /nh 
-^| findstr /r /c:".DSMC_DCS[^,]$" ') do echo Powershell script already running, wait for it to finish. >&2 & exit /b 1
-
-title %titleWhileRunning%
-taskkill /F /IM DCS.exe
-Color 9A
-echo LAUNCHING DCS...
-
-:Serverrestart
-cd /D %DCS_PATH%
-start "" /wait /min DCS.exe --server --norender
-timeout 40
-echo ============
-goto Serverrestart]]
-
-	writeDebugDetail(DSMC_ModuleName .. ": loadRestart, code created")
-
-	local o = io.open(DSMCdirectory .. 'Files/' .. "DSMC_Restart_DCS.bat", "w")
-	o:write(code)
-	o:close()
-
-	writeDebugDetail(DSMC_ModuleName .. ": loadRestart, .bat file created")
-
-	local revString = DSMCdirectory .. 'Files/' .. 'DSMC_Restart_DCS.bat'
-	local startString = string.gsub(revString, "\\", "/")
-
-	--[[""C:\Program Files\National Instruments\LabVIEW 2009\LabVIEW.exe" "C:\Program Files\National Instruments\LabVIEW 2009\examples\viserver\cmdline.llb\CommandLine.vi" -- 4.0"]]
-	local strCmd = tostring(startString)
-	writeDebugDetail(DSMC_ModuleName .. ": loadRestart, " .. strCmd)
-
-	local function Execute(cmd)
-		local exitCode = os.execute(cmd)
-		if exitCode ~= 0 then
-		   -- If the exit status isn't 0 this should indicate the execution
-		   -- wasn't a complete success. We'll return the pre-defined error
-		   -- message for this exit status or a generic one.
-		   return "Done with possible errors exit code "..exitCode..":\r\n"..cmd
-		else
-		   return "Done"
+	local deletedir
+	deletedir = function(dir)
+		for file in lfs.dir(dir) do
+			if file then
+				local file_path = dir..'/'..file
+				if file ~= "." and file ~= ".." then
+					if lfs.attributes(file_path, 'mode') == 'file' then
+						os.remove(file_path)
+						--print('remove file',file_path)
+					elseif lfs.attributes(file_path, 'mode') == 'directory' then
+						--print('dir', file_path)
+						deletedir(file_path)
+					end
+				end
+			end
 		end
+		lfs.rmdir(dir)
+		--print('remove dir',dir)
 	end
 
-	local loading, errors = Execute(tostring('"' .. strCmd ..  '"'))
-	writeDebugDetail(DSMC_ModuleName .. ": loadRestart, .bat file executed: " .. tostring(loading))
-	writeDebugDetail(DSMC_ModuleName .. ": loadRestart, .bat file errors: " .. tostring(errors))
 
-	--local retry, reErrors = Execute([["C:/Users/Admin/Saved Games/DCS.openbeta_server/DSMC/Files/DSMC_Restart_DCS.bat"]])
-	--writeDebugDetail(DSMC_ModuleName .. ": loadRestart, .bat file retry: " .. tostring(retry))
-	--writeDebugDetail(DSMC_ModuleName .. ": loadRestart, .bat file reErrors: " .. tostring(reErrors))
-
+	deletedir(DSMCtemp)
 end
-
-writeDebugDetail(DSMC_ModuleName .. ": loadrestart function done")
 
 -- callback on start
 function startDSMCprocess()
 	if UTIL and SAVE then
-
-		--UTIL.dumpTable("nightlyGa.lua", _G)
 
 		--## CHECKING MIZ FILENAME, IF NOT DMSCyourfilename THEN STOP
 		loadedMizFileName = DCS.getMissionName()
@@ -574,7 +241,299 @@ function startDSMCprocess()
 		
 		DCS_Multy	= DCS.isMultiplayer()
 		DCS_Server 	= DCS.isServer()
+		DCS_HasGraphics = false
+
+		local function is_norender()
+			return DCS.getConfigValue("norender")
+		end
+		if is_norender() == 0 then
+			DCS_HasGraphics = true
+		end
+
+
+		writeDebugBase(DSMC_ModuleName .. ": DCS_Multy: " .. tostring(DCS.isMultiplayer()))		
+		writeDebugBase(DSMC_ModuleName .. ": DCS_Server: " .. tostring(DCS.isServer()))	
 		
+		--local optCode = DCS.getMissionOptions()
+		--UTIL.dumpTable("DCSoptions.lua", optCode) -- not working correctly in dedicated server with DSMC
+
+		if DCS_HasGraphics == false or forceServerMode == true then -- DCS_Multy
+
+			writeDebugBase(DSMC_ModuleName .. ": Server mode active")
+			writeDebugBase(DSMC_ModuleName .. ": forceServerMode: " .. tostring(forceServerMode))
+			local dso_fcn, dso_err = dofile(DSOdir .. "DSMC_Dedicated_Server_options.lua")
+			if dso_err then
+				writeDebugBase(DSMC_ModuleName .. ": dso_fcn error = " .. tostring(dso_fcn))
+				writeDebugBase(DSMC_ModuleName .. ": dso_err error = " .. tostring(dso_err))
+			end
+		else
+			writeDebugBase(DSMC_ModuleName .. ": Standard mode active")
+
+			local opt_fcn, opt_err = dofile(lfs.writedir() .. "Config/options.lua")
+			if opt_err then
+				writeDebugBase(DSMC_ModuleName .. ": opt_fcn error = " .. tostring(opt_fcn))
+				writeDebugBase(DSMC_ModuleName .. ": opt_err error = " .. tostring(opt_err))
+			end
+			if options then
+				for opt_id, opt_data in pairs(options) do
+					if opt_id == "plugins" then
+						for pl_id, pl_data in pairs (opt_data) do
+							if pl_id == "DSMC" then						
+								
+								opt_CRST_var 		= pl_data.CRST	
+								opt_TMUP_cont_var	= pl_data.TMUP_opt	or 2
+								opt_TMUP_min_var 	= pl_data.TMUP_min	
+								opt_TMUP_max_var 	= pl_data.TMUP_max	
+								opt_SLOT_coa_var	= pl_data.SLOT_coa
+								opt_SLOT_var		= pl_data.SLOT
+								opt_SLOT_ab_var		= pl_data.SLOT_ab								
+								
+								opt_WRHS_var 		= pl_data.WRHS	
+								opt_WTHRfog_var 	= pl_data.WTHRfog	
+
+								opt_ATRL_var		= pl_data.ATRL
+								opt_ATRL_time_var	= pl_data.ATRL_time
+								opt_S247_var		= pl_data.S247
+								opt_S247_time_var	= pl_data.S247_time
+								opt_RF10_var		= pl_data.RF10
+
+								opt_CTLD1_var		= pl_data.CTLD1
+								opt_CTLD2_var		= pl_data.CTLD2
+
+								opt_DEBUG_var		= pl_data.DEBUG
+
+								--opt_MOBJ_var 		= true -- pl_data.MOBJ
+								--opt_TMUP_var		= true -- pl_data.TMUP
+								--opt_SPWN_var		= true -- pl_data.SPWN
+								--opt_UPAP_var		= pl_data.UPAP		
+							end
+						end
+					end
+				end
+			end	
+			
+			if opt_S247_var == false then
+				opt_S247_time_var = nil
+			end
+
+		end
+
+
+		-- reset SLOT_coa_var
+		if SLOT_coa_var == "Blue coalition only" then
+			SLOT_coa_var = "blue"
+		elseif SLOT_coa_var == "Red coalition only" then
+			SLOT_coa_var = "red"
+		elseif SLOT_coa_var == "All" then
+			SLOT_coa_var = "all"			
+		end
+
+		-- reset TMUP_min_var
+		if type(opt_TMUP_min_var) == "string" then
+			opt_TMUP_min_var = tonumber(string.sub(opt_TMUP_min_var, 1, 2))
+		end
+		if type(opt_TMUP_max_var) == "string" then
+			opt_TMUP_max_var = tonumber(string.sub(opt_TMUP_max_var, 1, 2))
+		end
+	
+		-- fixed on variables
+		MOBJ_var 							= true -- opt_MOBJ_var or DSMC_MapPersistence
+		WTHR_var 							= true -- opt_WTHR_var or DSMC_WeatherUpdate
+		TMUP_var							= true -- opt_TMUP_var or DSMC_UpdateStartTime	
+		WRHS_var							= true -- opt_WRHS_var or DSMC_TrackWarehouses
+		
+		-- optional variables
+		DEBUG_var							= opt_DEBUG_var or DSMC_DebugMode
+		CRST_var 							= opt_CRST_var or DSMC_StaticDeadUnits		
+		TMUP_cont_var						= opt_TMUP_cont_var or DSMC_UpdateStartTime_mode
+		TMUP_min_var						= opt_TMUP_min_var or DSMC_StarTimeHourMin
+		TMUP_max_var						= opt_TMUP_max_var or DSMC_StarTimeHourMax
+		SLOT_var							= opt_SLOT_var or DSMC_CreateSlotHeliports
+		SLOT_coa_var						= opt_SLOT_coa_var or DSMC_CreateSlotCoalition or "all" -- to test, set this "blue" or "red"
+		SLOT_add_ab							= opt_SLOT_ab_var or DSMC_CreateSlotAirbases -- to test, set this "blue" or "red
+		WRHS_rblt							= opt_WRHS_var or DSMC_WarehouseAutoSetup
+		WTHR_fog							= opt_WTHRfog_var or DSMC_DisableFog
+
+		ATRL_var							= opt_ATRL_var or DSMC_AutosaveProcess 
+		ATRL_time_var						= opt_ATRL_time_var or DSMC_AutosaveProcess_min 
+		S247_var							= opt_S247_time_var or DSMC_24_7_serverStandardSetup
+		RF10_var							= opt_RF10_var or DSMC_DisableF10save
+		STOP_var							= DSMC_AutosaveExit_hours
+		STOP_var_time						= DSMC_AutosaveExit_time
+		STOP_var_safe						= DSMC_AutosaveExit_safe
+		RSTS_var							= DSMC_AutoRestart_active
+		UMLS_var							= DSMC_updateMissionList	
+		
+		-- CTLD support variables
+		CTLD1_var							= DSMC_ctld_recognizeHelos or false
+		CTLD2_var							= DSMC_ctld_recognizeVehicles or false		
+		
+		-- developer variables
+		SBEO_var							= false 
+		DGWS_var							= false 
+		RTAI_var							= false 
+
+		-- not used currently
+		EMBD_var							= DSMC_ExclusionTag or nil
+		
+		--SPWN_var							= true -- opt_SPWN_var or DSMC_TrackSpawnedUnits
+		--UPAP_var							= DSMC_ExportDocuments or false -- opt_UPAP_var or    NOT USED NOW if true mission briefings will be updated from a mission to another
+	
+		-- debug call
+		debugProcessDetail = DEBUG_var
+
+		-- reset variable depending from DSMC_24_7_serverStandardSetup
+		if DCS_Multy == true and S247_var and S247_var > 0 then
+			writeDebugBase(DSMC_ModuleName .. ": S247_var is a valid setting: " ..tostring(S247_var))
+			if S247_var > 24 then S247_var = 0 end
+			writeDebugBase(DSMC_ModuleName .. ": S247_var filtered: " ..tostring(S247_var))
+			
+			if S247_var > 0 then
+				writeDebugBase(DSMC_ModuleName .. ": S247_var filtered child variables")
+				UMLS_var = true
+				STOP_var = S247_var
+				STOP_var_time = 0
+				STOP_var_safe = true
+				RSTS_var = true
+			end
+		end
+
+		writeDebugBase(DSMC_ModuleName .. ": S247_var = " ..tostring(S247_var))
+		writeDebugBase(DSMC_ModuleName .. ": MOBJ_var = " ..tostring(MOBJ_var))
+		writeDebugBase(DSMC_ModuleName .. ": CRST_var = " ..tostring(CRST_var))
+		writeDebugBase(DSMC_ModuleName .. ": WTHR_var = " ..tostring(WTHR_var))
+		writeDebugBase(DSMC_ModuleName .. ": WTHR_fog = " ..tostring(WTHR_fog))
+		writeDebugBase(DSMC_ModuleName .. ": TMUP_var = " ..tostring(TMUP_var))
+		writeDebugBase(DSMC_ModuleName .. ": TMUP_cont_var = " ..tostring(TMUP_cont_var))
+		writeDebugBase(DSMC_ModuleName .. ": TMUP_max = " ..tostring(TMUP_max))
+		writeDebugBase(DSMC_ModuleName .. ": TMUP_min = " ..tostring(TMUP_min))
+		writeDebugBase(DSMC_ModuleName .. ": WRHS_var = " ..tostring(WRHS_var))
+		writeDebugBase(DSMC_ModuleName .. ": SPWN_var = " ..tostring(SPWN_var))
+		writeDebugBase(DSMC_ModuleName .. ": DEBUG_var = " ..tostring(DEBUG_var))
+		writeDebugBase(DSMC_ModuleName .. ": ATRL_var = " ..tostring(ATRL_var))
+		writeDebugBase(DSMC_ModuleName .. ": ATRL_time_var = " ..tostring(ATRL_time_var))
+		--writeDebugBase(DSMC_ModuleName .. ": TAIR_var = " ..tostring(TAIR_var))
+		writeDebugBase(DSMC_ModuleName .. ": SLOT_var = " ..tostring(SLOT_var))
+		writeDebugBase(DSMC_ModuleName .. ": SLOT_coa_var = " ..tostring(SLOT_coa_var))
+		writeDebugBase(DSMC_ModuleName .. ": SLOT_add_ab = " ..tostring(SLOT_add_ab))	
+		writeDebugBase(DSMC_ModuleName .. ": UPAP_var = " ..tostring(UPAP_var))
+		writeDebugBase(DSMC_ModuleName .. ": STOP_var = " ..tostring(STOP_var))
+		writeDebugBase(DSMC_ModuleName .. ": STOP_var_time = " ..tostring(STOP_var_time))
+		writeDebugBase(DSMC_ModuleName .. ": STOP_var_safe = " ..tostring(STOP_var_safe))
+		writeDebugBase(DSMC_ModuleName .. ": RSTS_var = " ..tostring(RSTS_var))
+		writeDebugBase(DSMC_ModuleName .. ": UMLS_var = " ..tostring(UMLS_var))
+		writeDebugBase(DSMC_ModuleName .. ": SBEO_var = " ..tostring(SBEO_var))
+		writeDebugBase(DSMC_ModuleName .. ": CTLD1_var = " ..tostring(CTLD1_var))
+		writeDebugBase(DSMC_ModuleName .. ": CTLD2_var = " ..tostring(CTLD2_var))
+		writeDebugBase(DSMC_ModuleName .. ": EMBD_var = " ..tostring(EMBD_var))
+		
+		-- ## DSMC ADDITIONAL MODULES
+		if UTIL.fileExist(DSMCdirectory .. "MOBJ" .. ".lua") == true and MOBJ_var == true then
+			MOBJ 						= require("MOBJ")
+			writeDebugBase(DSMC_ModuleName .. ": loaded MOBJ module")
+		end
+		if UTIL.fileExist(DSMCdirectory .. "CRST" .. ".lua") == true and CRST_var == true then
+			CRST 						= require("CRST")
+			writeDebugBase(DSMC_ModuleName .. ": loaded in CRST module")
+		end
+		if UTIL.fileExist(DSMCdirectory .. "WTHR" .. ".lua") == true and WTHR_var == true then
+			WTHR 						= require("WTHR")
+			writeDebugBase(DSMC_ModuleName .. ": loaded in WTHR module")
+		end
+		if UTIL.fileExist(DSMCdirectory .. "WRHS" .. ".lua") == true and WRHS_var == true then
+			WRHS 						= require("WRHS")
+			writeDebugBase(DSMC_ModuleName .. ": loaded in WRHS module")
+		end
+		if UTIL.fileExist(DSMCdirectory .. "TMUP" .. ".lua") == true and TMUP_var == true then
+			TMUP 						= require("TMUP")
+			writeDebugBase(DSMC_ModuleName .. ": loaded in TMUP module")
+		end
+		if UTIL.fileExist(DSMCdirectory .. "SPWN" .. ".lua") == true and SPWN_var == true then
+			SPWN 						= require("SPWN")
+			writeDebugBase(DSMC_ModuleName .. ": loaded in SPWN module")
+		end
+		if UTIL.fileExist(DSMCdirectory .. "UPAP" .. ".lua") == true and UPAP_var == true then
+			UPAP 						= require("UPAP")
+			writeDebugBase(DSMC_ModuleName .. ": loaded in UPAP module")
+		end
+		if UTIL.fileExist(DSMCdirectory .. "SLOT" .. ".lua") == true then
+			if SLOT_var == true or SLOT_add_ab == true then
+				SLOT 						= require("SLOT")
+				writeDebugBase(DSMC_ModuleName .. ": loaded in SLOT module")
+			end
+		end
+
+		--if UTIL.fileExist(DSMCdirectory .. "DGWS" .. ".lua") == true then
+		--	DGWS 						= require("DGWS")
+		--end
+
+		if UTIL.fileExist(DSMCdirectory .. "ADTR" .. ".lua") == true then
+			ADTR 						= require("ADTR")
+			writeDebugBase(DSMC_ModuleName .. ": loaded in ADTR module")
+		end
+
+		-- check desanitization
+		desanitizer()
+	
+		-- debug call check (doesn't print if debugProcessDetail is false!)
+		writeDebugDetail(DSMC_ModuleName .. ": debugProcessDetail = " .. tostring(debugProcessDetail))
+	
+		-- assign auto save frequency in minutes
+		if ATRL_var then
+			autosavefrequency = tonumber(ATRL_time_var) * 60
+		end
+		
+		-- check STOP_var
+		if STOP_var then
+			if type(STOP_var) == 'number' then
+				if STOP_var > 24 then
+					STOP_var = nil
+				end
+			else
+				STOP_var = nil
+			end
+		end
+	
+		-- check STOP_var_time
+		if STOP_var_time then
+			if not STOP_var then
+				if type(STOP_var_time) == 'number' then
+					if STOP_var_time > 23 or STOP_var_time < 1 then
+						STOP_var_time = nil
+					end
+				else
+					STOP_var_time = nil
+				end
+			else
+				STOP_var_time = nil
+			end
+		end
+	
+		-- ## DSMC LOCAL MODULES
+
+		-- this will decide the saved name in case of server mode and autosave on.
+		function getNewMizFile(curPath)
+			if curPath then
+				if string.find(curPath, "DSMC_ServerReload_") then
+					local start, stop = string.find(curPath, "DSMC_ServerReload_")
+					local start2, stop2 = string.find(curPath, ".miz")
+					local progNum = string.sub(curPath, stop+1, start2-1)
+					writeDebugDetail(DSMC_ModuleName .. ": progNum = " .. tostring(progNum))
+					local numVal = tonumber(progNum)
+					local numVal2 = string.format("%03d", progNum+1)
+					local path = missionfilesdirectory .. "DSMC_ServerReload_" .. numVal2 .. ".miz"
+					writeDebugDetail(DSMC_ModuleName .. ": path = " .. tostring(path))
+				
+					return path
+				else
+					writeDebugDetail(DSMC_ModuleName .. ": returning, DSMC_ServerReload_001.miz")
+					return missionfilesdirectory .. "DSMC_ServerReload_001.miz"
+				end
+			else
+				writeDebugDetail(DSMC_ModuleName .. ": getNewMizFile, curPath non available")
+			end
+		end
+
 		if not DCS_Multy then
 			WRHS_rblt = true
 		end
@@ -649,8 +608,8 @@ function startDSMCprocess()
 						UTIL.inJectCode("DSMC_Date", "DSMC_Date = " .. tostring(DSMC_Date))
 
 						-- inject variables
-						UTIL.inJectCode("DSMC_F10save", "DSMC_DisableF10save = " .. tostring(DSMC_DisableF10save)) -- DSMC_disableF10  menu option
-						UTIL.inJectCode("DSMC_ServerMode", "DSMC_ServerMode = " .. tostring(DSMC_ServerMode)) -- DSMC_dediserv
+						UTIL.inJectCode("DSMC_F10save", "DSMC_DisableF10save = " .. tostring(RF10_var)) -- DSMC_disableF10  menu option
+						UTIL.inJectCode("DSMC_ServerMode", "DSMC_ServerMode = " .. tostring(DCS_Multy)) -- DSMC_dediserv
 						UTIL.inJectCode("DCSmulty", "DSMC_multy = " .. tostring(DCS.isMultiplayer()))
 						UTIL.inJectCode("DCSserver", "DSMC_server = " .. tostring(DCS.isServer()))
 						UTIL.inJectCode("debugProcessDetail", "DSMC_debugProcessDetail = " .. tostring(debugProcessDetail))
@@ -789,28 +748,9 @@ function startDSMCprocess()
 						end		
 
 						writeDebugDetail(DSMC_ModuleName .. ": loaded all variables")
-
-						--lfs.mkdir(DSMCtemp)
-						--lfs.mkdir(DSMCfiles)
-						--writeDebugDetail(DSMC_ModuleName .. ": created dir = " .. tostring(missionfilesdirectory .. "Temp/"))
 						
 						UTIL.copyFile(loadedMissionPath, DSMCfiles .. "tempFile.miz")		
 						writeDebugDetail(DSMC_ModuleName .. ": base file copied")
-
-						--local tmpSlots = DCS.getAvailableSlots("blue")
-						--UTIL.dumpTable("slotsData.lua", tmpSlots)
-
-
-						
-						if STOP_var or STOP_var then
-							if RSTS_var then
-								writeDebugBase(DSMC_ModuleName .. ": STOP_var is true, activating autorestart .bat file")
-								loadRestart()
-								writeDebugBase(DSMC_ModuleName .. ": STOP_var is true, .bat file activated")
-							end
-						else
-							writeDebugBase(DSMC_ModuleName .. ": STOP_var is false, no autorestart required")
-						end
 
 						writeDebugBase(DSMC_ModuleName .. ": Initial loop done, loading testfunctions if there")
 						
@@ -819,6 +759,7 @@ function startDSMCprocess()
 						end
 
 						writeDebugBase(DSMC_ModuleName .. ": Initial loop done, mission is started now!")
+
 					else
 						writeDebugDetail(DSMC_ModuleName .. ": setMaxId failed to get base counters! HALT ALL")
 						return false
@@ -841,28 +782,36 @@ end
 
 -- callback on start
 function desanitizer()
-	if ATRL_var or DSMC_ServerMode then
+	if ATRL_var or DCS_Server or S247_var then
+		writeDebugBase(DSMC_ModuleName .. ": desanitizer, starting... ")
 		local f=io.open(missionscriptingluaPath,"r")
 		if f~=nil then 
 		
 			local newText = ""
 			for line in f:lines() do				
 				if string.find(line, "sanitizeModule%('os'%)") and not string.find(line, "%-%-sanitizeModule%('os'%)") then
+					writeDebugBase(DSMC_ModuleName .. ": desanitizer, desanitize os")
 					local newline = string.gsub(line, "sanitizeModule%('os'%)", "%-%-sanitizeModule%('os'%), commented by DSMC: if you won't desanitized environment, please disable the autosave option!")	
 					newText = newText .. tostring(newline) .. "\n"
+					
 				elseif string.find(line, "sanitizeModule%('io'%)") and not string.find(line, "%-%-sanitizeModule%('io'%)")  then
+					writeDebugBase(DSMC_ModuleName .. ": desanitizer, desanitize io")
 					local newline = string.gsub(line, "sanitizeModule%('io'%)", "%-%-sanitizeModule%('io'%), commented by DSMC: if you won't desanitized environment, please disable the autosave option!")	
 					newText = newText .. tostring(newline) .. "\n"				
 				elseif string.find(line, "sanitizeModule%('lfs'%)") and not string.find(line, "%-%-sanitizeModule%('lfs'%)")  then
+					writeDebugBase(DSMC_ModuleName .. ": desanitizer, desanitize lfs")
 					local newline = string.gsub(line, "sanitizeModule%('lfs'%)", "%-%-sanitizeModule%('lfs'%), commented by DSMC: if you won't desanitized environment, please disable the autosave option!")	
 					newText = newText .. tostring(newline) .. "\n"				
 				elseif string.find(line, "%_G%['require'%] = nil") and not string.find(line, "%-%-%_G%['require'%] = nil")  then
+					writeDebugBase(DSMC_ModuleName .. ": desanitizer, desanitize require")
 					local newline = string.gsub(line, "%_G%['require'%] = nil", "%-%-%_G%['require'%] = nil, commented by DSMC: if you won't desanitized environment, please disable the autosave option!")	
 					newText = newText .. tostring(newline) .. "\n"
 				elseif string.find(line, "%_G%['loadlib'%] = nil") and not string.find(line, "%-%-%_G%['loadlib'%] = nil")  then
+					writeDebugBase(DSMC_ModuleName .. ": desanitizer, desanitize loadlib")
 					local newline = string.gsub(line, "%_G%['loadlib'%] = nil", "%-%-%_G%['loadlib'%] = nil, commented by DSMC: if you won't desanitized environment, please disable the autosave option!")	
 					newText = newText .. tostring(newline) .. "\n"	
 				elseif string.find(line, "%_G%['package'%] = nil") and not string.find(line, "%-%-%_G%['package'%] = nil")  then
+					writeDebugBase(DSMC_ModuleName .. ": desanitizer, desanitize package")
 					local newline = string.gsub(line, "%_G%['package'%] = nil", "%-%-%_G%['package'%] = nil, commented by DSMC: if you won't desanitized environment, please disable the autosave option!")	
 					newText = newText .. tostring(newline) .. "\n"				
 				else
@@ -876,6 +825,7 @@ function desanitizer()
 			local o = io.open(missionscriptingluaPath, "w")
 			o:write(newText)
 			o:close()
+			writeDebugBase(DSMC_ModuleName .. ": desanitizer, desanitize done")
 			return true
 			
 		else 
@@ -1064,6 +1014,19 @@ function saveOnDisconnect()
 	end
 end
 
+function loadRestart()
+	writeDebugBase(DSMC_ModuleName .. ": checking new file name...")
+	local n = SAVE.getNewMissionName(loadedMizFileName)
+	local p = missionfilesdirectory .. n
+	writeDebugBase(DSMC_ModuleName .. ": new file name: " .. tostring(p) )
+	if UTIL.fileExist(p) then
+		writeDebugBase(DSMC_ModuleName .. ": file exist, restart")
+		net.load_mission(p)
+	else
+		writeDebugBase(DSMC_ModuleName .. ": file does not exist, halting restart")
+	end
+end
+
 --## CALLBACKS
 function DSMC.onSimulationStart()
 	startDSMCprocess()
@@ -1119,12 +1082,9 @@ function DSMC.onTriggerMessage(message)
 					--command save actions
 					batchSaveProcess()
 
-				elseif message == "DSMC close..." then			
-					writeDebugBase(DSMC_ModuleName .. ": DCS is closing due to trigger message DSMC close")
-					DCS.exitProcess()
-
 				elseif message == "DSMC is trying to restart the server! land or disconnect as soon as you can: DSMC will try again in 10 minutes" then			
 					--command server closeup
+					writeDebugDetail(DSMC_ModuleName .. ": checking restart, STOP_var_safe = " .. tostring(STOP_var_safe))
 
 					if STOP_var_safe == true then
 
@@ -1133,11 +1093,25 @@ function DSMC.onTriggerMessage(message)
 						if player_tbl then
 							num_clients = tonumber(#player_tbl) - 1
 							writeDebugDetail(DSMC_ModuleName .. ": there are " .. tostring(num_clients) .. " clients connected")
-							if num_clients == 0 then
-								writeDebugBase(DSMC_ModuleName .. ": Closing DCS!")
+							if num_clients < 1 then
 
-								DCS.stopMission()
-								DCSshouldCloseNow = true
+								writeDebugDetail(DSMC_ModuleName .. ": performing save process batchSaveProcess..")
+								batchSaveProcess()
+								writeDebugDetail(DSMC_ModuleName .. ": batchSaveProcess done..")
+
+								if RSTS_var == true and DCS.isMultiplayer() == true then
+									DCSshouldCloseNow = true
+									writeDebugBase(DSMC_ModuleName .. ": RSTS_var is true, activating autorestart")
+									loadRestart()
+								else
+									writeDebugBase(DSMC_ModuleName .. ": Closing DCS!")
+									DCS.stopMission()
+									DCSshouldCloseNow = true
+								end
+
+								--writeDebugBase(DSMC_ModuleName .. ": Closing DCS!")
+								--DCS.stopMission()
+								--DCSshouldCloseNow = true
 							else
 								writeDebugBase(DSMC_ModuleName .. ": there are " .. tostring(num_clients) .. " clients connected, can't close DCS: delayed 10 mins")	
 							end			
@@ -1145,10 +1119,22 @@ function DSMC.onTriggerMessage(message)
 					else
 						writeDebugBase(DSMC_ModuleName .. ": Closing DCS without checking clients!")
 
-						DCS.stopMission()
-						DCSshouldCloseNow = true
+						writeDebugDetail(DSMC_ModuleName .. ": performing save process batchSaveProcess..")
+						batchSaveProcess()
+						writeDebugDetail(DSMC_ModuleName .. ": batchSaveProcess done..")
+
+						if RSTS_var == true and DCS.isMultiplayer() == true then
+							DCSshouldCloseNow = true
+							writeDebugBase(DSMC_ModuleName .. ": RSTS_var is true, activating autorestart")
+							loadRestart()
+						else
+							writeDebugBase(DSMC_ModuleName .. ": Closing DCS!")
+							DCS.stopMission()
+							DCSshouldCloseNow = true
+						end
 
 					end
+
 				end
 			end
 		end
@@ -1227,7 +1213,7 @@ end
 writeDebugDetail(DSMC_ModuleName .. ": callbacks loaded")
 DCS.setUserCallbacks(DSMC)
 
-desanitizer()
+
 recoverAutosave()
 
 if UTIL then
@@ -1245,5 +1231,7 @@ local language, langCountry = lang.getLocale()
 writeDebugDetail(DSMC_ModuleName .. ": language = " .. tostring(language) .. ", langCountry = " .. tostring(langCountry))
 
 writeDebugBase(DSMC_ModuleName .. ": Loaded " .. DSMC_MainVersion .. "." .. DSMC_SubVersion .. "." .. DSMC_SubSubVersion .. "." .. DSMC_Build .. ", released " .. DSMC_Date)
+
+UTIL.dumpTable("log.lua", logHistory)
 
 --~=

@@ -18,8 +18,8 @@ HOOK.writeDebugDetail(ModuleName .. ": local required loaded")
 
 -- ## LOCAL VARIABLES
 TMUPloaded						= false
-local minHourTime				= DSMC_StarTimeHourMin or 4   -- this is the minimum clock hour that could be set for mission start
-local maxHourTime				= DSMC_StarTimeHourMax or 16  -- this is the maximum clock hour that could be set for mission start
+local minHourTime				= TMUP_min_var or 4   -- this is the minimum clock hour that could be set for mission start
+local maxHourTime				= TMUP_max_var or 16  -- this is the maximum clock hour that could be set for mission start
 
 -- ## MANUAL TABLES
 
