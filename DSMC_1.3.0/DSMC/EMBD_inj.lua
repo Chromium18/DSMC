@@ -718,14 +718,20 @@ function EMBD.updateSpawnedPosition(tblSpawned, missionEnv)
 								if unit:getLife() > 1 then
 									local unitPos  	= unit:getPosition().p					
 									uData.uPos = unitPos
-									env.info(("EMBD.updateSpawnedPosition udata updated"))
+									if DSMC_debugProcessDetail == true then
+										env.info(("EMBD.updateSpawnedPosition udata updated"))
+									end
 								else
 									uData.uAlive = false
-									env.info(("EMBD.updateSpawnedPosition unit dead, removed"))
+									if DSMC_debugProcessDetail == true then
+										env.info(("EMBD.updateSpawnedPosition unit dead, removed"))
+									end
 								end
 							else
 								uData.uAlive = false
-								env.info(("EMBD.updateSpawnedPosition unit missing, removed"))					
+								if DSMC_debugProcessDetail == true then
+									env.info(("EMBD.updateSpawnedPosition unit missing, removed"))		
+								end			
 							end
 							if DSMC_debugProcessDetail == true then
 								env.info(("EMBD.updateSpawnedPosition unit check complete"))
@@ -1431,25 +1437,41 @@ EMBD.oncallworkflow = function(sanivar, recall)
 	env.info(("EMBD.oncallworkflow saveProcess finished"))
 end
 
+
+EMBD.preSaveCallback = nil
+
+-- original save method, renamed and called from the timer below
+EMBD.executeSAVEFunction = function(recall)
+  env.info(("EMBD.executeSAVEFunction launched. recall = " .. tostring(recall)))
+
+  if DSMC_ServerMode == true then
+    env.info(("EMBD.executeSAVE is in dedicated server mode"))
+    if DSMC_lfs and DSMC_io then
+      EMBD.oncallworkflow("desanitized", recall)
+    else
+      EMBD.runDesanMessage()
+    end
+  else
+    env.info(("EMBD.executeSAVE is in standard mode"))
+    if DSMC_lfs and DSMC_io then
+      EMBD.oncallworkflow("desanitized", recall)
+    else
+      EMBD.oncallworkflow("sanitized", recall)
+    end  
+  end
+  --dumpTable("wh_after.lua", env.warehouses)
+end
+
+-- new entry to make the callback detached and allow DSMC to process any mission changes.
 EMBD.executeSAVE = function(recall)
 	env.info(("EMBD.executeSAVE launched. recall = " .. tostring(recall)))
-	if DSMC_ServerMode == true then
-		env.info(("EMBD.executeSAVE is in dedicated server mode"))
-		if DSMC_lfs and DSMC_io then
-			EMBD.oncallworkflow("desanitized", recall)
-		else
-			EMBD.runDesanMessage()
-		end
-	else
-		env.info(("EMBD.executeSAVE is in standard mode"))
-		if DSMC_lfs and DSMC_io then
-			EMBD.oncallworkflow("desanitized", recall)
-		else
-			EMBD.oncallworkflow("sanitized", recall)
-		end	
+  
+	if EMBD.preSaveCallback ~= nil then
+	  EMBD.preSaveCallback()
 	end
-	--dumpTable("wh_after.lua", env.warehouses)
-end
+  
+	timer.scheduleFunction(EMBD.executeSAVEFunction, recall, timer.getTime() + 0.1)
+  end
 
 EMBD.runDesanMessage = function()
 	local function Desanmessage()
@@ -2157,6 +2179,7 @@ function EMBD.collectSpawned:onEvent(event)
 				tblSpawned[ei_gName] = {gID = tonumber(ei_ID), gCat = Object.getCategory(event.initiator), gAlt= ei_Altitude, gName = ei_gName, gCoalition = ei_coalition, gCountry = ei_country, gType = "static", gCounter = tblSpawnedcounter, gTable = ei, gPos = ei_pos, gUnits = ei_unitTable, gStaticAlive = true}
 			end
 		elseif Object.getCategory(event.initiator) == 6 then -- cargo
+			env.info(("EMBD.collectSpawned cargo"))
 			local _eiUnitData = event.initiator
 			local ei_gName = StaticObject.getName(event.initiator)
 			local ei = StaticObject.getByName(ei_gName)
@@ -2169,11 +2192,14 @@ function EMBD.collectSpawned:onEvent(event)
 			local ei_ID = DSMC_baseGcounter -- ei:getID()
 			local ei_Weight = event.initiator:getCargoWeight()
 			
+			env.info(("EMBD.collectSpawned static, ei_gName " .. tostring(ei_gName)))
+
 			if ei_gName then
 				ei_unitTable[#ei_unitTable+1] = {uID = tonumber(_eiUnitData:getID()), uName = _eiUnitData:getName(), uPos = _eiUnitData:getPosition().p, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true, uWeight = ei_Weight}
 			end
 
 			if ei and not tblSpawned[ei_gName] then
+				env.info(("EMBD.collectSpawned static, adding " .. tostring(ei_gName) .. " to the tblSpawned table"))
 				tblSpawnedcounter = tblSpawnedcounter + 1
 				tblSpawned[ei_gName] = {gID = tonumber(ei_ID), gCat = Object.getCategory(event.initiator), gAlt= ei_Altitude, gName = ei_gName, gCoalition = ei_coalition, gCountry = ei_country, gType = "static", gCounter = tblSpawnedcounter, gTable = ei, gPos = ei_pos, gUnits = ei_unitTable, gStaticAlive = true}					
 			end		

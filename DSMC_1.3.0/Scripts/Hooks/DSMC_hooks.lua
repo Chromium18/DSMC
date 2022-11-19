@@ -37,8 +37,8 @@ DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "3"
 DSMC_SubSubVersion 	= "0"
-DSMC_Build 			= "2201"
-DSMC_Date			= "13/11/2022"
+DSMC_Build 			= "2202"
+DSMC_Date			= "19/11/2022"
 
 -- ## DEBUG TO TEXT FUNCTION
 local forceServerMode 	= false
@@ -341,6 +341,7 @@ function startDSMCprocess()
 		WTHR_var 							= true -- opt_WTHR_var or DSMC_WeatherUpdate
 		TMUP_var							= true -- opt_TMUP_var or DSMC_UpdateStartTime	
 		WRHS_var							= true -- opt_WRHS_var or DSMC_TrackWarehouses
+		SPWN_var							= true -- opt_WRHS_var or DSMC_TrackWarehouses
 		
 		-- optional variables
 		DEBUG_var							= opt_DEBUG_var or DSMC_DebugMode
