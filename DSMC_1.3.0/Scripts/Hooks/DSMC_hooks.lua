@@ -318,14 +318,41 @@ function startDSMCprocess()
 
 		end
 
-
+		writeDebugBase(DSMC_ModuleName .. ": opt_SLOT_coa_var: " ..tostring(opt_SLOT_coa_var))
 		-- reset SLOT_coa_var
-		if SLOT_coa_var == "Blue coalition only" then
-			SLOT_coa_var = "blue"
-		elseif SLOT_coa_var == "Red coalition only" then
-			SLOT_coa_var = "red"
-		elseif SLOT_coa_var == "All" then
-			SLOT_coa_var = "all"			
+		if opt_SLOT_coa_var == 1 then
+			opt_SLOT_coa_var = "blue"
+		elseif opt_SLOT_coa_var == 2 then
+			opt_SLOT_coa_var = "red"
+		elseif opt_SLOT_coa_var == 0 then
+			opt_SLOT_coa_var = "all"			
+		end
+		writeDebugBase(DSMC_ModuleName .. ": opt_SLOT_coa_var: " ..tostring(opt_SLOT_coa_var))
+
+		if opt_TMUP_min_var == 0 then
+			opt_TMUP_min_var = 4
+		elseif opt_TMUP_min_var == 1 then
+			opt_TMUP_min_var = 6
+		elseif opt_TMUP_min_var == 2 then
+			opt_TMUP_min_var = 8
+		elseif opt_TMUP_min_var == 3 then
+			opt_TMUP_min_var = 10
+		elseif opt_TMUP_min_var == 4 then
+			opt_TMUP_min_var = 12
+		elseif opt_TMUP_min_var == 5 then
+			opt_TMUP_min_var = 14
+		end
+
+		if opt_TMUP_max_var == 0 then
+			opt_TMUP_max_var = 15
+		elseif opt_TMUP_max_var == 1 then
+			opt_TMUP_max_var = 17
+		elseif opt_TMUP_max_var == 2 then
+			opt_TMUP_max_var = 19
+		elseif opt_TMUP_max_var == 3 then
+			opt_TMUP_max_var = 21
+		elseif opt_TMUP_max_var == 4 then
+			opt_TMUP_max_var = 23
 		end
 
 		-- reset TMUP_min_var
