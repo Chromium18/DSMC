@@ -1412,7 +1412,7 @@ function getMizFiles(loadedMissionPath)
 				break
 			end
 		end
-		zipFile:unzClose()
+		--zipFile:unzClose() --moved below
 		return NewSaveresourceFiles
 	end
 	Unpack() -- execute the unpacking	
@@ -1427,6 +1427,7 @@ function getMizFiles(loadedMissionPath)
 		end
 	end
 	deleteFiles()	
+	zipFile:unzClose()
 	HOOK.writeDebugDetail(ModuleName .. ": getMizFiles - files deleted")
 	
 	-- remove directories
