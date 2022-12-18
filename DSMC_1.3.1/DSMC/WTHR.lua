@@ -27,11 +27,6 @@ DewPointCalc					= nil
 local rndFactorPerc				= 15 --% of randomization on calculated values
 local cloudFog					= false
 
--- single player / host with graphics: fog will be enabled
-if DSMC_ServerMode == false then
-	HOOK.writeDebugDetail(ModuleName .. ": Weather: fog disable turned off due to single player or host with graphics mode")	
-	WTHR_fog = false 
-end
 
 --# RND SEED
 math.randomseed(os.time())

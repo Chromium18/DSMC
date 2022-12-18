@@ -1,4 +1,4 @@
--- Dynamic Sequential Mission Campaign -- DSMC core injected functions module
+-- Dynamic Sequential Mission Campaign -- DSMC core injected functions module  1.3.1
 -- REWORK T/O and LAND to allow multiple sorties!
 
 local ModuleName  	= "EMBD"
@@ -372,7 +372,7 @@ function EMBD.getAptInfo()
 	end
 end
                                                                                                                                                            
-function EMBD.sendUnitsData(missionEnv)	--what does it do with statics??
+function EMBD.sendUnitsData(missionEnv)
 	tblUnitsUpdate = {}
 	for coalitionID,coalition in pairs(missionEnv["coalition"]) do
 		for countryID,country in pairs(coalition["country"]) do
@@ -831,7 +831,26 @@ function EMBD.updateSpawnedPosition(tblSpawned, missionEnv)
 end
 
 function EMBD.elabLogistic(tblLogCollect)	
+
+		--clean tblLogCollect from dead warehouses ships & similar
+		for eId, eData in pairs(tblLogCollect) do
+			if eData.place then
+				local exist = eData.place:isExist()
+				if exist == false then
+					if DSMC_debugProcessDetail == true then
+						env.info(("EMBD.elabLogistic tblLogCollect place data not existing in the mission: missing place"))
+					end	
+					tblLogCollect[eId] = nil				
+				end
 	
+			else
+				if DSMC_debugProcessDetail == true then
+					env.info(("EMBD.elabLogistic tblLogCollect place data not existing in the table: missing place"))
+				end	
+				tblLogCollect[eId] = nil
+			end
+		end
+
 	if tblLogisticAdds then
 		if DSMC_debugProcessDetail == true then
 			env.info(("EMBD.elabLogistic adding entries from WRHSJ"))

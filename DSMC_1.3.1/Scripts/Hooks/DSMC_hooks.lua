@@ -12,6 +12,7 @@ minizip 					= require('minizip')
 local lang					= require('i18n')
 DSMCdir						= lfs.writedir() .. "DSMC/"
 DSOdir						= lfs.writedir()
+local MsgWindow				= require('MsgWindow')
 
 guiBindPath = './dxgui/bind/?.lua;' .. 
               './dxgui/loader/?.lua;' .. 
@@ -30,19 +31,19 @@ package.path =
 	.. './Scripts/UI/Multiplayer/?.lua;'
 	.. './Scripts/DemoScenes/?.lua;'
 	.. './MAC_Gui/?.lua;'	
-	..package.path
+	.. package.path
 
 
 DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "3"
-DSMC_SubSubVersion 	= "0"
-DSMC_Build 			= "2204"
-DSMC_Date			= "03/12/2022"
+DSMC_SubSubVersion 	= "1"
+DSMC_Build 			= "2209"
+DSMC_Date			= "18/12/2022"
 
 -- ## DEBUG TO TEXT FUNCTION
 local forceServerMode 	= false
-local forceDebug 		= true
+local debugDGWS			= true
 
 -- keep old DSMC.log file as "old"
 local cur_debuglogfile  = io.open(lfs.writedir() .. "Logs/" .. "DSMC.log", "r")
@@ -89,6 +90,8 @@ StartFilterCode				= "DSMC"
 writeDebugBase(DSMC_ModuleName .. ": main variables loaded")
 
 -- ## LOCAL VARIABLES
+loadedMizFileName 			= nil
+loadedMissionPath 			= nil
 DSMCloader 					= false
 DCSshouldCloseNow			= false
 mapObj_deathcounter 		= 0
@@ -119,12 +122,14 @@ autosavefrequency			= nil -- minutes
 DCS_Multy					= nil
 DCS_Server					= nil
 DSMC_isRecovering			= false
+DSMC_isExportingCSVs		= false -- turning this true will have a VERY heavy impact on first simulation start and at each update.
 local alreadyStarted		= false
 writeDebugDetail(DSMC_ModuleName .. ": local variables loaded")
 
 -- ## PATHS VARIABLES
 DSMCdirectory				= lfs.writedir() .. "DSMC/"
 missionfilesdirectory 		= lfs.writedir() .. "Missions/"
+--shareddatadirectory 		= lfs.writedir() .. "Missions/DSMC_sharedData/"
 DSMCtemp					= missionfilesdirectory .. "Temp/"
 DSMCfiles					= missionfilesdirectory .. "Temp/Files/"  
 tempmissionfilesdirectory	= lfs.tempdir() .. "DSMCunpack/"
@@ -154,6 +159,21 @@ function loadDSMCHooks()
 	writeDebugBase(DSMC_ModuleName .. ": loaded UTIL module")
 	SAVE 						= require("SAVE")
 	writeDebugBase(DSMC_ModuleName .. ": loaded SAVE module")
+	
+	WLIB 						= require("WLIB")
+	writeDebugBase(DSMC_ModuleName .. ": loaded in WLIB module")
+	METR 						= require("METR")
+	writeDebugBase(DSMC_ModuleName .. ": loaded in METR module")
+	WTHR 						= require("WTHR")
+	writeDebugBase(DSMC_ModuleName .. ": loaded in WTHR module")
+
+
+	if debugDGWS == true then
+		debugProcessDetail = true
+		if UTIL.fileExist(DSMCdirectory .. "DGWS" .. ".lua") == true then
+			DGWS 						= require("DGWS")
+		end
+	end
 
 	-- check minimum settings to create callbacks
 	if UTIL and SAVE then
@@ -161,6 +181,34 @@ function loadDSMCHooks()
 	else
 		writeDebugBase(DSMC_ModuleName .. ": SAVER or UTIL failed loading, stop process")
 		return
+	end
+
+	if DSMC_isExportingCSVs == true then
+		if UTIL.fileExist(DSMCdirectory .. "DSMC_wpnDB.lua") then
+			local tbl_fcn, tbl_err = dofile(DSMCdirectory .. "DSMC_wpnDB.lua")
+			if tbl_err then
+				writeDebugDetail(DSMC_ModuleName .. ": weapons database : tbl_err = " .. tostring(tbl_err))
+			end
+
+			if DSMC_wpnDB.version == _G._APP_VERSION then
+				writeDebugBase(DSMC_ModuleName .. ": weapons database is there and updated, skipping")
+			else
+				writeDebugBase(DSMC_ModuleName .. ": weapons database is there but outdated, rebuilding")
+				--MsgWindow.info("DSMC needs to rebuilt the weapon database: this process is going to take some time (even 10-15 minutes!)", _("DSMC version " .. DSMC_MainVersion .. "." .. DSMC_SubVersion .. "." .. DSMC_SubSubVersion .. "." .. DSMC_Build), _("OK")):show()
+				UTIL.exportWpnDb()			
+
+			end
+
+		else
+			writeDebugBase(DSMC_ModuleName .. ": weapons database is missing, building up")
+			--MsgWindow.info("DSMC needs to rebuilt the weapon database: this process is going to take some time (even 10-15 minutes!)", _("DSMC version " .. DSMC_MainVersion .. "." .. DSMC_SubVersion .. "." .. DSMC_SubSubVersion .. "." .. DSMC_Build), _("OK")):show()
+			UTIL.exportWpnDb()
+		end
+
+		UTIL.dumpTable("DSMC_wpnDB_check.lua", DSMC_wpnDB) -- debug!!!!
+
+		-- test per webber
+		UTIL.addAircraftIndexToWhDatabase(missionfilesdirectory .. "warehouses_prova")
 	end
 
 end
@@ -232,12 +280,6 @@ end
 -- callback on start
 function startDSMCprocess()
 	if UTIL and SAVE then
-
-		--## CHECKING MIZ FILENAME, IF NOT DMSCyourfilename THEN STOP
-		loadedMizFileName = DCS.getMissionName()
-		loadedMissionPath = DCS.getMissionFilename()		
-		writeDebugDetail(DSMC_ModuleName .. ": loadedMissionPath: " .. tostring(loadedMissionPath))			
-		writeDebugDetail(DSMC_ModuleName .. ": loadedMizFileName: " .. tostring(loadedMizFileName))
 		
 		DCS_Multy	= DCS.isMultiplayer()
 		DCS_Server 	= DCS.isServer()
@@ -249,7 +291,6 @@ function startDSMCprocess()
 		if is_norender() == 0 then
 			DCS_HasGraphics = true
 		end
-
 
 		writeDebugBase(DSMC_ModuleName .. ": DCS_Multy: " .. tostring(DCS.isMultiplayer()))		
 		writeDebugBase(DSMC_ModuleName .. ": DCS_Server: " .. tostring(DCS.isServer()))	
@@ -289,6 +330,7 @@ function startDSMCprocess()
 								opt_SLOT_ab_var		= pl_data.SLOT_ab								
 								
 								opt_WRHS_var 		= pl_data.WRHS	
+								opt_WTHR_var 		= pl_data.WTHR	
 								opt_WTHRfog_var 	= pl_data.WTHRfog	
 
 								opt_ATRL_var		= pl_data.ATRL
@@ -354,21 +396,12 @@ function startDSMCprocess()
 		elseif opt_TMUP_max_var == 4 then
 			opt_TMUP_max_var = 23
 		end
-
-		-- reset TMUP_min_var
-		if type(opt_TMUP_min_var) == "string" then
-			opt_TMUP_min_var = tonumber(string.sub(opt_TMUP_min_var, 1, 2))
-		end
-		if type(opt_TMUP_max_var) == "string" then
-			opt_TMUP_max_var = tonumber(string.sub(opt_TMUP_max_var, 1, 2))
-		end
 	
 		-- fixed on variables
 		MOBJ_var 							= true -- opt_MOBJ_var or DSMC_MapPersistence
-		WTHR_var 							= true -- opt_WTHR_var or DSMC_WeatherUpdate
 		TMUP_var							= true -- opt_TMUP_var or DSMC_UpdateStartTime	
 		WRHS_var							= true -- opt_WRHS_var or DSMC_TrackWarehouses
-		SPWN_var							= true -- opt_WRHS_var or DSMC_TrackWarehouses
+		SPWN_var							= true -- opt_SPWN_var or DSMC_TrackSpawnedUnits
 		
 		-- optional variables
 		DEBUG_var							= opt_DEBUG_var or DSMC_DebugMode
@@ -380,6 +413,7 @@ function startDSMCprocess()
 		SLOT_coa_var						= opt_SLOT_coa_var or DSMC_CreateSlotCoalition or "all" -- to test, set this "blue" or "red"
 		SLOT_add_ab							= opt_SLOT_ab_var or DSMC_CreateSlotAirbases -- to test, set this "blue" or "red
 		WRHS_rblt							= opt_WRHS_var or DSMC_WarehouseAutoSetup
+		WTHR_var							= opt_WTHR_var or DSMC_WeatherUpdate	
 		WTHR_fog							= opt_WTHRfog_var or DSMC_DisableFog
 
 		ATRL_var							= opt_ATRL_var or DSMC_AutosaveProcess 
@@ -403,12 +437,13 @@ function startDSMCprocess()
 
 		-- not used currently
 		EMBD_var							= DSMC_ExclusionTag or nil
-		
-		--SPWN_var							= true -- opt_SPWN_var or DSMC_TrackSpawnedUnits
 		--UPAP_var							= DSMC_ExportDocuments or false -- opt_UPAP_var or    NOT USED NOW if true mission briefings will be updated from a mission to another
 	
 		-- debug call
 		debugProcessDetail = DEBUG_var
+
+		-- test fast server reload
+		S247_var = 0.025
 
 		-- reset variable depending from DSMC_24_7_serverStandardSetup
 		if DCS_Multy == true and S247_var and S247_var > 0 then
@@ -427,14 +462,15 @@ function startDSMCprocess()
 		end
 
 		writeDebugBase(DSMC_ModuleName .. ": S247_var = " ..tostring(S247_var))
+		writeDebugBase(DSMC_ModuleName .. ": RF10_var = " ..tostring(RF10_var))
 		writeDebugBase(DSMC_ModuleName .. ": MOBJ_var = " ..tostring(MOBJ_var))
 		writeDebugBase(DSMC_ModuleName .. ": CRST_var = " ..tostring(CRST_var))
 		writeDebugBase(DSMC_ModuleName .. ": WTHR_var = " ..tostring(WTHR_var))
 		writeDebugBase(DSMC_ModuleName .. ": WTHR_fog = " ..tostring(WTHR_fog))
 		writeDebugBase(DSMC_ModuleName .. ": TMUP_var = " ..tostring(TMUP_var))
 		writeDebugBase(DSMC_ModuleName .. ": TMUP_cont_var = " ..tostring(TMUP_cont_var))
-		writeDebugBase(DSMC_ModuleName .. ": TMUP_max = " ..tostring(TMUP_max))
-		writeDebugBase(DSMC_ModuleName .. ": TMUP_min = " ..tostring(TMUP_min))
+		writeDebugBase(DSMC_ModuleName .. ": TMUP_max_var = " ..tostring(TMUP_max_var))
+		writeDebugBase(DSMC_ModuleName .. ": TMUP_min_var = " ..tostring(TMUP_min_var))
 		writeDebugBase(DSMC_ModuleName .. ": WRHS_var = " ..tostring(WRHS_var))
 		writeDebugBase(DSMC_ModuleName .. ": SPWN_var = " ..tostring(SPWN_var))
 		writeDebugBase(DSMC_ModuleName .. ": DEBUG_var = " ..tostring(DEBUG_var))
@@ -464,14 +500,14 @@ function startDSMCprocess()
 			CRST 						= require("CRST")
 			writeDebugBase(DSMC_ModuleName .. ": loaded in CRST module")
 		end
-		if UTIL.fileExist(DSMCdirectory .. "WTHR" .. ".lua") == true and WTHR_var == true then
-			WTHR 						= require("WTHR")
-			writeDebugBase(DSMC_ModuleName .. ": loaded in WTHR module")
-		end
 		if UTIL.fileExist(DSMCdirectory .. "WRHS" .. ".lua") == true and WRHS_var == true then
 			WRHS 						= require("WRHS")
 			writeDebugBase(DSMC_ModuleName .. ": loaded in WRHS module")
 		end
+		if UTIL.fileExist(DSMCdirectory .. "WTHR" .. ".lua") == true and WTHR_var == true then
+			WTHR 						= require("WTHR")
+			writeDebugBase(DSMC_ModuleName .. ": loaded WTHR module")
+		end			
 		if UTIL.fileExist(DSMCdirectory .. "TMUP" .. ".lua") == true and TMUP_var == true then
 			TMUP 						= require("TMUP")
 			writeDebugBase(DSMC_ModuleName .. ": loaded in TMUP module")
@@ -491,9 +527,9 @@ function startDSMCprocess()
 			end
 		end
 
-		--if UTIL.fileExist(DSMCdirectory .. "DGWS" .. ".lua") == true then
-		--	DGWS 						= require("DGWS")
-		--end
+		if UTIL.fileExist(DSMCdirectory .. "DGWS" .. ".lua") == true and DGWS_var == true and debugDGWS == false then
+			DGWS 						= require("DGWS")
+		end
 
 		if UTIL.fileExist(DSMCdirectory .. "ADTR" .. ".lua") == true then
 			ADTR 						= require("ADTR")
@@ -540,7 +576,7 @@ function startDSMCprocess()
 		-- ## DSMC LOCAL MODULES
 
 		-- this will decide the saved name in case of server mode and autosave on.
-		function getNewMizFile(curPath)
+		function getNewMizFile(curPath) -- NOT NEEDED ANYMORE?
 			if curPath then
 				if string.find(curPath, "DSMC_ServerReload_") then
 					local start, stop = string.find(curPath, "DSMC_ServerReload_")
@@ -572,6 +608,14 @@ function startDSMCprocess()
 
 				SAVE.getMizFiles(loadedMissionPath)
 				if SAVE.tempEnv.mission and SAVE.tempEnv.warehouses and SAVE.tempEnv.dictionary and SAVE.tempEnv.mapResource then
+
+					--if ATRL_var == true then -- Funzione per SIG
+					--	writeDebugDetail(DSMC_ModuleName .. ": exporting shared data tables")
+					--	UTIL.saveTable("DSMC_warehouse.lua", SAVE.tempEnv.warehouses, lfs.writedir() .. "Missions/DSMC_sharedData/", "int") -- shareddatadirectory
+					--	writeDebugDetail(DSMC_ModuleName .. ": exporting done")
+					--end
+
+
 					writeDebugDetail(DSMC_ModuleName .. ": tempEnv.files available")
 
 					--## FILTER PASSED, NOW LOADING EXTERNAL CODE INTO MISSION ENV (INJECTING)
@@ -729,12 +773,12 @@ function startDSMCprocess()
 						UTIL.inJectCode("EMBD_var", "DSMC_EMBD_var = " .. tostring(EMBD_var))
 						writeDebugDetail(DSMC_ModuleName .. ": EMBD injected")
 
-						local tblThreats = UTIL.getThreatRanges()
+						local tblThreats = UTIL.getUnitData()
 						if tblThreats then
 							UTIL.inJectTable("EMBD.tblThreatsRange", tblThreats)
-							writeDebugDetail(DSMC_ModuleName .. ": tblThreats injected")
+							writeDebugDetail(DSMC_ModuleName .. ": tblThreats injected in EMBD")
 						else
-							writeDebugDetail(DSMC_ModuleName .. ": can't inject tblThreats")
+							writeDebugDetail(DSMC_ModuleName .. ": can't inject tblThreats in EMBD")
 						end
 
 						if DGWS_var then
@@ -781,13 +825,7 @@ function startDSMCprocess()
 						writeDebugDetail(DSMC_ModuleName .. ": base file copied")
 
 						writeDebugBase(DSMC_ModuleName .. ": Initial loop done, loading testfunctions if there")
-						
-						if DGWS_var then
-							DGWS.testFunctions()
-						end
-
 						writeDebugBase(DSMC_ModuleName .. ": Initial loop done, mission is started now!")
-
 					else
 						writeDebugDetail(DSMC_ModuleName .. ": setMaxId failed to get base counters! HALT ALL")
 						return false
@@ -900,14 +938,7 @@ function loadtables()
 		UTIL.dumpTable("tblSpawned.lua", tblSpawned)
 		UTIL.dumpTable("tblConquer.lua", tblConquer)
 		UTIL.dumpTable("tblWarehouseChangeCoa.lua", tblWarehouseChangeCoa)
-
-		--UTIL.dumpTable("DGWS_terrain.lua", DGWS_terrain)
-		--UTIL.dumpTable("DGWS_orbat.lua", DGWS_orbat)
-		--UTIL.dumpTable("DGWS_intel.lua", DGWS_intel)
-		--UTIL.dumpTable("DGWS_staticassets.lua", DGWS_staticassets)
-
 	end
-	--]]--
 end
 
 function makefirstmission(missionPath)
@@ -960,7 +991,7 @@ function makefirstmission(missionPath)
 					end
 				end
 				local outFile = io.open(serSettingPath, "w");
-				local newSrvConfigStr = UTIL.IntegratedserializeWithCycles('cfg', serEnv.cfg);
+				local newSrvConfigStr = UTIL.Integratedserialize('cfg', serEnv.cfg); -- check for 2204
 				outFile:write(newSrvConfigStr);
 				io.close(outFile);
 			else
@@ -1056,6 +1087,36 @@ function loadRestart()
 end
 
 --## CALLBACKS
+DSMC_metarWeatherAtStart = false
+if DSMC_metarWeatherAtStart == true then
+	wh_update = false -- when true, DSMC will updating the loadedMissionPath variable. everthing work inside the pushRealTimeWeather function
+	function DSMC.onMissionLoadEnd()
+		writeDebugDetail(DSMC_ModuleName .. ": onMissionLoadEnd, called")		
+		if wh_update == false then
+			WTHR.pushRealTimeWeather(loadedMissionPath) --- , DCS.getMissionName()
+		else
+			wh_update = false
+			writeDebugDetail(DSMC_ModuleName .. ": onMissionLoadEnd, wh_update: " .. tostring(wh_update))			
+		end
+	end
+end
+
+function DSMC.onMissionLoadBegin()
+	writeDebugDetail(DSMC_ModuleName .. ": onMissionLoadBegin, called")		
+	loadedMizFileName = DCS.getMissionName()
+	loadedMissionPath = DCS.getMissionFilename()	
+	if 	DSMC_metarWeatherAtStart == true then
+		if wh_update == false then
+			writeDebugDetail(DSMC_ModuleName .. ": onMissionLoadBegin, loadedMissionPath: " .. tostring(loadedMissionPath))			
+			writeDebugDetail(DSMC_ModuleName .. ": onMissionLoadBegin, loadedMizFileName: " .. tostring(loadedMizFileName))
+		else
+			writeDebugDetail(DSMC_ModuleName .. ": onMissionLoadBegin: wh_update is true, update names skipped")	
+		end
+	end
+end
+
+
+
 function DSMC.onSimulationStart()
 	startDSMCprocess()
 end
@@ -1188,26 +1249,6 @@ function DSMC.onPlayerDisconnect()
 	saveOnDisconnect()
 end
 
---[[
-function DSMC.onRadioMessage(message, duration)
-	local lmz = DCS.getMissionName()
-	if lmz then
-		if string.sub(lmz,1,4) == StartFilterCode then
-			writeDebugDetail(DSMC_ModuleName .. ": test onRadioMessage = " .. tostring(message))
-		end
-	end
-end
-
-function DSMC.onShowGameMenu()
-	local lmz = DCS.getMissionName()
-	if lmz then
-		if string.sub(lmz,1,4) == StartFilterCode then	
-			writeDebugDetail(DSMC_ModuleName .. ": test onShowGameMenu")
-		end
-	end
-end
---]]--
-
 function DSMC.onSimulationStop()
 	alreadyStarted = false
 	local lmz = DCS.getMissionName()
@@ -1259,7 +1300,5 @@ local language, langCountry = lang.getLocale()
 writeDebugDetail(DSMC_ModuleName .. ": language = " .. tostring(language) .. ", langCountry = " .. tostring(langCountry))
 
 writeDebugBase(DSMC_ModuleName .. ": Loaded " .. DSMC_MainVersion .. "." .. DSMC_SubVersion .. "." .. DSMC_SubSubVersion .. "." .. DSMC_Build .. ", released " .. DSMC_Date)
-
-UTIL.dumpTable("log.lua", logHistory)
 
 --~=

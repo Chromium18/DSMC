@@ -16,6 +16,7 @@ cdata =
 	SLOT_ab_txt							= _("Automatically create clients slot on airbases"),	
 	SLOT_txt_Help						= _("Airbase slot creation require mission designer to follow specific rules, check manual!"),
 	WRHS_txt							= _("Automatic rebuilt of the supply net (see manual for details)"),	
+	WTHR_txt							= _("Enable or disable automatic weather update"),	
 	WTHRfog_txt							= _("Prevent atmosferic fog creation in saved files"),
 	
 	SWG_Preference_Title				= _("Server with graphics options"),

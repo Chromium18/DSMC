@@ -32,6 +32,7 @@ return {
 	SLOT						= DbOption.new():setValue(false):checkbox():setEnforceable(), 
 	SLOT_ab						= DbOption.new():setValue(false):checkbox():setEnforceable(),
 	WRHS						= DbOption.new():setValue(true):checkbox():setEnforceable(), 	
+	WTHR						= DbOption.new():setValue(true):checkbox():setEnforceable(), 	
 	WTHRfog						= DbOption.new():setValue(false):checkbox():setEnforceable(), 	
 	
 	ATRL						= DbOption.new():setValue(true):checkbox():setEnforceable(), 

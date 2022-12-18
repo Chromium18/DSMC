@@ -16,6 +16,7 @@ DSMC_CreateSlotHeliports    	= true      -- true / false. If true, helicopters s
 DSMC_CreateSlotAirbases     	= true      -- true / false. If true, slots will be created in airbase also and with fixed wing type. BEWARE: REQUIRE CONSISTENT SCENERY DESIGN! CHECK MANUAL
 DSMC_CreateSlotCoalition    	= "all"     -- "all", "blue", "red". Case sensitive. If wrong, it reverts to "all". If blue or red, slots will be created only for that coalition
 DSMC_WarehouseAutoSetup     	= true      -- true / false. If true, at each mission end the supply net will be automatically rebuilt. Check manual!
+DSMC_WeatherUpdate              = true      -- true / false. If false, DSMC weather system won't run and update the mission
 DSMC_DisableFog     	        = false     -- true / false. If false, DSMC weather system will create fog when could be expected due to moisture levels. If true, it will prevent fog formation in any conditions.
 
 -- ##################################################################

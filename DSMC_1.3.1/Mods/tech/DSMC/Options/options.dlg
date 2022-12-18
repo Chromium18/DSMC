@@ -111,8 +111,6 @@ dialog = {
 				},
 				--]]--
 
-
-
 				["SavedFile_Preference_Title_label"] = { -- DSMC_Title_SAVE
 					["params"] = {
 						["bounds"] = {
@@ -526,13 +524,32 @@ dialog = {
 					["skin"] = CheckBoxSkin,
 					["type"] = "CheckBox",
 				},
-				["WTHRfogCheckbox"] = {
+				["WTHRCheckbox"] = {
 					["params"] = {
 						["bounds"] = {
 								["h"] = verticalBound,
 								["w"] = width, 
 								["x"] = leftMargin1,
 								["y"] = verticalStack*10.75,
+						},
+						["enabled"] = true,
+						["state"] = false,
+						["tabOrder"] = 0,
+						["text"] = "$WTHR_txt",
+						["tooltip"] = "if not checked, DSMC weather system won't work and therefore the weather won't be updated.",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = CheckBoxSkin,
+					["type"] = "CheckBox",
+				},
+				["WTHRfogCheckbox"] = {
+					["params"] = {
+						["bounds"] = {
+								["h"] = verticalBound,
+								["w"] = width, 
+								["x"] = leftMargin1,
+								["y"] = verticalStack*11.5,
 						},
 						["enabled"] = true,
 						["state"] = false,
@@ -544,7 +561,7 @@ dialog = {
 					},
 					["skin"] = CheckBoxSkin,
 					["type"] = "CheckBox",
-				},
+				},								
 
 				["SWG_Preference_Title_label"] = {
 					["params"] = {
