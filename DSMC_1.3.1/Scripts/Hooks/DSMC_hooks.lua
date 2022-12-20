@@ -160,12 +160,12 @@ function loadDSMCHooks()
 	SAVE 						= require("SAVE")
 	writeDebugBase(DSMC_ModuleName .. ": loaded SAVE module")
 	
-	WLIB 						= require("WLIB")
-	writeDebugBase(DSMC_ModuleName .. ": loaded in WLIB module")
-	METR 						= require("METR")
-	writeDebugBase(DSMC_ModuleName .. ": loaded in METR module")
-	WTHR 						= require("WTHR")
-	writeDebugBase(DSMC_ModuleName .. ": loaded in WTHR module")
+	--WLIB 						= require("WLIB")
+	--writeDebugBase(DSMC_ModuleName .. ": loaded in WLIB module")
+	--METR 						= require("METR")
+	--writeDebugBase(DSMC_ModuleName .. ": loaded in METR module")
+	--WTHR 						= require("WTHR")
+	--writeDebugBase(DSMC_ModuleName .. ": loaded in WTHR module")
 
 
 	if debugDGWS == true then
