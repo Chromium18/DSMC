@@ -443,7 +443,7 @@ function startDSMCprocess()
 		debugProcessDetail = DEBUG_var
 
 		-- test fast server reload
-		S247_var = 0.025
+		--S247_var = 0.025
 
 		-- reset variable depending from DSMC_24_7_serverStandardSetup
 		if DCS_Multy == true and S247_var and S247_var > 0 then
