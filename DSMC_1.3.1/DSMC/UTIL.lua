@@ -17,7 +17,7 @@ local ME_DB   		= require('me_db_api')
 -- ## DEBUG
 
 
-HOOK.writeDebugDetail(ModuleName .. ": local required loaded")
+HOOK.writeDebugBase(ModuleName .. ": local required loaded")
 
 -- ## LOCAL VARIABLES
 UTILloaded						= false
@@ -237,12 +237,28 @@ function tableShow(tbl, loc, indent, tableshow_tbls)
 	end
 end
 
-function dumpTable(fname, tabledata)
+function dumpTable(fname, tabledata, varInt)
 	if lfs and io then
 		local fdir = lfs.writedir() .. [[DSMC\Debug\]] .. fname
 		local f = io.open(fdir, 'w')
-		f:write(tableShow(tabledata))
+		local str = nil
+		if varInt then
+			if varInt == "basic" then
+				str = IntegratedbasicSerialize(fname, tabledata)
+			elseif varInt == "cycles" then
+				str = IntegratedserializeWithCycles(fname, tabledata)
+			elseif varInt == "int" then
+				str = Integratedserialize(fname, tabledata)
+			else
+				str = IntegratedserializeWithCycles(fname, tabledata)
+			end
+		else
+			str = IntegratedserializeWithCycles(fname, tabledata)
+		end
+
+		f:write(str)
 		f:close()
+
 	end
 end
 
@@ -266,6 +282,18 @@ function saveTable(fname, tabledata, savedir, varInt)
 			str = IntegratedserializeWithCycles(fname, tabledata)
 		end
 		
+		f:write(str)
+		f:close()
+	end
+end
+
+function saveText(fname, textString, savedir)
+	local filespath = savedir
+	if io then
+		local fdir = filespath .. fname .. ".csv"
+		local f = io.open(fdir, 'w')
+		local str = textString
+
 		f:write(str)
 		f:close()
 	end
@@ -352,7 +380,7 @@ function dbYearsBuilder()
 end
 --dbYearsBuilder()
 
-function getThreatRanges()
+function getUnitData()
 	local t = {}
 	for dbId, dbData in pairs(ME_DB) do
 		if dbId == "unit_by_type" then
@@ -373,7 +401,7 @@ function getThreatRanges()
 						at = cData
 					end
 				end
-				if tr and tr > 0 then
+				if tr or dt or ir or at then
 					t[uType] = {detection = dt, threat = tr, irsignature = ir, attr = at}
 				end
 			end
@@ -384,9 +412,10 @@ function getThreatRanges()
 end
 
 -- #### CAMPAIGN BUILD UTILITIES, MANUAL CONTROLLED ####
-local DB = require('me_db_api')
---UTIL.dumpTable("DB.lua", DB) 
 
+
+
+--[[
 local xEnv = {}
 local basicPylonDB = {}
 function basicPylonDB_builder(database)
@@ -486,95 +515,7 @@ function basicPylonDB_builder(database)
 end
 
 local wpnDB = {}
-function wpnDB_builder(pDB)    -- pDB level index: a = aircraft, p = pylon, w = weapon / wpnDB index: acf = aircraft, wpn = weapon
-	local tempWdb = {}
-	if pDB then
-		for aType, aData in pairs(pDB) do
-			HOOK.writeDebugDetail(ModuleName .. ": aType: " .. tostring(aType))
-			--if aData.pylons then -- if table.getn(aData) > 0 then
-				local a_check = false
-				local currentTbl = nil
-				if table.getn(tempWdb) > 0 then
-					for iaId, iaData in pairs(tempWdb) do
-						HOOK.writeDebugDetail(ModuleName .. ": iaId: " .. tostring(iaId))
-						if iaId == aType then
-							a_check = true
-							currentTbl = iaData
-							HOOK.writeDebugDetail(ModuleName .. ": wpnDB_builder, found currentTbl")
-						end
-					end
-				end
-
-				HOOK.writeDebugDetail(ModuleName .. ": a_check: " .. tostring(a_check))
-				if a_check == false then
-					--wpnDB[aType] = currentTbl
-					currentTbl = {pylons = {}, fuel = aData.fuel}
-				end
-
-				-- da qui.
-				if currentTbl.fuel == nil then
-					currentTbl.fuel = 0
-					HOOK.writeDebugDetail(ModuleName .. ": wpnDB_builder, fuelerror")
-				end
-
-				if currentTbl.pylons then -- currentTbl
-					for pId, pData in pairs(aData.pylons) do
-						for wId, wData in pairs(pData) do				
-							local wpn_check = false
-							--for acfId, acfData in pairs(currentTbl) do
-								--if table.getn(acfData) > 0 then   
-									for wpnId, wpnData in pairs(currentTbl.pylons) do -- acfData
-										if wpnData.name == wData.name then
-											wpn_check = true
-											local qty = 1
-											if wData.count then
-												qty = wData.count
-											end
-											wpnData.num = wpnData.num + qty
-										end
-									end
-								--end
-							--end
-
-							if wpn_check == false then
-								local qty = 1
-								if wData.count then
-									qty = wData.count
-								end					
-								
-								local ws = wData.wsType
-								local at = wData.attrType
-								--[[
-								if wData.wsType then
-									ws = wData.wsType
-								elseif wData.attrType then
-									ws = wData.attrType
-								else
-									ws = "none"
-								end
-								--]]--
-
-								currentTbl.pylons[#currentTbl.pylons+1] = {name = wData.name, num = qty, wsStr = ws, atStr = at, weight = wData.weight}
-							end
-
-						end
-					end
-				
-					tempWdb[aType] = currentTbl
-				else
-					HOOK.writeDebugDetail(ModuleName .. ": wpnDB_builder, error 1")
-
-				end
-
-				
-			--end
-		end
-
-		return tempWdb
-	else
-		HOOK.writeDebugDetail(ModuleName .. ": wpnDB_builder, pDB nil")
-	end
-end
+function wpnDB_builder(pDB)  
 
 if HOOK.SBEO_var == true then
 	HOOK.writeDebugDetail(ModuleName .. ": HOOK.SBEO_var true")
@@ -617,7 +558,7 @@ if HOOK.SBEO_var == true then
 			end
 
 		else
-			basicPylonDB = basicPylonDB_builder(DB)
+			basicPylonDB = basicPylonDB_builder(ME_DB)
 			--UTIL.dumpTable("basicPylonDB_fine.lua", basicPylonDB) 
 			local bName = "basicPylonDB.lua"
 			local bpath = HOOK.DSMCdirectory .. bName
@@ -639,6 +580,254 @@ if HOOK.SBEO_var == true then
 
 	end
 end
+--]]--
+
+
+function exportWpnDb()
+	
+	DSMC_wpnDB = {version = _G._APP_VERSION, database = {}}
+	local dbWpn = {}
+	
+	
+	HOOK.writeDebugDetail(ModuleName .. ": createdbWpn, launched")
+	--UTIL.dumpTable("nightlyGb.lua", _G)
+	--HOOK.writeDebugDetail(ModuleName .. ": createdbWpn, G exported")
+	for uniID, uniData in pairs(resource_by_unique_name) do
+		--HOOK.writeDebugDetail(ModuleName .. ": createdbWpn, checking " .. tostring(uniID))
+		local wsTable = uniData.wsTypeOfWeapon or uniData.ws_type
+		if wsTable then
+			if type(wsTable) == "table" then
+				if #wsTable == 4 then
+					--HOOK.writeDebugDetail(ModuleName .. ": createdbWpn, wsTable found for " .. tostring(uniID))
+					local wsString = wsTypeToString(wsTable)	
+					--HOOK.writeDebugDetail(ModuleName .. ": createdbWpn, wsString for  " .. tostring(uniID).. " is " .. tostring(wsString))
+					dbWpn[#dbWpn+1] = {unique = uniID, name = uniData.name, wsData = wsString, dis_name = uniData.display_name}
+				end
+			end
+		end
+	end
+
+	for dbId, dbData in pairs(ME_DB) do
+		if dbId == "unit_by_type" then
+			for uType, uData in pairs(dbData) do
+
+				local checkPlaneHelo = false
+
+				for cId, cData in pairs(uData) do
+					if cId == "attribute" then
+						for aId, aData in pairs(cData) do
+							if aData == "Planes" or aData == "Helicopters" then
+								checkPlaneHelo = true
+							end
+						end
+					end
+				end
+
+				if checkPlaneHelo == true then
+					
+					HOOK.writeDebugBase(ModuleName .. ": exportWpnDb, adding data for: " .. tostring(uType))
+
+					DSMC_wpnDB.database[uType] = {}
+					local tempData = {}
+
+					-- fuel parameter
+					if uData.MaxFuelWeight then
+						tempData.MaxFuelWeight = tonumber(uData.MaxFuelWeight)
+						HOOK.writeDebugBase(ModuleName .. ": exportWpnDb, adding fuel: " .. tostring(tempData.MaxFuelWeight))
+					end
+
+					tempData.weapons = {}
+
+					if uData.Pylons then
+						--local Piloni = {}
+						for pId, pData in pairs(uData.Pylons) do
+							if pData.Launchers then
+								for lId, lData in pairs(pData.Launchers) do
+									if lData.CLSID then
+										--HOOK.writeDebugBase(ModuleName .. ": exportWpnDb, pylon CLSID checked")
+										for dbId, dbData in pairs(ME_DB) do
+											if dbId == "category_by_weapon_CLSID" then
+												for cId, cData in pairs(dbData) do
+													if cData.Launchers then
+														for wId, wData in pairs(cData.Launchers) do												
+															if wData.CLSID then
+																--HOOK.writeDebugBase(ModuleName .. ": exportWpnDb, weapon CLSID checked")
+																if tostring(wData.CLSID) == tostring(lData.CLSID) then
+																	--HOOK.writeDebugBase(ModuleName .. ": exportWpnDb, weapon CLSID found!")
+																	--HOOK.writeDebugDetail(ModuleName .. ": x3")
+																	--local attrTbl 	= wData.attribute
+																	local wsData 	= wData.wsTypeOfWeapon or wData.attribute
+																	local wsId		= nil
+																	local wpnName 	= wData.displayName
+																	local wsString  = nil
+
+																	--UTIL.dumpTable("wsData_" .. tostring(wpnName) .. ".lua", wsData)
+
+																	if type(wsData) == "string" then
+																		for hId, hData in pairs(dbWpn) do
+																			if hData.unique == wsData then
+																				wpnName = hData.dis_name
+																				wsString = hData.wsData
+																			end
+																		end
+																		wsId = wsData
+																		
+																	else
+																		--HOOK.writeDebugBase(ModuleName .. ": exportWpnDb, wsId is a table")
+																		local wsStr = wsTypeToString(wsData)
+																		--HOOK.writeDebugBase(ModuleName .. ": exportWpnDb, wsStr " .. tostring(wsStr))
+																		for hId, hData in pairs(dbWpn) do
+																			if hData.wsData == wsStr then
+																				--HOOK.writeDebugBase(ModuleName .. ": exportWpnDb, found in dbWpn")
+																				wsId = hData.unique
+																				--HOOK.writeDebugBase(ModuleName .. ": exportWpnDb, wsId " .. tostring(wsId))
+																				wpnName = hData.dis_name
+																				wsString = hData.wsData
+																			end
+																		end
+																	end
+
+																	--HOOK.writeDebugBase(ModuleName .. ": exportWpnDb, wsId " .. tostring(wsId))
+																	--HOOK.writeDebugBase(ModuleName .. ": exportWpnDb, wpnName " .. tostring(wpnName))
+
+																	--check if there
+																	local checkadd = true
+																	for xId, xData in pairs(tempData.weapons) do
+																		if xData.wsUnique == wsId then
+																			checkadd = false
+																		end
+																	end
+
+																	if checkadd == true then
+																		HOOK.writeDebugBase(ModuleName .. ": exportWpnDb, adding weapon: " .. tostring(wpnName))
+																		tempData.weapons[#tempData.weapons+1] = {name = wpnName, wsUnique = wsId, wsStr = wsString}
+																	end
+																end
+															end
+														end
+													end
+												end
+											end
+										end
+
+
+									end
+								end
+							end
+						end
+					end
+
+					DSMC_wpnDB.database[uType] = tempData
+					tempData = nil
+
+				end
+			end
+		end
+	end
+	HOOK.writeDebugBase(ModuleName .. ": exportWpnDb cycle done")
+	--UTIL.dumpTable("DSMC_wpnDB.lua", DSMC_wpnDB) 	
+	saveTable("DSMC_wpnDB", DSMC_wpnDB, HOOK.DSMCdirectory, "int")
+end
+
+function addAircraftIndexToWhDatabase(path, export) -- open a warehouse file from "path" and add every acf suitable for that weapons according to DCS. if export == true, it will export some csv file with all the relevant data
+	if DSMC_wpnDB and path then
+		if type(DSMC_wpnDB) == "table" and type(path) == "string" then
+
+			local whTbl = nil
+			local tbl_fcn, tbl_err = dofile(path)
+			if warehouses then
+				whTbl = deepCopy(warehouses)
+				warehouses = nil
+			end
+
+			-- fuel csv
+			local fuel_String = "whCategory;whId;fuelType;fuelQty\n"
+
+			-- acf csv
+			local acf_String = "whCategory;whId;acfType;acfQty\n"
+
+			-- wpn csv
+			local wpn_String = "whCategory;whId;wpnType;wpnQty;acfCompatibleString\n"
+
+			for whCat, whCatData in pairs(whTbl) do
+				for whId, whData in pairs(whCatData) do
+
+					if whData.unlimitedFuel == false then
+						fuel_String = fuel_String .. whCat .. ";" .. tostring(whId) ..";" .. "gasoline" ..";" .. tostring(whData.gasoline.InitFuel) .."\n"
+						fuel_String = fuel_String .. whCat .. ";" .. tostring(whId) ..";" .. "methanol_mixture" .. tostring(whData.methanol_mixture.InitFuel) .."\n"
+						fuel_String = fuel_String .. whCat .. ";" .. tostring(whId) ..";" .. "diesel" ..";" .. tostring(whData.diesel.InitFuel) .."\n"
+						fuel_String = fuel_String .. whCat .. ";" .. tostring(whId) ..";" .. "jet_fuel" ..";" .. tostring(whData.jet_fuel.InitFuel) .."\n"
+
+					else
+						fuel_String = fuel_String .. whCat .. ";" .. tostring(whId) ..";" .. "gasoline" ..";" .. "unlimited" .."\n"
+						fuel_String = fuel_String .. whCat .. ";" .. tostring(whId) ..";" .. "methanol_mixture" ..";" .. "unlimited" .."\n"
+						fuel_String = fuel_String .. whCat .. ";" .. tostring(whId) ..";" .. "diesel" ..";" .. "unlimited" .."\n"
+						fuel_String = fuel_String .. whCat .. ";" .. tostring(whId) ..";" .. "jet_fuel" ..";" .. "unlimited" .."\n"
+					end
+
+					if whData.unlimitedAircrafts == false then
+						for acfCat, acfTbl in pairs(whData.aircrafts) do
+							for acfName, acfData in pairs(acfTbl) do
+								acf_String = acf_String .. whCat .. ";" .. tostring(whId) ..";" .. tostring(acfName) ..";" .. tostring(acfData.initialAmount) .."\n"
+							end
+						end
+
+					else
+						acf_String = acf_String .. whCat .. ";" .. tostring(whId) ..";" .. "any aircraft" ..";" .. "unlimited" .."\n"
+					end
+
+					if whData.unlimitedMunitions == false then
+						if whData.weapons and #whData.weapons > 0 then
+							for wId, wData in pairs(whData.weapons) do
+								local string = wsTypeToString(wData.wsType)
+
+								-- separa il wpn_string che deve appoggiarsi al dbWeapon dalla tabella sotto.
+								if string then
+									local t = {}
+									local n = nil
+									local s = ""
+									local found = false
+									for aId, aData in pairs(DSMC_wpnDB.database) do
+										for yId, yData in pairs(aData.weapons) do
+											if yData.wsStr == string then
+												t[#t+1] = aId
+												s = s .. "_" .. tostring(aId)
+												n = yData.name
+												found = true
+											end
+										end
+									end
+
+									if found == true then
+										wData.users = t
+										wData.name = n
+
+										wpn_String = wpn_String .. whCat .. ";" .. tostring(whId) ..";" .. tostring(wData.name) ..";" .. tostring(wData.initialAmount) .. ";" .. tostring(s) .. "\n"
+									else
+										HOOK.writeDebugBase(ModuleName .. ": addAircraftIndexToWhDatabase, weapon not recognized: " .. tostring(string))
+									end
+								end
+
+							end
+						end
+					else
+						wpn_String = wpn_String .. whCat .. ";" .. tostring(whId) ..";" .. "any weapon" ..";" .. "unlimited" .."\n"
+					end
+				end
+			end
+			saveText("csv_fuel", fuel_String, HOOK.missionfilesdirectory)
+			saveText("csv_acf", acf_String, HOOK.missionfilesdirectory)
+			saveText("csv_wpn", wpn_String, HOOK.missionfilesdirectory)
+			saveTable("test_warehouse", whTbl, HOOK.missionfilesdirectory, "int")
+			return whTbl
+		end
+	end
+end
+
+
+
+
+
 
 function deepCopy(object)
     local lookup_table = {}
@@ -784,6 +973,7 @@ function addFARPwh(wh)
 	end
 	HOOK.writeDebugDetail(ModuleName .. ": addFARPwh done")
 end
+
 
 
 function makeWhZero(whData, whTbl, base_qty) -- used in whRestart
@@ -2102,7 +2292,7 @@ end
 
 HOOK.writeDebugBase(ModuleName .. ": Loaded " .. MainVersion .. "." .. SubVersion .. "." .. Build .. ", released " .. Date)
 UTILloaded = true
----UTIL.dumpTable("_G_server.lua", _G) 
+--UTIL.dumpTable("_G_server.lua", _G) 
 --~=
 
 --
