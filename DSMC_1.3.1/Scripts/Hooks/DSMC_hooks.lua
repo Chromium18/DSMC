@@ -38,12 +38,12 @@ DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "3"
 DSMC_SubSubVersion 	= "1"
-DSMC_Build 			= "2231"
+DSMC_Build 			= "2235"
 DSMC_Date			= "06/01/2023"
 
 -- ## DEBUG TO TEXT FUNCTION
 local forceServerMode 	= false
-local debugDGWS			= true
+local debugDGWS			= false
 
 -- keep old DSMC.log file as "old"
 local cur_debuglogfile  = io.open(lfs.writedir() .. "Logs/" .. "DSMC.log", "r")
@@ -160,6 +160,7 @@ function loadDSMCHooks()
 	SAVE 						= require("SAVE")
 	writeDebugBase(DSMC_ModuleName .. ": loaded SAVE module")
 	
+	--FOR TESTING PURPOSES!!!!
 	--WLIB 						= require("WLIB")
 	--writeDebugBase(DSMC_ModuleName .. ": loaded in WLIB module")
 	--METR 						= require("METR")
@@ -445,21 +446,70 @@ function startDSMCprocess()
 		-- test fast server reload
 		--S247_var = 0.025
 
-		-- reset variable depending from DSMC_24_7_serverStandardSetup
-		if DCS_Multy == true and S247_var and S247_var > 0 then
-			writeDebugBase(DSMC_ModuleName .. ": S247_var is a valid setting: " ..tostring(S247_var))
-			if S247_var > 24 then S247_var = 0 end
-			writeDebugBase(DSMC_ModuleName .. ": S247_var filtered: " ..tostring(S247_var))
-			
-			if S247_var > 0 then
-				writeDebugBase(DSMC_ModuleName .. ": S247_var filtered child variables")
+		writeDebugBase(DSMC_ModuleName .. ": S247_var (pre edit) = " ..tostring(S247_var))
+
+		--test standard setup
+		if DCS_Multy == true then
+			if S247_var == false or S247_var == nil then
+				writeDebugBase(DSMC_ModuleName .. ": S247_var is false")
+				S247_var = 0
+			elseif type(S247_var) == "number" then
+				writeDebugBase(DSMC_ModuleName .. ": S247_var is a valid setting: " ..tostring(S247_var))
+				if S247_var > 24 then S247_var = 0 end
+				writeDebugBase(DSMC_ModuleName .. ": S247_var filtered: " ..tostring(S247_var))
+				
+				if S247_var > 0 then
+					writeDebugBase(DSMC_ModuleName .. ": S247_var filtered child variables")
+					UMLS_var = true
+					STOP_var = S247_var
+					STOP_var_time = 0
+					STOP_var_safe = true
+					RSTS_var = true
+				end			
+			elseif type(S247_var) == "string" then
+				writeDebugBase(DSMC_ModuleName .. ": S247_var is a string")
+				
+				local _getParsedHour = function()
+					--pcall(function()
+						local h = string.sub(S247_var,1,2)
+						local m = string.sub(S247_var,4,5) 
+						writeDebugBase(DSMC_ModuleName .. ": S247_var parsed h: " ..tostring(h))
+						writeDebugBase(DSMC_ModuleName .. ": S247_var parsed h: " ..tostring(m))
+						if h ~= nil and m ~= nil then
+							local hn = tonumber(h)
+							local mn = tonumber(m)
+
+							writeDebugBase(DSMC_ModuleName .. ": S247_var parsed hn: " ..tostring(h))
+							writeDebugBase(DSMC_ModuleName .. ": S247_var parsed mn: " ..tostring(mn))
+
+							if type(hn) == "number" and type(mn) == "number" then
+								local mnh = mn/60
+								writeDebugBase(DSMC_ModuleName .. ": S247_var parsed mnh: " ..tostring(mnh))
+								local totVal =  hn + mnh
+								writeDebugBase(DSMC_ModuleName .. ": S247_var parsed totVal: " ..tostring(totVal))
+								return totVal
+							end
+						end
+					--end)
+				end
+
+				local val = _getParsedHour()
+
+				writeDebugBase(DSMC_ModuleName .. ": S247_var parsed: " ..tostring(val))
+
+				S247_var = 0
 				UMLS_var = true
-				STOP_var = S247_var
-				STOP_var_time = 0
-				STOP_var_safe = true
+				STOP_var = nil
+				STOP_var_time = val
+				STOP_var_safe = false
 				RSTS_var = true
 			end
 		end
+
+		-- reset variable depending from DSMC_24_7_serverStandardSetup
+		--if DCS_Multy == true and S247_var and S247_var > 0 then
+
+		--end
 
 		writeDebugBase(DSMC_ModuleName .. ": S247_var = " ..tostring(S247_var))
 		writeDebugBase(DSMC_ModuleName .. ": RF10_var = " ..tostring(RF10_var))
@@ -705,12 +755,17 @@ function startDSMCprocess()
 							local hour_s = hour*3600
 							local min_s = minute*60
 							local curSec = second+min_s+hour_s
+							local stopSec = STOP_var_time*3600
 							writeDebugDetail(DSMC_ModuleName .. ": curSec = " .. tostring(curSec))
+							writeDebugDetail(DSMC_ModuleName .. ": stopSec = " .. tostring(stopSec))
+
 							local deltaSeconds = nil
-							if STOP_var_time*3600 > curSec then
-								deltaSeconds = (STOP_var_time*3600) - curSec 
+							if stopSec > curSec then
+								writeDebugDetail(DSMC_ModuleName .. ": curSec higher than stopSec")
+								deltaSeconds = (stopSec) - curSec 
 							else
-								deltaSeconds = (24*3600) - curSec + (STOP_var_time*3600)
+								writeDebugDetail(DSMC_ModuleName .. ": curSec lower than stopSec")
+								deltaSeconds = (24*3600) - curSec + (stopSec)
 							end
 
 							writeDebugDetail(DSMC_ModuleName .. ": deltaSeconds = " .. tostring(deltaSeconds))
