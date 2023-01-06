@@ -69,13 +69,28 @@ function doSpawned(missionEnv, tblSpawned, whEnv) -- , dictEnv
 						correctCoalition = "blue"				
 					end					
 					HOOK.writeDebugDetail(ModuleName .. ": Coalition set")
-					
-					for ctryID, ctryData in pairs (missionEnv.coalition[correctCoalition]["country"]) do
-						if tonumber(sgData.gCountry) == tonumber(ctryData.id) then
-							correctCountry = ctryID
+
+					-- identify Country
+					local ctry_DCS = _G.country 
+					local c = {} -- temporary table if the country wasn't in the mission
+
+					--UTIL.dumpTable("ctry_DCS.lua", ctry_DCS, "int")
+					for cId, cData in pairs(ctry_DCS.by_idx) do
+						if tonumber(sgData.gCountry) == cId then
+							--correctCountry = cId
+							c.id = cId
+							c.name = cData.Name
+							HOOK.writeDebugDetail(ModuleName .. ": Country set")
 						end
 					end
-					HOOK.writeDebugDetail(ModuleName .. ": Country set")
+					
+					
+					--for ctryID, ctryData in pairs (missionEnv.coalition[correctCoalition]["country"]) do			
+					--	if tonumber(sgData.gCountry) == tonumber(ctryData.id) then
+					--		correctCountry = ctryID
+					--	end
+					--end
+					--HOOK.writeDebugDetail(ModuleName .. ": Country set")
 					
 					local groupTable = {}
 					-- SET mother groupTable
@@ -88,7 +103,29 @@ function doSpawned(missionEnv, tblSpawned, whEnv) -- , dictEnv
 						end
 						groupTable = missionEnv.coalition[correctCoalition]["country"][correctCountry]["static"]["group"]
 						
-					elseif sgData.gType == "vehicle" then					
+					elseif sgData.gType == "vehicle" then
+
+						-- country check
+						local found = false
+						for crId, crData in pairs(missionEnv.coalition[correctCoalition]["country"]) do
+							if tonumber(sgData.gCountry) == crData.id then
+								correctCountry = crId
+								found = true
+								HOOK.writeDebugDetail(ModuleName .. ": Country found, crId :" .. tostring(correctCountry))
+							end
+						end
+
+						if found == false then
+							HOOK.writeDebugDetail(ModuleName .. ": Country missing")
+							local l = UTIL.deepCopy(missionEnv.coalition[correctCoalition]["country"])
+							correctCountry = #l+1
+							l[#l+1] = c	
+							missionEnv.coalition[correctCoalition]["country"] = l
+							HOOK.writeDebugDetail(ModuleName .. ": Country added")							
+						end
+
+						--UTIL.dumpTable("ctry_DCS_tbl.lua", missionEnv.coalition[correctCoalition], "int")
+
 						if not missionEnv.coalition[correctCoalition]["country"][correctCountry]["vehicle"] then
 							missionEnv.coalition[correctCoalition]["country"][correctCountry]["vehicle"] = {}				
 						end
