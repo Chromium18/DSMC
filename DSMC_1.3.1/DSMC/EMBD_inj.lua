@@ -674,7 +674,7 @@ function EMBD.changeWarehouseCoalition(missionEnv)
 	end	
 end
 
-function EMBD.updateSpawnedPosition(tblSpawned, missionEnv)	
+function EMBD.updateSpawnedPosition(missionEnv)	
 	if tblSpawned then
 		for id, idData in pairs(tblSpawned) do		
 			if DSMC_debugProcessDetail == true then
@@ -859,13 +859,7 @@ function EMBD.elabLogistic(tblLogCollect)
 		for id, data in pairs(tblLogisticAdds) do
 			tblLogistic[#tblLogistic+1] = data
 		end
-	end
-
-	if DSMC_debugProcessDetail == true then
-		if DSMC_io and DSMC_lfs then
-			dumpTable("tblLogCollect.lua", tblLogCollect)
-		end
-	end			
+	end	
 
 	for uId, uData in pairs(tblLogCollect) do
 		if uId and uData.action and uData.unit and uData.fuel and uData.ammo and uData.desc and uData.place then
@@ -943,7 +937,6 @@ function EMBD.elabLogistic(tblLogCollect)
 end
 
 EMBD.collectLogCrates = function()
-
 	if ctld_c then
 		if ctld_c.spawnableCrates and ctld_c.upscaleResupplyFactor then
 
@@ -1251,7 +1244,7 @@ EMBD.oncallworkflow = function(sanivar, recall)
 		EMBD.collectLogCrates()
 		EMBD.sendUnitsData(env.mission)
 		EMBD.changeWarehouseCoalition(env.mission)
-		EMBD.updateSpawnedPosition(tblSpawned, env.mission)
+		EMBD.updateSpawnedPosition(env.mission)
 		EMBD.elabLogistic(tblLogCollect)
 		
 		
@@ -1343,7 +1336,7 @@ EMBD.oncallworkflow = function(sanivar, recall)
 		EMBD.collectLogCrates()
 		EMBD.sendUnitsData(env.mission)
 		EMBD.changeWarehouseCoalition(env.mission)
-		EMBD.updateSpawnedPosition(tblSpawned, env.mission)
+		EMBD.updateSpawnedPosition(env.mission)
 		EMBD.elabLogistic(tblLogCollect)
 		
 		strAirbases						= ""
@@ -1478,7 +1471,6 @@ EMBD.executeSAVEFunction = function(recall)
       EMBD.oncallworkflow("sanitized", recall)
     end  
   end
-  --dumpTable("wh_after.lua", env.warehouses)
 end
 
 -- new entry to make the callback detached and allow DSMC to process any mission changes.
@@ -2151,10 +2143,12 @@ function EMBD.collectSpawned:onEvent(event)
 					if ei_unitTableSource and #ei_unitTableSource > 0 then
 						for _id, _eiUnitData in pairs(ei_unitTableSource) do
 							if DSMC_trackspawnedinfantry == true then
+								env.info(("EMBD.collectSpawned adding a unit"))
 								DSMC_baseUcounter = DSMC_baseUcounter + 1
 								ei_unitTable[#ei_unitTable+1] = {uID = DSMC_baseUcounter, uName = _eiUnitData:getName(), uPos = _eiUnitData:getPosition().p, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true}
 							else
 								if not _eiUnitData:hasAttribute("Infantry") then  -- infantry wont't be tracked
+									env.info(("EMBD.collectSpawned adding a non infantry unit"))
 									DSMC_baseUcounter = DSMC_baseUcounter + 1
 									ei_unitTable[#ei_unitTable+1] = {uID = DSMC_baseUcounter, uName = _eiUnitData:getName(), uPos = _eiUnitData:getPosition().p, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true}
 								end
@@ -2251,6 +2245,7 @@ function EMBD.collectSpawned:onEvent(event)
 
 		end
 	end
+
 end
 world.addEventHandler(EMBD.collectSpawned)
 
