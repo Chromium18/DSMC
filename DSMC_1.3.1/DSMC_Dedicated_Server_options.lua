@@ -26,7 +26,7 @@ DSMC_DisableFog     	        = false     -- true / false. If false, DSMC weather
 DSMC_DisableF10save				= false      -- true / false. F10 menù save option disable switch
 DSMC_AutosaveProcess			= false		-- true / false. --> Choosing Auto-Save will make DSMC automatically desanitizatize MissionScripting.lua
 DSMC_AutosaveProcess_min		= 2			-- minutes, number, from 2 to 480. DSMC_AutosaveProcess must be true.
-DSMC_24_7_serverStandardSetup   = 1         -- value, 0->24. 0 means disabled. Any values above 24 are read as 0. If a valid number between 1 and 24, it will automatically save the scenery & close DCS after that period in hours, and set the saved mission as first upon restart of DCS.
+DSMC_24_7_serverStandardSetup   = 0         -- value, 0->24. 0 means disabled. Any values above 24 are read as 0. If a valid number between 1 and 24, it will automatically save the scenery & close DCS after that period in hours, and set the saved mission as first upon restart of DCS.
 -- This option is a simplified setup for the specific server autosave layout, where:
 ---- variable DSMC_AutosaveExit_hours is equal to the specified values
 ---- variable DSMC_AutosaveExit_time is 0
