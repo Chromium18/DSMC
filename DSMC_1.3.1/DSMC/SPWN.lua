@@ -62,7 +62,7 @@ function doSpawned(missionEnv, tblSpawned, whEnv) -- , dictEnv
 					local correctCountry = nil				
 					
 					if tonumber(sgData.gCoalition) == 0 then
-						correctCoalition = "neutral"
+						correctCoalition = "neutrals"
 					elseif tonumber(sgData.gCoalition) == 1 then
 						correctCoalition = "red"				
 					elseif tonumber(sgData.gCoalition) == 2 then
@@ -84,17 +84,29 @@ function doSpawned(missionEnv, tblSpawned, whEnv) -- , dictEnv
 						end
 					end
 					
-					
-					--for ctryID, ctryData in pairs (missionEnv.coalition[correctCoalition]["country"]) do			
-					--	if tonumber(sgData.gCountry) == tonumber(ctryData.id) then
-					--		correctCountry = ctryID
-					--	end
-					--end
-					--HOOK.writeDebugDetail(ModuleName .. ": Country set")
-					
 					local groupTable = {}
 					-- SET mother groupTable
-					if sgData.gType == "static" then				
+					if sgData.gType == "static" then
+						
+						-- country check
+						local found = false
+						for crId, crData in pairs(missionEnv.coalition[correctCoalition]["country"]) do
+							if tonumber(sgData.gCountry) == crData.id then
+								correctCountry = crId
+								found = true
+								HOOK.writeDebugDetail(ModuleName .. ": Country found, crId :" .. tostring(correctCountry))
+							end
+						end
+
+						if found == false then
+							HOOK.writeDebugDetail(ModuleName .. ": Country missing")
+							local l = UTIL.deepCopy(missionEnv.coalition[correctCoalition]["country"])
+							correctCountry = #l+1
+							l[#l+1] = c	
+							missionEnv.coalition[correctCoalition]["country"] = l
+							HOOK.writeDebugDetail(ModuleName .. ": Country added")							
+						end						
+
 						if not missionEnv.coalition[correctCoalition]["country"][correctCountry]["static"] then
 							missionEnv.coalition[correctCoalition]["country"][correctCountry]["static"] = {}				
 						end											
