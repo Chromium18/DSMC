@@ -1,5 +1,4 @@
--- Dynamic Sequential Mission Campaign -- DSMC core injected functions module  1.3.1
--- REWORK T/O and LAND to allow multiple sorties!
+-- Dynamic Sequential Mission Campaign -- DSMC core injected functions module
 
 local ModuleName  	= "EMBD"
 local MainVersion 	= DSMC_MainVersion
@@ -20,7 +19,6 @@ local mapObj_deathcounter 		= 0
 if not DSMC_baseGcounter then
 	DSMC_baseGcounter = 20000000
 end
-
 
 if not DSMC_baseUcounter then
 	DSMC_baseUcounter = 19000000
@@ -674,7 +672,32 @@ function EMBD.changeWarehouseCoalition(missionEnv)
 	end	
 end
 
-function EMBD.updateSpawnedPosition(missionEnv)	
+function EMBD.getNorthCorrection(gPoint)	--gets the correction needed for true north
+	local point = deepCopy(gPoint)
+	if not point.z then --Vec2; convert to Vec3
+		point.z = point.y
+		point.y = 0
+	end
+	local lat, lon = coord.LOtoLL(point)
+	local north_posit = coord.LLtoLO(lat + 1, lon)
+	return math.atan2(north_posit.z - point.z, north_posit.x - point.x)
+end
+
+function EMBD.getHeading(u, rawHeading)
+	local unitpos = u:getPosition()
+	if unitpos then
+		local Heading = math.atan2(unitpos.x.z, unitpos.x.x)
+		if not rawHeading then
+			Heading = Heading + EMBD.getNorthCorrection(unitpos.p)
+		end
+		if Heading < 0 then
+			Heading = Heading + 2*math.pi	-- put heading in range of 0 to 2*pi
+		end
+		return Heading
+	end
+end
+
+function EMBD.updateSpawnedPosition(tblSpawned, missionEnv)	
 	if tblSpawned then
 		for id, idData in pairs(tblSpawned) do		
 			if DSMC_debugProcessDetail == true then
@@ -716,8 +739,13 @@ function EMBD.updateSpawnedPosition(missionEnv)
 							local unit	 	= Unit.getByName(uData.uName)					
 							if unit then
 								if unit:getLife() > 1 then
-									local unitPos  	= unit:getPosition().p					
+									local unitPos  	= unit:getPosition().p	
 									uData.uPos = unitPos
+									if 	uData.uHdg then
+										local unitHdg	= EMBD.getHeading(unit)	
+										uData.uHdg = unitHdg
+									end
+									
 									if DSMC_debugProcessDetail == true then
 										env.info(("EMBD.updateSpawnedPosition udata updated"))
 									end
@@ -745,8 +773,12 @@ function EMBD.updateSpawnedPosition(missionEnv)
 							local object	 	= StaticObject.getByName(uData.uName)					
 							if object then
 								if object:getLife() > 1 then
-									local unitPos  	= object:getPosition().p					
+									local unitPos  	= object:getPosition().p	
 									uData.uPos = unitPos
+									if 	uData.uHdg then
+										local unitHdg	= EMBD.getHeading(object)	
+										uData.uHdg = unitHdg
+									end
 									env.info(("EMBD.updateSpawnedPosition udata updated"))
 								else
 									tblSpawned[id] = nil
@@ -831,25 +863,25 @@ function EMBD.updateSpawnedPosition(missionEnv)
 end
 
 function EMBD.elabLogistic(tblLogCollect)	
-
-		--clean tblLogCollect from dead warehouses ships & similar
-		for eId, eData in pairs(tblLogCollect) do
-			if eData.place then
-				local exist = eData.place:isExist()
-				if exist == false then
-					if DSMC_debugProcessDetail == true then
-						env.info(("EMBD.elabLogistic tblLogCollect place data not existing in the mission: missing place"))
-					end	
-					tblLogCollect[eId] = nil				
-				end
 	
-			else
+	--clean tblLogCollect from dead warehouses ships & similar
+	for eId, eData in pairs(tblLogCollect) do
+		if eData.place then
+			local exist = eData.place:isExist()
+			if exist == false then
 				if DSMC_debugProcessDetail == true then
-					env.info(("EMBD.elabLogistic tblLogCollect place data not existing in the table: missing place"))
+					env.info(("EMBD.elabLogistic tblLogCollect place data not existing in the mission: missing place"))
 				end	
-				tblLogCollect[eId] = nil
+				tblLogCollect[eId] = nil				
 			end
+
+		else
+			if DSMC_debugProcessDetail == true then
+				env.info(("EMBD.elabLogistic tblLogCollect place data not existing in the table: missing place"))
+			end	
+			tblLogCollect[eId] = nil
 		end
+	end
 
 	if tblLogisticAdds then
 		if DSMC_debugProcessDetail == true then
@@ -859,7 +891,13 @@ function EMBD.elabLogistic(tblLogCollect)
 		for id, data in pairs(tblLogisticAdds) do
 			tblLogistic[#tblLogistic+1] = data
 		end
-	end	
+	end
+
+	if DSMC_debugProcessDetail == true then
+		if DSMC_io and DSMC_lfs then
+			dumpTable("tblLogCollect.lua", tblLogCollect)
+		end
+	end			
 
 	for uId, uData in pairs(tblLogCollect) do
 		if uId and uData.action and uData.unit and uData.fuel and uData.ammo and uData.desc and uData.place then
@@ -937,6 +975,7 @@ function EMBD.elabLogistic(tblLogCollect)
 end
 
 EMBD.collectLogCrates = function()
+
 	if ctld_c then
 		if ctld_c.spawnableCrates and ctld_c.upscaleResupplyFactor then
 
@@ -1244,7 +1283,7 @@ EMBD.oncallworkflow = function(sanivar, recall)
 		EMBD.collectLogCrates()
 		EMBD.sendUnitsData(env.mission)
 		EMBD.changeWarehouseCoalition(env.mission)
-		EMBD.updateSpawnedPosition(env.mission)
+		EMBD.updateSpawnedPosition(tblSpawned, env.mission)
 		EMBD.elabLogistic(tblLogCollect)
 		
 		
@@ -1336,7 +1375,7 @@ EMBD.oncallworkflow = function(sanivar, recall)
 		EMBD.collectLogCrates()
 		EMBD.sendUnitsData(env.mission)
 		EMBD.changeWarehouseCoalition(env.mission)
-		EMBD.updateSpawnedPosition(env.mission)
+		EMBD.updateSpawnedPosition(tblSpawned, env.mission)
 		EMBD.elabLogistic(tblLogCollect)
 		
 		strAirbases						= ""
@@ -1454,26 +1493,27 @@ EMBD.preSaveCallback = nil
 
 -- original save method, renamed and called from the timer below
 EMBD.executeSAVEFunction = function(recall)
-  env.info(("EMBD.executeSAVEFunction launched. recall = " .. tostring(recall)))
-
-  if DSMC_ServerMode == true then
-    env.info(("EMBD.executeSAVE is in dedicated server mode"))
-    if DSMC_lfs and DSMC_io then
-      EMBD.oncallworkflow("desanitized", recall)
-    else
-      EMBD.runDesanMessage()
-    end
-  else
-    env.info(("EMBD.executeSAVE is in standard mode"))
-    if DSMC_lfs and DSMC_io then
-      EMBD.oncallworkflow("desanitized", recall)
-    else
-      EMBD.oncallworkflow("sanitized", recall)
-    end  
-  end
+	env.info(("EMBD.executeSAVEFunction launched. recall = " .. tostring(recall)))
+  
+	if DSMC_ServerMode == true then
+	  env.info(("EMBD.executeSAVE is in dedicated server mode"))
+	  if DSMC_lfs and DSMC_io then
+		EMBD.oncallworkflow("desanitized", recall)
+	  else
+		EMBD.runDesanMessage()
+	  end
+	else
+	  env.info(("EMBD.executeSAVE is in standard mode"))
+	  if DSMC_lfs and DSMC_io then
+		EMBD.oncallworkflow("desanitized", recall)
+	  else
+		EMBD.oncallworkflow("sanitized", recall)
+	  end  
+	end
+	--dumpTable("wh_after.lua", env.warehouses)
 end
 
--- new entry to make the callback detached and allow DSMC to process any mission changes.
+  -- new entry to make the callback detached and allow DSMC to process any mission changes.
 EMBD.executeSAVE = function(recall)
 	env.info(("EMBD.executeSAVE launched. recall = " .. tostring(recall)))
   
@@ -1482,7 +1522,7 @@ EMBD.executeSAVE = function(recall)
 	end
   
 	timer.scheduleFunction(EMBD.executeSAVEFunction, recall, timer.getTime() + 0.1)
-  end
+end
 
 EMBD.runDesanMessage = function()
 	local function Desanmessage()
@@ -2140,17 +2180,20 @@ function EMBD.collectSpawned:onEvent(event)
 					local ei_ID = DSMC_baseGcounter -- ei:getID()
 					local ei_Altitude = land.getHeight({x = ei_pos.x, y = ei_pos.z})
 					env.info(("EMBD.collectSpawned unit data collected"))
+
 					if ei_unitTableSource and #ei_unitTableSource > 0 then
 						for _id, _eiUnitData in pairs(ei_unitTableSource) do
+
+							local unitHdg	= EMBD.getHeading(_eiUnitData)	
+							local uPosition = _eiUnitData:getPosition().p
+
 							if DSMC_trackspawnedinfantry == true then
-								env.info(("EMBD.collectSpawned adding a unit"))
 								DSMC_baseUcounter = DSMC_baseUcounter + 1
-								ei_unitTable[#ei_unitTable+1] = {uID = DSMC_baseUcounter, uName = _eiUnitData:getName(), uPos = _eiUnitData:getPosition().p, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true}
+								ei_unitTable[#ei_unitTable+1] = {uID = DSMC_baseUcounter, uName = _eiUnitData:getName(), uPos = uPosition, uHdg = unitHdg, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true}
 							else
 								if not _eiUnitData:hasAttribute("Infantry") then  -- infantry wont't be tracked
-									env.info(("EMBD.collectSpawned adding a non infantry unit"))
 									DSMC_baseUcounter = DSMC_baseUcounter + 1
-									ei_unitTable[#ei_unitTable+1] = {uID = DSMC_baseUcounter, uName = _eiUnitData:getName(), uPos = _eiUnitData:getPosition().p, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true}
+									ei_unitTable[#ei_unitTable+1] = {uID = DSMC_baseUcounter, uName = _eiUnitData:getName(), uPos = uPosition, uHdg = uHeading, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true}
 								end
 							end
 						end
@@ -2204,9 +2247,9 @@ function EMBD.collectSpawned:onEvent(event)
 			DSMC_baseGcounter = DSMC_baseGcounter + 1
 			local ei_ID = DSMC_baseGcounter -- ei:getID()
 			local ei_Weight = event.initiator:getCargoWeight()
-			
-			env.info(("EMBD.collectSpawned static, ei_gName " .. tostring(ei_gName)))
 
+			env.info(("EMBD.collectSpawned static, ei_gName " .. tostring(ei_gName)))
+			
 			if ei_gName then
 				ei_unitTable[#ei_unitTable+1] = {uID = tonumber(_eiUnitData:getID()), uName = _eiUnitData:getName(), uPos = _eiUnitData:getPosition().p, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true, uWeight = ei_Weight}
 			end
@@ -2231,7 +2274,11 @@ function EMBD.collectSpawned:onEvent(event)
 				env.info(("EMBD.collectSpawned static data collected, ei_gName: " .. tostring(ei_gName)))
 				
 				if ei_gName then
-					ei_unitTable[#ei_unitTable+1] = {uID = tonumber(_eiUnitData:getID()), uName = _eiUnitData:getName(), uPos = _eiUnitData:getPosition().p, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true}
+
+					local unitHdg	= EMBD.getHeading(_eiUnitData)	
+					local uPosition = _eiUnitData:getPosition().p
+
+					ei_unitTable[#ei_unitTable+1] = {uID = tonumber(_eiUnitData:getID()), uName = _eiUnitData:getName(), uPos = uPosition, uHdg = unitHdg, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true}
 				end
 
 				if ei and not tblSpawned[ei_gName] then
@@ -2245,7 +2292,6 @@ function EMBD.collectSpawned:onEvent(event)
 
 		end
 	end
-
 end
 world.addEventHandler(EMBD.collectSpawned)
 
@@ -2670,58 +2716,60 @@ EMBD.scheduleCTLDsupport = function()
 
 				EMBD.AddInfantriesOnBirth = {}
 				function EMBD.AddInfantriesOnBirth:onEvent(event)	
-					if event.id == world.event.S_EVENT_BIRTH and event.initiator and b == true then
-						if Object.getCategory(event.initiator) == 1 then	
-							local unit = event.initiator
-							if unit then
-								--local unitID = unit:getID()					
-								if unit:hasAttribute("Infantry") then
+					if	b == true then
+						if event.id == world.event.S_EVENT_BIRTH and event.initiator then
+							if Object.getCategory(event.initiator) == 1 then	
+								local unit = event.initiator
+								if unit then
+									--local unitID = unit:getID()					
+									if unit:hasAttribute("Infantry") then
 
-									env.info(ModuleName .. " AddInfantriesOnBirth unit " .. tostring(unit:getName()) .. " is an infantry, evaluating group composition")
+										env.info(ModuleName .. " AddInfantriesOnBirth unit " .. tostring(unit:getName()) .. " is an infantry, evaluating group composition")
 
-									
-									local group = unit:getGroup()
-									if group then
-										local countTot = 0
-										local countInf = 0
-										local unitsCoa = nil
-										for units_id, units_data in pairs(group:getUnits()) do
-											countTot = countTot + 1
-											if units_data:hasAttribute("Infantry") then
-												countInf = countInf +1
-												unitsCoa = units_data:getCoalition()
-											end
-										end
 										
-										if countInf == countTot and unitsCoa then
-
-												env.info(ModuleName .. " AddInfantriesOnBirth all units in the group are infantry")
-
-				
-											local groupID = group:getID()
-											local groupName = group:getName()
-											local placefree = true
-											if not ctld.extractableGroups[groupName] then
-												table.insert(ctld.extractableGroups, groupName)
-				
-												if unitsCoa == 1 then
-													table.insert(ctld.droppedTroopsRED, groupName)
-													env.info(ModuleName .. " added group to RED dropped: " .. tostring(groupName))
-												elseif unitsCoa == 2 then
-													table.insert(ctld.droppedTroopsBLUE, groupName)
-													env.info(ModuleName .. " added group to BLUE dropped: " .. tostring(groupName))
-												else 
-													table.insert(ctld.droppedTroopsNEUTRAL, groupName)
-													env.info(ModuleName .. " added group to RED dropped: " .. tostring(groupName))
+										local group = unit:getGroup()
+										if group then
+											local countTot = 0
+											local countInf = 0
+											local unitsCoa = nil
+											for units_id, units_data in pairs(group:getUnits()) do
+												countTot = countTot + 1
+												if units_data:hasAttribute("Infantry") then
+													countInf = countInf +1
+													unitsCoa = units_data:getCoalition()
 												end
-				
-												env.info(ModuleName .. " AddInfantriesOnBirth group of units added as extractable")
+											end
+											
+											if countInf == countTot and unitsCoa then
+
+													env.info(ModuleName .. " AddInfantriesOnBirth all units in the group are infantry")
+
+					
+												local groupID = group:getID()
+												local groupName = group:getName()
+												local placefree = true
+												if not ctld.extractableGroups[groupName] then
+													table.insert(ctld.extractableGroups, groupName)
+					
+													if unitsCoa == 1 then
+														table.insert(ctld.droppedTroopsRED, groupName)
+														env.info(ModuleName .. " added group to RED dropped: " .. tostring(groupName))
+													elseif unitsCoa == 2 then
+														table.insert(ctld.droppedTroopsBLUE, groupName)
+														env.info(ModuleName .. " added group to BLUE dropped: " .. tostring(groupName))
+													else 
+														table.insert(ctld.droppedTroopsNEUTRAL, groupName)
+														env.info(ModuleName .. " added group to RED dropped: " .. tostring(groupName))
+													end
+					
+													env.info(ModuleName .. " AddInfantriesOnBirth group of units added as extractable")
+												end
 											end
 										end
-									end
-								end			
+									end			
+								end
 							end
-						end
+						end					
 					end
 				end
 				world.addEventHandler(EMBD.AddInfantriesOnBirth)
@@ -2752,7 +2800,5 @@ local function dumpThreats()
 	end
 end
 timer.scheduleFunction(dumpThreats, {}, timer.getTime() + 2)
-
-
 
 --~=

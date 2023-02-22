@@ -74,7 +74,6 @@ function doSpawned(missionEnv, tblSpawned, whEnv) -- , dictEnv
 					local ctry_DCS = _G.country 
 					local c = {} -- temporary table if the country wasn't in the mission
 
-					--UTIL.dumpTable("ctry_DCS.lua", ctry_DCS, "int")
 					for cId, cData in pairs(ctry_DCS.by_idx) do
 						if tonumber(sgData.gCountry) == cId then
 							--correctCountry = cId
@@ -86,8 +85,8 @@ function doSpawned(missionEnv, tblSpawned, whEnv) -- , dictEnv
 					
 					local groupTable = {}
 					-- SET mother groupTable
-					if sgData.gType == "static" then
-						
+					if sgData.gType == "static" then	
+
 						-- country check
 						local found = false
 						for crId, crData in pairs(missionEnv.coalition[correctCoalition]["country"]) do
@@ -105,8 +104,8 @@ function doSpawned(missionEnv, tblSpawned, whEnv) -- , dictEnv
 							l[#l+1] = c	
 							missionEnv.coalition[correctCoalition]["country"] = l
 							HOOK.writeDebugDetail(ModuleName .. ": Country added")							
-						end						
-
+						end								
+						
 						if not missionEnv.coalition[correctCoalition]["country"][correctCountry]["static"] then
 							missionEnv.coalition[correctCoalition]["country"][correctCountry]["static"] = {}				
 						end											
@@ -164,7 +163,7 @@ function doSpawned(missionEnv, tblSpawned, whEnv) -- , dictEnv
 								--DICTPROBLEM
 								--MaxDict = MaxDict+1									
 								--local UnitDictEntry = "DictKey_UnitName_" .. MaxDict
-								--local name = nil
+								local name = nil
 								newMaxId = newMaxId + 1
 								if uData.uName then
 									name = uData.uName
@@ -194,6 +193,10 @@ function doSpawned(missionEnv, tblSpawned, whEnv) -- , dictEnv
 									shape = uData.shape_name
 								end
 
+								local hdg = uData.uHdg
+								if not hdg then
+									hdg = 0
+								end
 
 								if tonumber(sgData.gCat) == 3 then 
 									sgUnits[#sgUnits + 1] =
@@ -206,7 +209,7 @@ function doSpawned(missionEnv, tblSpawned, whEnv) -- , dictEnv
 														["x"] = uData.uPos.x,
 														--DICTPROBLEM
 														["name"] = name, --UnitDictEntry,
-														["heading"] = 0, -- do it better next time
+														["heading"] = hdg,
 														["category"] = "Fortifications",
 													}
 								elseif tonumber(sgData.gCat) == 4 then -- FARP
@@ -220,7 +223,7 @@ function doSpawned(missionEnv, tblSpawned, whEnv) -- , dictEnv
 														["x"] = uData.uPos.x,
 														--DICTPROBLEM
 														["name"] = name, -- UnitDictEntry,
-														["heading"] = 0, -- do it better next time
+														["heading"] = hdg,
 														["category"] = "Heliports",
 														["heliport_modulation"] = 0,
 														["heliport_frequency"] = 127.5,
@@ -244,7 +247,7 @@ function doSpawned(missionEnv, tblSpawned, whEnv) -- , dictEnv
 														["x"] = uData.uPos.x,
 														--DICTPROBLEM
 														["name"] = name, -- UnitDictEntry,
-														["heading"] = 0, -- do it better next time
+														["heading"] = hdg, 
 														["mass"] = uData.uWeight,
 														["canCargo"] = true,
 													}
@@ -263,7 +266,7 @@ function doSpawned(missionEnv, tblSpawned, whEnv) -- , dictEnv
 														--DICTPROBLEM
 														["name"] = name, -- UnitDictEntry,
 														["playerCanDrive"] = true,
-														["heading"] = 0, -- do it better next time
+														["heading"] = hdg, 
 													}
 								end
 								HOOK.writeDebugDetail(ModuleName .. ": added unit " .. tostring(uData.uName))

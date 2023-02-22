@@ -879,6 +879,74 @@ local standardHeloTypes = {
 			["gun"] = 100,
 		}, -- end of ["payload"]
 	}, -- end of [Ka-50]
+    ["Ka-50_3"] = {	
+		["ropeLength"] = 15,
+		["type"] = "Ka-50_3",
+		["AddPropAircraft"] = 
+		{
+			["IMU alignment type"] = 3,
+			["modification"] = "Ka-50_3",
+			["Helmet-mounted device"] = 0,
+			["Realistic INS"] = true,
+		}, -- end of ["AddPropAircraft"]		
+		["Radio"] = 
+		{
+			[1] = 
+			{
+				["modulations"] = 
+				{
+				}, -- end of ["modulations"]
+				["channels"] = 
+				{
+					[1] = 21.5,
+					[2] = 25.7,
+					[3] = 27,
+					[4] = 28,
+					[5] = 30,
+					[6] = 32,
+					[7] = 40,
+					[8] = 50,
+					[9] = 55.5,
+					[10] = 59.9,
+				}, -- end of ["channels"]
+			}, -- end of [1]
+			[2] = 
+			{
+				["modulations"] = 
+				{
+				}, -- end of ["modulations"]
+				["channels"] = 
+				{
+					[1] = 0.625,
+					[2] = 0.303,
+					[3] = 0.289,
+					[4] = 0.591,
+					[5] = 0.408,
+					[6] = 0.803,
+					[7] = 0.443,
+					[8] = 0.215,
+					[9] = 0.525,
+					[10] = 1.065,
+					[11] = 0.718,
+					[12] = 0.35,
+					[13] = 0.583,
+					[14] = 0.283,
+					[15] = 0.995,
+					[16] = 1.21,
+				}, -- end of ["channels"]
+			}, -- end of [2]
+		}, -- end of ["Radio"]
+		["payload"] = 
+		{
+			["pylons"] = 
+			{
+			}, -- end of ["pylons"]
+			["fuel"] = "0", -- "0"
+			["flare"] = 128,
+			["chaff"] = 0,
+			["gun"] = 100,
+		}, -- end of ["payload"]
+	}, -- end of [Ka-50]		
 	["Mi-8MT"] = 
 	{
 		["hardpoint_racks"] = true,
