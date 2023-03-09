@@ -38,8 +38,8 @@ DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "3"
 DSMC_SubSubVersion 	= "1"
-DSMC_Build 			= "2243"
-DSMC_Date			= "22/02/2023"
+DSMC_Build 			= "2248"
+DSMC_Date			= "09/03/2023"
 
 -- ## DEBUG TO TEXT FUNCTION
 local forceServerMode 	= false
@@ -648,9 +648,9 @@ function startDSMCprocess()
 			end
 		end
 
-		if not DCS_Multy then
-			WRHS_rblt = true
-		end
+		--if not DCS_Multy then
+		--	WRHS_rblt = true
+		--end
 		
 		if loadedMizFileName and loadedMissionPath then				
 			if string.sub(loadedMizFileName,1,4) == StartFilterCode then
@@ -903,7 +903,7 @@ end
 
 -- callback on start
 function desanitizer()
-	if ATRL_var or DCS_Server or S247_var then
+	if ATRL_var then
 		writeDebugBase(DSMC_ModuleName .. ": desanitizer, starting... ")
 		local f=io.open(missionscriptingluaPath,"r")
 		if f~=nil then 

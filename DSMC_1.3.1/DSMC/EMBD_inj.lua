@@ -742,7 +742,7 @@ function EMBD.updateSpawnedPosition(tblSpawned, missionEnv)
 									local unitPos  	= unit:getPosition().p	
 									uData.uPos = unitPos
 									if 	uData.uHdg then
-										local unitHdg	= EMBD.getHeading(unit)	
+										local unitHdg	= EMBD.getHeading(unit, true)	
 										uData.uHdg = unitHdg
 									end
 									
@@ -776,7 +776,7 @@ function EMBD.updateSpawnedPosition(tblSpawned, missionEnv)
 									local unitPos  	= object:getPosition().p	
 									uData.uPos = unitPos
 									if 	uData.uHdg then
-										local unitHdg	= EMBD.getHeading(object)	
+										local unitHdg	= EMBD.getHeading(object, true)	
 										uData.uHdg = unitHdg
 									end
 									env.info(("EMBD.updateSpawnedPosition udata updated"))
@@ -2184,7 +2184,7 @@ function EMBD.collectSpawned:onEvent(event)
 					if ei_unitTableSource and #ei_unitTableSource > 0 then
 						for _id, _eiUnitData in pairs(ei_unitTableSource) do
 
-							local unitHdg	= EMBD.getHeading(_eiUnitData)	
+							local unitHdg	= EMBD.getHeading(_eiUnitData, true)	
 							local uPosition = _eiUnitData:getPosition().p
 
 							if DSMC_trackspawnedinfantry == true then
@@ -2275,7 +2275,7 @@ function EMBD.collectSpawned:onEvent(event)
 				
 				if ei_gName then
 
-					local unitHdg	= EMBD.getHeading(_eiUnitData)	
+					local unitHdg	= EMBD.getHeading(_eiUnitData, true)	
 					local uPosition = _eiUnitData:getPosition().p
 
 					ei_unitTable[#ei_unitTable+1] = {uID = tonumber(_eiUnitData:getID()), uName = _eiUnitData:getName(), uPos = uPosition, uHdg = unitHdg, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true}
