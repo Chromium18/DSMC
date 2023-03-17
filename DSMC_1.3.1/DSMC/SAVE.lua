@@ -55,35 +55,39 @@ function updateAirbaseTable(missionEnv)
 			HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: category 0")
 			local nearestAFB = ME_DB.getNearestAirdrome(admData.pos.x, admData.pos.z)
 			local parkList = getStandList(nearestAFB.roadnet)		-- ME_parking.
-			admData["parkings"] = parkList
+			if parkList then
+				admData["parkings"] = parkList
 
-			-- count airplane slots
-			local fwPk = 0
-			for _, pData in pairs(parkList) do
-				for rId, rData in pairs(pData.params) do
-					if rId == "FOR_AIRPLANES" then
-						if rData == 1 then
-							fwPk = fwPk + 1
+				-- count airplane slots
+				local fwPk = 0
+				for _, pData in pairs(parkList) do
+					for rId, rData in pairs(pData.params) do
+						if rId == "FOR_AIRPLANES" then
+							if rData == 1 then
+								fwPk = fwPk + 1
+							end
 						end
 					end
 				end
-			end
-			-- count heli slots
-			local rwPk = 0
-			for _, pData in pairs(parkList) do
-				for rId, rData in pairs(pData.params) do
-					if rId == "FOR_HELICOPTERS" then
-						if rData == 1 then
-							rwPk = rwPk + 1
+				-- count heli slots
+				local rwPk = 0
+				for _, pData in pairs(parkList) do
+					for rId, rData in pairs(pData.params) do
+						if rId == "FOR_HELICOPTERS" then
+							if rData == 1 then
+								rwPk = rwPk + 1
+							end
 						end
 					end
 				end
+
+				admData["fw_parkNum"] = fwPk
+				admData["rw_parkNum"] = rwPk
+
+				HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: added parkings")			
+			else
+					HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: unable to identify parking table")
 			end
-
-			admData["fw_parkNum"] = fwPk
-			admData["rw_parkNum"] = rwPk
-
-			HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: added parkings")
 
 		elseif admData.desc.category == 1 then
 			admData["parkings"] = {}
@@ -200,15 +204,17 @@ end
 function getStandList(roadnet)
 	local sList = Terrain.getStandList(roadnet, {"SHELTER","FOR_HELICOPTERS","FOR_AIRPLANES","WIDTH","LENGTH","HEIGHT"})    
 	local listP = {}
-	for k, v in pairs(sList) do
-		listP[v.crossroad_index] = v	  
-        if v.params then
-            local params = {}
-            for kk, vv in pairs(v.params) do
-                params[kk] = tonumber(vv)
-            end
-            v.params = params
-        end    
+	if sList then
+		for k, v in pairs(sList) do
+			listP[v.crossroad_index] = v	  
+			if v.params then
+				local params = {}
+				for kk, vv in pairs(v.params) do
+					params[kk] = tonumber(vv)
+				end
+				v.params = params
+			end    
+		end
 	end
 	return listP
 end
@@ -1019,9 +1025,7 @@ function save()
 		mResFun()	
 		HOOK.writeDebugDetail(ModuleName .. ": save mixFun, dictFun, wrhsFun & mResFun available")
 		
-		--if HOOK.SLOT_var == true or HOOK.SLOT_ab_var == true then -- and HOOK.DSMC_ServerMode == false 
 		updateAirbaseTable(env.mission)
-		--end
 		
 		updateUnits(env.mission)	
 		updateStaticCoa(env.mission)
@@ -1090,10 +1094,10 @@ function save()
 		end		
 		
 		-- plan module for DSMC 2.0
-		if UTIL.fileExist(HOOK.DSMCdirectory .. "DGWS" .. ".lua") == true and UTIL.fileExist(HOOK.DSMCdirectory .. "GOAP" .. ".lua") == true and UTIL.fileExist(HOOK.DSMCdirectory .. "DLNY" .. ".lua") == true and HOOK.DGWS_var == true then
+		if UTIL.fileExist(HOOK.DSMCdirectory .. "DGWS" .. ".lua") == true and HOOK.DGWS_var == true then
 			HOOK.writeDebugDetail(ModuleName .. " starting DGWS...")
 			local m = UTIL.deepCopy(env.mission)
-			env.mission = DGWS.executePlanning(DGWS_terrain, DGWS_intel, DGWS_orbat, DGWS_staticassets, m) -- m, tblTerrainDb
+			env.mission = DGWS.executePlanning(m)
 			HOOK.writeDebugDetail(ModuleName .. " DGWS done")
 
 			-- executePlanning(terrain, intel, orbat)
@@ -1108,11 +1112,11 @@ function save()
 			HOOK.writeDebugDetail(ModuleName .. " no external files available")
 		end			
 
-		HOOK.writeDebugDetail(ModuleName .. " d1")
+		--HOOK.writeDebugDetail(ModuleName .. " d1")
 		if HOOK.UPAP_var == true then
 			updateBriefing(env.mission, dict_env.dictionary)
 		end	
-		HOOK.writeDebugDetail(ModuleName .. " d2")
+		--HOOK.writeDebugDetail(ModuleName .. " d2")
 
 		lfs.mkdir(HOOK.missionfilesdirectory .. "Temp/")
 		--mission
@@ -1122,7 +1126,7 @@ function save()
 		local newMissionStr = UTIL.Integratedserialize('mission', env.mission);
 		outFile:write(newMissionStr);
 		io.close(outFile);
-		HOOK.writeDebugDetail(ModuleName .. " d3")
+		--HOOK.writeDebugDetail(ModuleName .. " d3")
 
 		--warehouses
 		local w_fName = "warehouses"
@@ -1132,7 +1136,7 @@ function save()
 		w_outFile:write(newWrhsStr);
 		io.close(w_outFile);
 
-		HOOK.writeDebugDetail(ModuleName .. " d3")
+		--HOOK.writeDebugDetail(ModuleName .. " d3")
 
 		--dictionary
 		local d_fName = "dictionary"
