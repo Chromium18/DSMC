@@ -45,6 +45,14 @@ return {
 	CTLD1						= DbOption.new():setValue(true):checkbox():setEnforceable(), 
 	CTLD2						= DbOption.new():setValue(true):checkbox():setEnforceable(), 
 
+	EXCL_var					= DbOption.new():setValue(0):combo({DbOption.Item(_('Exclude')):Value(0),
+																	DbOption.Item(_('XCL')):Value(1),
+																	DbOption.Item(_('NoTrack')):Value(2),
+																	DbOption.Item(_('NoSave')):Value(3),
+																	DbOption.Item(_('NoUpdate')):Value(4),
+																	DbOption.Item(_('NoUP')):Value(5),
+																	DbOption.Item(_('NoKill')):Value(6),
+																	DbOption.Item(_('NoDeath')):Value(7),}),
 
 	--WRHS						= DbOption.new():setValue(true):checkbox():setEnforceable(), 
 	--TRPS						= DbOption.new():setValue(true):checkbox():setEnforceable(), 

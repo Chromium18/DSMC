@@ -37,12 +37,12 @@ package.path =
 DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "3"
-DSMC_SubSubVersion 	= "1"
-DSMC_Build 			= "2255"
-DSMC_Date			= "17/03/2023"
+DSMC_SubSubVersion 	= "2"
+DSMC_Build 			= "2544"
+DSMC_Date			= "22/04/2023"
 
 -- ## DEBUG TO TEXT FUNCTION
-local forceServerMode 	= false
+local forceServerMode 	= false 
 local debugDGWS			= false
 
 -- keep old DSMC.log file as "old"
@@ -159,15 +159,6 @@ function loadDSMCHooks()
 	writeDebugBase(DSMC_ModuleName .. ": loaded UTIL module")
 	SAVE 						= require("SAVE")
 	writeDebugBase(DSMC_ModuleName .. ": loaded SAVE module")
-	
-	--FOR TESTING PURPOSES!!!!
-	--WLIB 						= require("WLIB")
-	--writeDebugBase(DSMC_ModuleName .. ": loaded in WLIB module")
-	--METR 						= require("METR")
-	--writeDebugBase(DSMC_ModuleName .. ": loaded in METR module")
-	--WTHR 						= require("WTHR")
-	--writeDebugBase(DSMC_ModuleName .. ": loaded in WTHR module")
-
 
 	if debugDGWS == true then
 		debugProcessDetail = true
@@ -342,6 +333,7 @@ function startDSMCprocess()
 
 								opt_CTLD1_var		= pl_data.CTLD1
 								opt_CTLD2_var		= pl_data.CTLD2
+								opt_EMDB_var		= pl_data.EXCL_var
 
 								opt_DEBUG_var		= pl_data.DEBUG
 
@@ -369,6 +361,27 @@ function startDSMCprocess()
 			opt_SLOT_coa_var = "red"
 		elseif opt_SLOT_coa_var == 0 then
 			opt_SLOT_coa_var = "all"			
+		end
+		writeDebugBase(DSMC_ModuleName .. ": opt_SLOT_coa_var: " ..tostring(opt_SLOT_coa_var))
+
+		writeDebugBase(DSMC_ModuleName .. ": opt_SLOT_coa_var: " ..tostring(opt_SLOT_coa_var))
+		-- reset SLOT_coa_var
+		if opt_EMDB_var == 0 then
+			opt_EMDB_var = "Exclude"
+		elseif opt_EMDB_var == 1 then
+			opt_EMDB_var = "XCL"
+		elseif opt_EMDB_var == 2 then
+			opt_EMDB_var = "NoTrack"
+		elseif opt_EMDB_var == 3 then
+			opt_EMDB_var = "NoSave"	
+		elseif opt_EMDB_var == 4 then
+			opt_EMDB_var = "NoUpdate"	
+		elseif opt_EMDB_var == 5 then
+			opt_EMDB_var = "NoUP"	
+		elseif opt_EMDB_var == 6 then
+			opt_EMDB_var = "NoKill"	
+		elseif opt_EMDB_var == 7 then
+			opt_EMDB_var = "NoDeath"				
 		end
 		writeDebugBase(DSMC_ModuleName .. ": opt_SLOT_coa_var: " ..tostring(opt_SLOT_coa_var))
 
@@ -433,11 +446,11 @@ function startDSMCprocess()
 		
 		-- developer variables
 		SBEO_var							= false 
-		DGWS_var							= false 
-		RTAI_var							= false 
+		DGWS_var							= debugDGWS -- DGWS test script, check above cause part of the code is loaded at DCS start
+		RTAI_var							= false -- Real Time AI enhancement (Base) script. Require DGWS
 
 		-- not used currently
-		EMBD_var							= DSMC_ExclusionTag or nil
+		EMBD_var							= opt_EMDB_var or DSMC_Excl_Tag
 		--UPAP_var							= DSMC_ExportDocuments or false -- opt_UPAP_var or    NOT USED NOW if true mission briefings will be updated from a mission to another
 	
 		-- debug call
@@ -622,6 +635,7 @@ function startDSMCprocess()
 				STOP_var_time = nil
 			end
 		end
+		writeDebugBase(DSMC_ModuleName .. ": STOP_var_time = " ..tostring(STOP_var_time))
 	
 		-- ## DSMC LOCAL MODULES
 
@@ -816,6 +830,11 @@ function startDSMCprocess()
 						end
 
 						-- main loop code: EMDB file
+
+
+						UTIL.inJectCode("EMBD_var", "DSMC_ExclusionTag = " .. '"' .. tostring(EMBD_var) .. '"')
+						writeDebugDetail(DSMC_ModuleName .. ": EMBD_var injecting " .. tostring(EMBD_var))
+
 						local e = io.open(DSMCdir .. "EMBD_inj.lua", "r")
 						local Embeddedcode = nil
 						if e then
@@ -825,12 +844,12 @@ function startDSMCprocess()
 							writeDebugBase(DSMC_ModuleName .. ": EMBD_inj.lua not found")
 						end			
 						UTIL.inJectCode("Embeddedcode", Embeddedcode)
-						UTIL.inJectCode("EMBD_var", "DSMC_EMBD_var = " .. tostring(EMBD_var))
 						writeDebugDetail(DSMC_ModuleName .. ": EMBD injected")
 
 						local tblThreats = UTIL.getUnitData()
 						if tblThreats then
 							UTIL.inJectTable("EMBD.tblThreatsRange", tblThreats)
+							UTIL.dumpTable("EMBD.tblThreatsRange_int", tblThreats, "int")
 							writeDebugDetail(DSMC_ModuleName .. ": tblThreats injected in EMBD")
 						else
 							writeDebugDetail(DSMC_ModuleName .. ": can't inject tblThreats in EMBD")
@@ -858,21 +877,6 @@ function startDSMCprocess()
 							writeDebugBase(DSMC_ModuleName .. ": PLAN not required")	
 						end	
 						--]]--
-						
-						if RTAI_var then
-							writeDebugDetail(DSMC_ModuleName .. ": activating real time AI enhancement")
-							local e = io.open(DSMCdir .. "RTAI_inj.lua", "r")
-							local Embeddedcode = nil
-							if e then
-								Embeddedcode = tostring(e:read("*all"))
-								e:close()
-							else
-								writeDebugBase(DSMC_ModuleName .. ": RTAI_inj.lua not found")
-							end			
-							UTIL.inJectCode("Embeddedcode", Embeddedcode)
-						else
-							writeDebugBase(DSMC_ModuleName .. ": RTAI not required")	
-						end		
 
 						writeDebugDetail(DSMC_ModuleName .. ": loaded all variables")
 						

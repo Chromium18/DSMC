@@ -470,7 +470,7 @@ dialog = {
 					["params"] = {
 						["bounds"] = {
 								["h"] = verticalBound,
-								["w"] = 150, 
+								["w"] = 250, 
 								["x"] = leftMargin1,
 								["y"] = verticalStack*9.25, -- 5.5
 						},
@@ -488,7 +488,7 @@ dialog = {
 						["bounds"] = {
 								["h"] = verticalBound,
 								["w"] = 150, 
-								["x"] = leftMargin1+150,
+								["x"] = leftMargin1+250,
 								["y"] = verticalStack*9.25, -- 5.5
 						},
 						["enabled"] = true,
@@ -569,7 +569,7 @@ dialog = {
 							["h"] = verticalBound,
 							["w"] = width,
 							["x"] = leftMargin1,
-							["y"] = verticalStack*14,
+							["y"] = verticalStack*12.5,
 						},
 						["enabled"] = true,
 						["text"] = "$SWG_Preference_Title",
@@ -586,7 +586,7 @@ dialog = {
 							["h"] = verticalBound,
 							["w"] = width, 
 							["x"] = leftMargin1,
-							["y"] = verticalStack*14.5,
+							["y"] = verticalStack*13,
 						},
 						["enabled"] = true,
 						["text"] = "$SWG_Preference_Foot1",
@@ -603,7 +603,7 @@ dialog = {
 							["h"] = verticalBound,
 							["w"] = width, 
 							["x"] = leftMargin1,
-							["y"] = verticalStack*15,
+							["y"] = verticalStack*13.5,
 						},
 						["enabled"] = true,
 						["text"] = "$SWG_Preference_Foot2",
@@ -620,7 +620,7 @@ dialog = {
 							["h"] = verticalBound,
 							["w"] = width, 
 							["x"] = leftMargin1,
-							["y"] = verticalStack*15.5,
+							["y"] = verticalStack*14,
 						},
 						["enabled"] = true,
 						["text"] = "$SWG_Preference_Foot3",
@@ -638,7 +638,7 @@ dialog = {
 								["h"] = verticalBound,
 								["w"] = 245, 
 								["x"] = leftMargin1,
-								["y"] = verticalStack*16.25,
+								["y"] = verticalStack*14.75,
 						},
 						["enabled"] = true,
 						["state"] = false,
@@ -657,7 +657,7 @@ dialog = {
 							["h"] = verticalBound,
 							["w"] = 180, 
 							["x"] = leftMargin1+250,
-							["y"] = verticalStack*16.25-5,
+							["y"] = verticalStack*14.75-5,
 						},
 						["enabled"] = true,
 						["pageStep"] = 2,
@@ -686,7 +686,7 @@ dialog = {
 							["h"] = verticalBound,
 							["w"] = 30, 
 							["x"] = leftMargin1+420,
-							["y"] = verticalStack*16.25,
+							["y"] = verticalStack*14.75,
 						},
 						["enabled"] = true,
 						["text"] = "0",
@@ -707,7 +707,7 @@ dialog = {
 								["h"] = verticalBound,
 								["w"] = 245, 
 								["x"] = leftMargin1,
-								["y"] = verticalStack*17,
+								["y"] = verticalStack*15.5,
 						},
 						["enabled"] = true,
 						["state"] = false,
@@ -726,7 +726,7 @@ dialog = {
 							["h"] = verticalBound,
 							["w"] = 180, 
 							["x"] = leftMargin1+250,
-							["y"] = verticalStack*17-5,
+							["y"] = verticalStack*15.5-5,
 						},
 						["enabled"] = true,
 						["pageStep"] = 2,
@@ -755,7 +755,7 @@ dialog = {
 							["h"] = verticalBound,
 							["w"] = 30, 
 							["x"] = leftMargin1+420,
-							["y"] = verticalStack*17,
+							["y"] = verticalStack*15.5,
 						},
 						["enabled"] = true,
 						["text"] = "0",
@@ -776,7 +776,7 @@ dialog = {
 								["h"] = verticalBound,
 								["w"] = width, 
 								["x"] = leftMargin1,
-								["y"] = verticalStack*17.75,
+								["y"] = verticalStack*16.25,
 						},
 						["enabled"] = true,
 						["state"] = false,
@@ -789,15 +789,54 @@ dialog = {
 					["skin"] = CheckBoxSkin,
 					["type"] = "CheckBox",
 				},					
+				["EXCL_coa_label"] = {
+					["params"] = {
+						["bounds"] = {
+								["h"] = verticalBound,
+								["w"] = 250, 
+								["x"] = leftMargin1,
+								["y"] = verticalStack*17,
+						},
+						["enabled"] = true,
+						["text"] = "$EXCL_txt",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = LabelSkin,
+					["type"] = "Static",
+				},
+				["EXCL_varComboList"] = {
+					["params"] = {
+						["bounds"] = {
+								["h"] = verticalBound,
+								["w"] = 150, 
+								["x"] = leftMargin1+250,
+								["y"] = verticalStack*17,
+						},
+						["enabled"] = true,
+						["state"] = false,
+						["tabOrder"] = 0,
+						["text"] = "Item1",
+						["tooltip"] = "Exclusion tag. Any group name with this text in their name won't be updated in saved file",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = {
+						["params"] = {
+							["name"] = "comboListSkin_options",
+						},
+					},
+					["type"] = "ComboList",
+				},		
 				
-
 				["DEBUGCheckbox"] = {
 					["params"] = {
 						["bounds"] = {
 								["h"] = verticalBound,
 								["w"] = 800, 
 								["x"] = leftMargin1,
-								["y"] = verticalStack*19.5,
+								["y"] = verticalStack*18,
 						},
 						["enabled"] = true,
 						["state"] = false,
@@ -810,8 +849,6 @@ dialog = {
 					["skin"] = CheckBoxSkin,
 					["type"] = "CheckBox",
 				},		
-
-
 
 				["CTLD_Title_label"] = {
 					["params"] = {

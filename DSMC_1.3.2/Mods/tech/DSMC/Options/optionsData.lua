@@ -11,7 +11,7 @@ cdata =
 	TMUP_cont_FALSE						= _("Saved scenery start next day, random hour from                 to"), 
 	TMUP_cont_REAL						= _("Saved scenery start on real world date, same time as original mission"), 
 	
-	SLOT_coa_txt							= _("Create slot for coalition: "),	
+	SLOT_coa_txt						= _("Create slot only for coalition: "),	
 	SLOT_txt							= _("Automatically create clients slot on heliports"),	
 	SLOT_ab_txt							= _("Automatically create clients slot on airbases"),	
 	SLOT_txt_Help						= _("Airbase slot creation require mission designer to follow specific rules, check manual!"),
@@ -36,6 +36,9 @@ cdata =
 	DEBUG_txt							= _("Enable detail debug mode. WARNING: activate only for reproduce a bug"),
 	DEBUG_help							= _("When DEBUG mode is active, the reload options works with minutes instead of hours! so choosing '3' mean reload every 3 minutes"),
 	
+	EXTRA_Title							= _("Additional options"),
+	EXCL_txt							= _("Exclusion tag for group names: "),
+
 	--SPWN_txt				= _("Keeps spawned vehicles, crates & static object"),
 	--TRPS_txt				= _("Enable troops transport & crate logistic with CTLD by Ciribob"),
 	--DCSR_txt				= _("Enable integrated CSAR script by Ciribob"),

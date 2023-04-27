@@ -66,7 +66,7 @@ local standardPlaneTypes = {
 			["pylons"] = 
 			{
 			}, -- end of ["pylons"]
-			["fuel"] = 296,
+			["fuel"] = "0",
 			["flare"] = 0,
 			["ammo_type"] = 1,
 			["chaff"] = 0,
@@ -86,7 +86,7 @@ local standardPlaneTypes = {
 			["pylons"] = 
 			{
 			}, -- end of ["pylons"]
-			["fuel"] = 409,
+			["fuel"] = "0",
 			["flare"] = 0,
 			["ammo_type"] = 1,
 			["chaff"] = 0,
@@ -125,7 +125,7 @@ local standardPlaneTypes = {
 			["pylons"] = 
 			{
 			}, -- end of ["pylons"]
-			["fuel"] = 191,
+			["fuel"] = "0",
 			["flare"] = 0,
 			["chaff"] = 0,
 			["gun"] = 100,
@@ -144,7 +144,7 @@ local standardPlaneTypes = {
 			["pylons"] = 
 			{
 			}, -- end of ["pylons"]
-			["fuel"] = 676.704,
+			["fuel"] = "0",
 			["flare"] = 0,
 			["ammo_type"] = 1,
 			["chaff"] = 0,
@@ -163,7 +163,7 @@ local standardPlaneTypes = {
 			["pylons"] = 
 			{
 			}, -- end of ["pylons"]
-			["fuel"] = 676.704,
+			["fuel"] = "0",
 			["flare"] = 0,
 			["ammo_type"] = 1,
 			["chaff"] = 0,
@@ -182,7 +182,7 @@ local standardPlaneTypes = {
 			["pylons"] = 
 			{
 			}, -- end of ["pylons"]
-			["fuel"] = 676.704,
+			["fuel"] = "0",
 			["flare"] = 0,
 			["ammo_type"] = 1,
 			["chaff"] = 0,
@@ -201,7 +201,7 @@ local standardPlaneTypes = {
 			["pylons"] = 
 			{
 			}, -- end of ["pylons"]
-			["fuel"] = 497.76,
+			["fuel"] = "0",
 			["flare"] = 0,
 			["ammo_type"] = 1,
 			["chaff"] = 0,
@@ -216,7 +216,7 @@ local standardPlaneTypes = {
 			["pylons"] = 
 			{
 			}, -- end of ["pylons"]
-			["fuel"] = 497.76,
+			["fuel"] = "0",
 			["flare"] = 0,
 			["ammo_type"] = 1,
 			["chaff"] = 0,
@@ -247,7 +247,7 @@ local standardPlaneTypes = {
 			["pylons"] = 
 			{
 			}, -- end of ["pylons"]
-			["fuel"] = 247,
+			["fuel"] = "0",
 			["flare"] = 0,
 			["ammo_type"] = 1,
 			["chaff"] = 0,
@@ -263,7 +263,7 @@ local standardPlaneTypes = {
 			["pylons"] = 
 			{
 			}, -- end of ["pylons"]
-			["fuel"] = 996.6432,
+			["fuel"] = "0",
 			["flare"] = 0,
 			["ammo_type"] = 1,
 			["chaff"] = 0,
@@ -813,7 +813,33 @@ local standardPlaneTypes = {
 		["hardpoint_racks"] = true,
 	},
 
+	["MiG-15bis"] = {
+		["type"] = "MiG-15bis",
+		["payload"] = 
+		{
+			["pylons"] = 
+			{
+			}, -- end of ["pylons"]
+			["fuel"] = "0",
+			["flare"] = 0,
+			["chaff"] = 0,
+			["gun"] = 100,
+		}, -- end of ["payload"]
+	},
 
+	["F-86F Sabre"] = {
+		["type"] = "F-86F Sabre",
+		["payload"] = 
+		{
+			["pylons"] = 
+			{
+			}, -- end of ["pylons"]
+			["fuel"] = "0",
+			["flare"] = 0,
+			["chaff"] = 0,
+			["gun"] = 100,
+		}, -- end of ["payload"]
+	},
 
 }
 
@@ -946,7 +972,7 @@ local standardHeloTypes = {
 			["chaff"] = 0,
 			["gun"] = 100,
 		}, -- end of ["payload"]
-	}, -- end of [Ka-50]		
+	}, -- end of [Ka-50]	
 	["Mi-8MT"] = 
 	{
 		["hardpoint_racks"] = true,
@@ -2514,12 +2540,12 @@ function buildHelipadSlot(missionEnv, warehouseEnv, tblSlots)
 					local link_val = nil
 					local link_type_val = nil
 					local coa = afbData.coalition
-					HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, heliport: " .. tostring(afbId) .. ", coa:" ..tostring(coa))
+					--HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, heliport: " .. tostring(afbId) .. ", coa:" ..tostring(coa))
 
 					for coalitionID,coalition in pairs(missionEnv["coalition"]) do
 						if coalitionID == HOOK.SLOT_coa_var or permitAll == true then
 							--if string.lower(coa) == string.lower(coalitionID) then
-								HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, heliport: " .. tostring(afbId) .. ", c1")
+								--HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, heliport: " .. tostring(afbId) .. ", c1")
 								for countryID,country in pairs(coalition["country"]) do
 									for attrID,attr in pairs(country) do
 										if (type(attr)=="table") then		
@@ -2527,7 +2553,7 @@ function buildHelipadSlot(missionEnv, warehouseEnv, tblSlots)
 												for groupID,group in pairs(attr["group"]) do
 													if (group) then
 														for unitID,unit in pairs(group["units"]) do
-															HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, heliport: " .. tostring(afbId) .. ", c2 unit id: " .. tostring(unit.unitId))
+															--HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, heliport: " .. tostring(afbId) .. ", c2 unit id: " .. tostring(unit.unitId))
 															if tonumber(unit.unitId) == tonumber(afbId) then
 																-- correct coalition
 																if string.lower(coa) ~= string.lower(coalitionID) then
@@ -2562,7 +2588,7 @@ function buildHelipadSlot(missionEnv, warehouseEnv, tblSlots)
 																			if catId == "helicopters" then
 																				for acfId, acfData in pairs(catData) do
 																					for aId, aData in pairs(standardHeloTypes) do
-																						HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, acfId: " .. tostring(acfId) .. ", aId:" .. tostring(aId))
+																						--HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, acfId: " .. tostring(acfId) .. ", aId:" .. tostring(aId))
 																						if acfId == aId then
 																																														
 																							-- all single ship version
@@ -2573,6 +2599,50 @@ function buildHelipadSlot(missionEnv, warehouseEnv, tblSlots)
 																							if nGroups > maxSlots then
 																								nGroups = maxSlots
 																							end
+
+																							
+																							--[[
+																							
+																							local numberFlights = math.floor(acfData.initialAmount/2)
+
+																							HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, acfId: " .. tostring(acfId) .. ", numberFlights: " .. tostring(numberFlights))
+																							local nUnits = nil
+																							local nGroups = 0
+																							
+																							if numberFlights > 0 and numberFlights < 1 then  -- single ship
+																								nUnits = 1
+																								nGroups = 1
+																								--HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, adding " .. tostring(acfId) .. " on helipad " .. tostring(yId))
+																								--tblSlots[#tblSlots+1] = {h= heading_val, x=x_val, y = y_val, link = link_val, linkType = link_type_val, cntyID = country.id, coaID = coa, acfType = acfId, numUnits = 1}
+																								HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, creating 1 group, single ship")
+																							elseif numberFlights == 1 then -- two ship
+																								nUnits = 2
+																								nGroups = 1
+																								
+																								--tblSlots[#tblSlots+1] = {h= heading_val, x=x_val, y = y_val, link = link_val, linkType = link_type_val, cntyID = country.id, coaID = coa, acfType = acfId, numUnits = 2}
+																								HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, creating 1 group, 2ship")																							
+																							elseif numberFlights < 2 and numberFlights > 1 then -- three ship
+																								nUnits = 3
+																								nGroups = 1
+																								
+																								--tblSlots[#tblSlots+1] = {h= heading_val, x=x_val, y = y_val, link = link_val, linkType = link_type_val, cntyID = country.id, coaID = coa, acfType = acfId, numUnits = 3}
+																								HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, creating 1 group, 3ship")
+																							elseif numberFlights >= 2 then -- 2x two ship
+																								if numberFlights > maxFlights then
+																									HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, numberFlights " .. tostring(numberFlights) .. " exceeded maxFlights, reducing to " .. tostring(maxFlights))
+																									numberFlights = maxFlights
+																								end
+																						
+																								nGroups = math.floor(numberFlights)
+																								nUnits = 2
+
+																								HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, creating " .. tostring(nGroups) .. " groups , 2 ships each")
+																							else
+																								HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, numberFlights is " .. tostring(numberFlights)  .. ": no availability for " .. tostring(acfId))
+																							end
+
+
+																							--]]--
 
 																							if #posTbl > 1 and nGroups > 0 then
 																								HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, heliport is multi unit, adding all helo types on different helipad")
