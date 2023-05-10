@@ -718,7 +718,7 @@ function EMBD.updateSpawnedPosition(tblSpawned, missionEnv)
 				exclude = true
 			end
 
-			if exclude == true then
+			if exclude == false then
 				-- verify existing
 				local proceed = true
 				for coalitionID,coalition in pairs(missionEnv["coalition"]) do
