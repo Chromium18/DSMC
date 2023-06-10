@@ -62,6 +62,22 @@ tblConquer						= {}
 --tblConquerCollect				= {}
 tblWarehouseChangeCoa 			= {}
 
+-- airlift crates cross support
+local checkLOGIandCTLD = function()
+	if LOGI then
+		spawnableCrates					= LOGI.spawnableCrates
+		upscaleResupplyFactor    		= LOGI.upscaleResupplyFactor
+	elseif ctld_c then
+		spawnableCrates					= ctld_c.spawnableCrates
+		upscaleResupplyFactor    		= ctld_c.upscaleResupplyFactor
+	elseif ctld then
+		spawnableCrates					= ctld.spawnableCrates
+		upscaleResupplyFactor    		= ctld.upscaleResupplyFactor
+	end
+end
+timer.scheduleFunction(checkLOGIandCTLD, {}, timer.getTime() + 5)
+
+
 trigger.action.outText("DSMC is active in this mission", 10)
 if not DSMC_DisableF10save then
 	trigger.action.outText("to save scenery progress, you can use the communication F10 menù and choose DSMC - save mission", 5)
@@ -315,11 +331,6 @@ if DSMC_io and DSMC_lfs then
 	env.info(("EMBD desanitized additional function loaded"))
 end
 
-function doMessage(text) -- REMOVE?
-	local msg_duration = 5
-	trigger.action.outText(text, msg_duration)
-end
-
 -- ##CORE
 
 --[[
@@ -356,7 +367,6 @@ function EMBD.getAptInfo()
 	--dumpTable("apt_Table.lua", apt_Table)
 	for Aid, Adata in pairs(apt_Table) do
 		if Adata and Adata:isExist() == true then
-
 			local aptInfo = Adata:getDesc()
 			local aptName = Adata:getName()
 			local aptID	  = Adata:getID()
@@ -992,95 +1002,159 @@ end
 
 EMBD.collectLogCrates = function()
 
-	if ctld_c then
-		if ctld_c.spawnableCrates and ctld_c.upscaleResupplyFactor then
+	if spawnableCrates and upscaleResupplyFactor then
+
+		if DSMC_debugProcessDetail == true then
+			env.info(("EMBD.collectLogCrates active, spawnableCrates table available"))
+		end		
+		--tblLogistic[#tblLogistic+1] = {action = uData.action, acf = acfType, placeId = placeId_E, placeName = placeName_E, placeType = placeType_E, fuel = fuelKg, ammo = ammoTbl, directammo = nil}
+		
+		for _, aData in pairs(tblAirbases) do
 
 			if DSMC_debugProcessDetail == true then
-				env.info(("EMBD.collectLogCrates ctld_c active, spawnableCrates table available"))
-			end		
-			--tblLogistic[#tblLogistic+1] = {action = uData.action, acf = acfType, placeId = placeId_E, placeName = placeName_E, placeType = placeType_E, fuel = fuelKg, ammo = ammoTbl, directammo = nil}
-			
-			for _, aData in pairs(tblAirbases) do
+				env.info(("EMBD.collectLogCrates checking airbase or farp: " .. tostring(aData.name)))
+			end	
 
-				if DSMC_debugProcessDetail == true then
-					env.info(("EMBD.collectLogCrates checking airbase or farp: " .. tostring(aData.name)))
-				end	
+			local isAB = false
+			if aData.desc.category == 0 then
+				isAB = true
+			end
 
-				local isAB = false
-				if aData.desc.category == 0 then
-					isAB = true
-				end
-
-				if isAB == true then
-					local _volume = {
-						id = world.VolumeType.SPHERE,
-						params = {
-							point = aData.pos,
-							radius = 5000
-						}
+			if isAB == true then
+				local _volume = {
+					id = world.VolumeType.SPHERE,
+					params = {
+						point = aData.pos,
+						radius = 5000
 					}
+				}
 
-					local _searchAB = function(cargo)
-						pcall(function()
-							if cargo ~= nil then
+				local _searchAB = function(cargo)
+					pcall(function()
+						if cargo ~= nil then
 
-								if cargo:getLife() > 1 then
-									local c_wh = cargo:getCargoWeight()
-									local c_type = cargo:getTypeName()
-									local c_Id = cargo:getID()
-									local c_Coa = cargo:getCoalition()
-									local c_Country = cargo:getCountry()
-									local c_Pos = cargo:getPosition().p
+							if cargo:getLife() > 1 then
+								local c_wh = cargo:getCargoWeight()
+								local c_type = cargo:getTypeName()
+								local c_Id = cargo:getID()
+								local c_Coa = cargo:getCoalition()
+								local c_Country = cargo:getCountry()
+								local c_Pos = cargo:getPosition().p
+								local c_Name = cargo:getName()
 
-									local posOnAirbase = false
-									if c_Pos then
-										local lType = land.getSurfaceType({x = c_Pos.x, y = c_Pos.z})
-										if lType == 5 then
-											if DSMC_debugProcessDetail == true then
-												env.info(("EMBD.collectLogCrates found crate, lType: " .. tostring(lType)))
-											end		
-											posOnAirbase = true
-										else
-											if DSMC_debugProcessDetail == true then
-												env.info(("EMBD.collectLogCrates found crate, lType: " .. tostring(lType)))
-											end		
-										end
+								local warehouseId = nil
+								local w_string_init, w_string_start = string.find(c_Name, "WID")
+								if DSMC_debugProcessDetail == true then
+									env.info(("EMBD.collectLogCrates warehouseId w_string_init: " .. tostring(w_string_init)))
+									env.info(("EMBD.collectLogCrates warehouseId w_string_start: " .. tostring(w_string_start)))
+								end	
+
+								if w_string_init and w_string_start then
+									local w_string = string.sub(c_Name, w_string_start+1)
+
+									if DSMC_debugProcessDetail == true then
+										env.info(("EMBD.collectLogCrates warehouseId w_string: " .. tostring(w_string)))
+									end	
+
+									if w_string then
+										warehouseId = string.match(w_string, "%d+")  -- QUIIIIIIIIIIIIIII
 									end
-									
-									if posOnAirbase then
-										for C_cat, C_data in pairs(ctld_c.spawnableCrates) do
-											if C_cat == "Airlift supplies" then
-												for sC_ind, sC_logData in pairs(C_data) do	
-													for C_ind, C_logData in pairs(sC_logData) do								
-														if C_ind == "Fuel resupplies" or C_ind == "Ammo resupplies" then
-															for _, _crData in pairs(C_logData) do
-																if _crData.weight == c_wh then
-																	if DSMC_debugProcessDetail == true then
-																		env.info(("EMBD.collectLogCrates found crate, type: " .. tostring(c_type) .. ", weight: " .. tostring(c_wh)  .. ", id: " .. tostring(c_Id)))
-																	end															
+								end
 
-																	local ab = Airbase.getByName(aData.name)
-																	if ab then
-																		local ab_type = nil
-																		if ab:hasAttribute("Airfields") then
-																			ab_type  = "airports"
-																		else
-																			if DSMC_debugProcessDetail == true then
-																				env.info(("EMBD.collectLogCrates ab is not an airport, skip"))
-																			end		
-																		end
+								if DSMC_debugProcessDetail == true then
+									env.info(("EMBD.collectLogCrates warehouseId identified: " .. tostring(warehouseId)))
+								end	
 
-																		if ab_type then											
-																			if c_type == "fueltank_cargo" then -- assess fuel
-																				local addedTons = (c_wh-60)*ctld_c.upscaleResupplyFactor/1000 -- 60 kilos is the "standard" void crate weight. Obviously assumed.
+								local posOnAirbase = false
+								if c_Pos then
+									local lType = land.getSurfaceType({x = c_Pos.x, y = c_Pos.z})
+									if lType == 5 then
+										if DSMC_debugProcessDetail == true then
+											env.info(("EMBD.collectLogCrates found crate, lType: " .. tostring(lType)))
+										end		
+										posOnAirbase = true
+									else
+										if DSMC_debugProcessDetail == true then
+											env.info(("EMBD.collectLogCrates found crate, lType: " .. tostring(lType)))
+										end		
+									end
+								end
+								
+								if posOnAirbase then
+									for C_cat, C_data in pairs(spawnableCrates) do
+										if C_cat == "Airlift supplies" then
+											for sC_ind, sC_logData in pairs(C_data) do	
+												for C_ind, C_logData in pairs(sC_logData) do								
+													if C_ind == "Fuel resupplies" or C_ind == "Ammo resupplies" then
+														for _, _crData in pairs(C_logData) do
+															if _crData.weight == c_wh then
+																if DSMC_debugProcessDetail == true then
+																	env.info(("EMBD.collectLogCrates found crate, type: " .. tostring(c_type) .. ", weight: " .. tostring(c_wh)  .. ", id: " .. tostring(c_Id) .. ", name: " .. tostring(c_Name)))
+																end															
 
-																				tblLogistic[#tblLogistic+1] = {action = "arrival", acf = "none", placeId = aData.id, placeName = aData.name, placeType = ab_type, fuel = 0, ammo = {}, directammo = nil, directfuel = addedTons}
-																				
+																local ab = Airbase.getByName(aData.name)
+																if ab then
+																	local ab_type = nil
+																	if ab:hasAttribute("Airfields") then
+																		ab_type  = "airports"
+																	else
+																		if DSMC_debugProcessDetail == true then
+																			env.info(("EMBD.collectLogCrates ab is not an airport, skip"))
+																		end		
+																	end
+
+																	if ab_type then											
+																		if c_type == "fueltank_cargo" then -- assess fuel
+																			local addedTons = (c_wh-60)*upscaleResupplyFactor/1000 -- 60 kilos is the "standard" void crate weight. Obviously assumed.
+																			
+																			
+																			tblLogistic[#tblLogistic+1] = {action = "arrival", acf = "none", placeId = aData.id, placeName = aData.name, placeType = ab_type, fuel = 0, ammo = {}, directammo = nil, directfuel = addedTons}
+																			if warehouseId then
+																				if DSMC_debugProcessDetail == true then
+																					env.info(("EMBD.collectLogCrates removing amount from wh id: " .. tostring(warehouseId)))
+																				end	
+																				tblLogistic[#tblLogistic+1] = {action = "departure", acf = "none", placeId = warehouseId, placeName = "none", placeType = "warehouses", fuel = 0, ammo = {}, directammo = nil, directfuel = -addedTons}
+																			end
+
+																			-- remove if spawned
+																			local spawned = false
+																			for sId, sData in pairs(tblSpawned) do
+																				for _, suData in pairs(sData.gUnits) do 																			
+																					if tostring(c_Id) == tostring(suData.uID) or c_Name == suData.uName then
+																						
+																						tblSpawned[sId] = nil
+																						spawned = true
+																						if DSMC_debugProcessDetail == true then
+																							env.info(("EMBD.collectLogCrates removed from spawned list"))
+																						end	
+																					end
+																				end
+																			end
+
+																			-- remove if ME
+																			--if spawned == false then
+																				tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(c_Id), coalitionID = c_Coa, countryID = c_Country, staticTable = nil, objCategory = 6, objTypeName = c_type}
+																				if DSMC_debugProcessDetail == true then
+																					env.info(("EMBD.collectLogCrates removed from mission editor existing cargo"))
+																				end	
+																			--end
+																		elseif c_type == "ammo_cargo" then -- assess ammo
+																			if _crData.dirAmmo then
+																				local addedTons = 0 
+
+																				tblLogistic[#tblLogistic+1] = {action = "arrival", acf = "none", placeId = aData.id, placeName = aData.name, placeType = ab_type, fuel = addedTons, ammo = {}, directammo = _crData.dirAmmo, dirQty = _crData.dirAmmoQty, directfuel = nil}
+																				if warehouseId then
+																					if DSMC_debugProcessDetail == true then
+																						env.info(("EMBD.collectLogCrates removing amount from wh id: " .. tostring(warehouseId)))
+																					end	
+																					tblLogistic[#tblLogistic+1] = {action = "departure", acf = "none", placeId = warehouseId, placeName = "none", placeType = "warehouses", fuel = addedTons, ammo = {}, directammo = _crData.dirAmmo, dirQty = -_crData.dirAmmoQty, directfuel = nil}
+																				end
+
 																				-- remove if spawned
 																				local spawned = false
 																				for sId, sData in pairs(tblSpawned) do
 																					for _, suData in pairs(sData.gUnits) do 
-																						if tostring(c_Id) == tostring(suData.uID) then
+																						if tostring(c_Id) == tostring(suData.uID) or c_Name == suData.uName then
 																							
 																							tblSpawned[sId] = nil
 																							spawned = true
@@ -1093,101 +1167,127 @@ EMBD.collectLogCrates = function()
 
 																				-- remove if ME
 																				--if spawned == false then
-																					tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(c_Id), coalitionID = c_Coa, countryID = c_Country, staticTable = nil, objCategory = 6, objTypeName = c_type}
-																					if DSMC_debugProcessDetail == true then
-																						env.info(("EMBD.collectLogCrates removed from mission editor existing cargo"))
-																					end	
-																				--end
-																			elseif c_type == "ammo_cargo" then -- assess ammo
-																				if _crData.dirAmmo then
-																					local addedTons = 0 
-
-																					tblLogistic[#tblLogistic+1] = {action = "arrival", acf = "none", placeId = aData.id, placeName = aData.name, placeType = ab_type, fuel = addedTons, ammo = {}, directammo = _crData.dirAmmo, dirQty = _crData.dirAmmoQty, directfuel = nil}
-																					
-																					-- remove if spawned
-																					local spawned = false
-																					for sId, sData in pairs(tblSpawned) do
-																						for _, suData in pairs(sData.gUnits) do 
-																							if tostring(c_Id) == tostring(suData.uID) then
-																								
-																								tblSpawned[sId] = nil
-																								spawned = true
-																								if DSMC_debugProcessDetail == true then
-																									env.info(("EMBD.collectLogCrates removed from spawned list"))
-																								end	
-																							end
-																						end
-																					end
-
-																					-- remove if ME
-																					--if spawned == false then
-																					tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(c_Id), coalitionID = c_Coa, countryID = c_Country, staticTable = nil, objCategory = 6, objTypeName = c_type}
-																					if DSMC_debugProcessDetail == true then
-																						env.info(("EMBD.collectLogCrates removed from mission editor existing cargo"))
-																					end	
-																				else
-																					if DSMC_debugProcessDetail == true then
-																						env.info(("EMBD.collectLogCrates ammo class not available"))
-																					end																	
-																				end
-
+																				tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(c_Id), coalitionID = c_Coa, countryID = c_Country, staticTable = nil, objCategory = 6, objTypeName = c_type}
+																				if DSMC_debugProcessDetail == true then
+																					env.info(("EMBD.collectLogCrates removed from mission editor existing cargo"))
+																				end	
+																			else
+																				if DSMC_debugProcessDetail == true then
+																					env.info(("EMBD.collectLogCrates ammo class not available"))
+																				end																	
 																			end
+
 																		end
 																	end
 																end
 															end
 														end
-													end												
-												end
-
+													end
+												end												
 											end
+
 										end
-									else
-										if DSMC_debugProcessDetail == true then
-											env.info(("EMBD.collectLogCrates : Crates is not over a paved area"))
-										end	
 									end
-								end	
+								else
+									if DSMC_debugProcessDetail == true then
+										env.info(("EMBD.collectLogCrates : Crates is not over a paved area"))
+									end	
+								end
+							end	
 
-							end
-						end)
-						return true
-					end      
-					world.searchObjects(Object.Category.CARGO, _volume, _searchAB)	
+						end
+					end)
+					return true
+				end      
+				world.searchObjects(Object.Category.CARGO, _volume, _searchAB)	
 
-				else
-					local _volume = {
-						id = world.VolumeType.SPHERE,
-						params = {
-							point = aData.pos,
-							radius = 200
-						}
+			else
+				local _volume = {
+					id = world.VolumeType.SPHERE,
+					params = {
+						point = aData.pos,
+						radius = 200
 					}
+				}
 
-					local _search = function(cargo)
-						pcall(function()
-							if cargo ~= nil then
-								if cargo:getLife() > 1 then
-									local c_wh = cargo:getCargoWeight()
-									local c_type = cargo:getTypeName()
-									local c_Id = cargo:getID()
-									local c_Coa = cargo:getCoalition()
-									local c_Country = cargo:getCountry()
-									
-									for C_cat, C_data in pairs(ctld_c.spawnableCrates) do
-										if C_cat == "Airlift supplies" then
-											for sC_ind, sC_logData in pairs(C_data) do	
-												for C_ind, C_logData in pairs(sC_logData) do
-													if C_ind == "Fuel resupplies" or C_ind == "Ammo resupplies" then
-														for _, _crData in pairs(C_logData) do
-															if _crData.weight == c_wh then
-																if DSMC_debugProcessDetail == true then
-																	env.info(("EMBD.collectLogCrates found crate, type: " .. tostring(c_type) .. ", weight: " .. tostring(c_wh)  .. ", id: " .. tostring(c_Id)))
-																end															
+				local _search = function(cargo)
+					pcall(function()
+						if cargo ~= nil then
+							if cargo:getLife() > 1 then
+								local c_wh = cargo:getCargoWeight()
+								local c_type = cargo:getTypeName()
+								local c_Id = cargo:getID()
+								local c_Coa = cargo:getCoalition()
+								local c_Country = cargo:getCountry()
+								local c_Name = cargo:getName()
 
-																
-																if c_type == "fueltank_cargo" then -- assess fuel
-																	local addedTons = (c_wh-60)*ctld_c.upscaleResupplyFactor/1000 -- 60 kilos is the "standard" void crate weight. Obviously assumed.
+								local warehouseId = nil
+								local w_string_init, w_string_start = string.find(c_Name, "WID")
+								if w_string_init and w_string_start then
+									local w_string = string.sub(c_Name, w_string_start+1)
+									if w_string then
+										warehouseId = string.match(w_string, "%d+")
+									end
+								end
+
+								if DSMC_debugProcessDetail == true then
+									env.info(("EMBD.collectLogCrates warehouseId identified: " .. tostring(warehouseId)))
+								end	
+								
+								for C_cat, C_data in pairs(spawnableCrates) do
+									if C_cat == "Airlift supplies" then
+										for sC_ind, sC_logData in pairs(C_data) do	
+											for C_ind, C_logData in pairs(sC_logData) do
+												if C_ind == "Fuel resupplies" or C_ind == "Ammo resupplies" then
+													for _, _crData in pairs(C_logData) do
+														if _crData.weight == c_wh then
+															if DSMC_debugProcessDetail == true then
+																env.info(("EMBD.collectLogCrates found crate, type: " .. tostring(c_type) .. ", weight: " .. tostring(c_wh)  .. ", id: " .. tostring(c_Id) .. ", name: " .. tostring(c_Name)))
+															end															
+															
+															if c_type == "fueltank_cargo" then -- assess fuel
+																local addedTons = (c_wh-60)*upscaleResupplyFactor/1000 -- 60 kilos is the "standard" void crate weight. Obviously assumed.
+																local ab_type = "warehouses"
+																local ab = Airbase.getByName(aData.name)
+																if ab then
+																	if ab:hasAttribute("Airfields") then
+																		ab_type  = "airports"
+																	end
+
+																	if ab_type == "warehouses" then
+
+																		tblLogistic[#tblLogistic+1] = {action = "arrival", acf = "none", placeId = aData.id, placeName = aData.name, placeType = ab_type, fuel = 0, ammo = {}, directammo = nil, directfuel = addedTons}
+																		if warehouseId then
+																			if DSMC_debugProcessDetail == true then
+																				env.info(("EMBD.collectLogCrates removing amount from wh id: " .. tostring(warehouseId)))
+																			end	
+																			tblLogistic[#tblLogistic+1] = {action = "departure", acf = "none", placeId = warehouseId, placeName = "none", placeType = "warehouses", fuel = 0, ammo = {}, directammo = nil, directfuel = -addedTons}
+																		end
+
+																		-- remove if spawned
+																		local spawned = false
+																		for sId, sData in pairs(tblSpawned) do
+																			for _, suData in pairs(sData.gUnits) do 
+																				if tostring(c_Id) == tostring(suData.uID) or c_Name == suData.uName then
+																					
+																					tblSpawned[sId] = nil
+																					spawned = true
+																					if DSMC_debugProcessDetail == true then
+																						env.info(("EMBD.collectLogCrates removed from spawned list"))
+																					end	
+																				end
+																			end
+																		end
+
+																		tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(c_Id), coalitionID = c_Coa, countryID = c_Country, staticTable = nil, objCategory = 6, objTypeName = c_type}
+																		if DSMC_debugProcessDetail == true then
+																			env.info(("EMBD.collectLogCrates removed from mission editor existing cargo"))
+																		end	
+																	end
+																end
+															elseif c_type == "ammo_cargo" then -- assess ammo
+																if _crData.dirAmmo then
+																	local addedTons = 0 
 																	local ab_type = "warehouses"
 																	local ab = Airbase.getByName(aData.name)
 																	if ab then
@@ -1197,13 +1297,18 @@ EMBD.collectLogCrates = function()
 
 																		if ab_type == "warehouses" then
 
-																			tblLogistic[#tblLogistic+1] = {action = "arrival", acf = "none", placeId = aData.id, placeName = aData.name, placeType = ab_type, fuel = 0, ammo = {}, directammo = nil, directfuel = addedTons}
-																			
+																			tblLogistic[#tblLogistic+1] = {action = "arrival", acf = "none", placeId = aData.id, placeName = aData.name, placeType = ab_type, fuel = addedTons, ammo = {}, directammo = _crData.dirAmmo, dirQty = _crData.dirAmmoQty, directfuel = nil}
+																			if warehouseId then
+																				if DSMC_debugProcessDetail == true then
+																					env.info(("EMBD.collectLogCrates removing amount from wh id: " .. tostring(warehouseId)))
+																				end	
+																				tblLogistic[#tblLogistic+1] = {action = "departure", acf = "none", placeId = warehouseId, placeName = "none", placeType = "warehouses", fuel = addedTons, ammo = {}, directammo = _crData.dirAmmo, dirQty = -_crData.dirAmmoQty, directfuel = nil}
+																			end
 																			-- remove if spawned
 																			local spawned = false
 																			for sId, sData in pairs(tblSpawned) do
 																				for _, suData in pairs(sData.gUnits) do 
-																					if tostring(c_Id) == tostring(suData.uID) then
+																					if tostring(c_Id) == tostring(suData.uID) or c_Name == suData.uName then
 																						
 																						tblSpawned[sId] = nil
 																						spawned = true
@@ -1219,50 +1324,14 @@ EMBD.collectLogCrates = function()
 																				env.info(("EMBD.collectLogCrates removed from mission editor existing cargo"))
 																			end	
 																		end
+
 																	end
-																elseif c_type == "ammo_cargo" then -- assess ammo
-																	if _crData.dirAmmo then
-																		local addedTons = 0 
-																		local ab_type = "warehouses"
-																		local ab = Airbase.getByName(aData.name)
-																		if ab then
-																			if ab:hasAttribute("Airfields") then
-																				ab_type  = "airports"
-																			end
-
-																			if ab_type == "warehouses" then
-
-																				tblLogistic[#tblLogistic+1] = {action = "arrival", acf = "none", placeId = aData.id, placeName = aData.name, placeType = ab_type, fuel = addedTons, ammo = {}, directammo = _crData.dirAmmo, dirQty = _crData.dirAmmoQty, directfuel = nil}
-																				
-																				-- remove if spawned
-																				local spawned = false
-																				for sId, sData in pairs(tblSpawned) do
-																					for _, suData in pairs(sData.gUnits) do 
-																						if tostring(c_Id) == tostring(suData.uID) then
-																							
-																							tblSpawned[sId] = nil
-																							spawned = true
-																							if DSMC_debugProcessDetail == true then
-																								env.info(("EMBD.collectLogCrates removed from spawned list"))
-																							end	
-																						end
-																					end
-																				end
-
-																				tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(c_Id), coalitionID = c_Coa, countryID = c_Country, staticTable = nil, objCategory = 6, objTypeName = c_type}
-																				if DSMC_debugProcessDetail == true then
-																					env.info(("EMBD.collectLogCrates removed from mission editor existing cargo"))
-																				end	
-																			end
-
-																		end
-																	else
-																		if DSMC_debugProcessDetail == true then
-																			env.info(("EMBD.collectLogCrates ammo class not available"))
-																		end																	
-																	end
-
+																else
+																	if DSMC_debugProcessDetail == true then
+																		env.info(("EMBD.collectLogCrates ammo class not available"))
+																	end																	
 																end
+
 															end
 														end
 													end
@@ -1270,18 +1339,19 @@ EMBD.collectLogCrates = function()
 											end
 										end
 									end
-								end	
+								end
+							end	
 
-							end
-						end)
-						return true
-					end      
-					world.searchObjects(Object.Category.CARGO, _volume, _search)	
-				end 
-			
-			end
+						end
+					end)
+					return true
+				end      
+				world.searchObjects(Object.Category.CARGO, _volume, _search)	
+			end 
+		
 		end
 	end
+
 end
 
 EMBD.oncallworkflow = function(sanivar, recall)
@@ -1504,9 +1574,7 @@ EMBD.oncallworkflow = function(sanivar, recall)
 	env.info(("EMBD.oncallworkflow saveProcess finished"))
 end
 
-
 EMBD.preSaveCallback = nil
-
 -- original save method, renamed and called from the timer below
 EMBD.executeSAVEFunction = function(recall)
 	env.info(("EMBD.executeSAVEFunction launched. recall = " .. tostring(recall)))
@@ -1542,8 +1610,8 @@ end
 
 EMBD.runDesanMessage = function()
 	local function Desanmessage()
-		trigger.action.outText("DSMC can't work, you need to desanitize the server!", 10)
-		env.info(("DSMC can't work, you need to desanitize the server!"))
+		trigger.action.outText("DSMC can't work as required!, you need to desanitize the server or change your options. Check manual!", 10)
+		env.info(("DSMC can't work as required!, you need to desanitize the server or change your options. Check manual!"))
 	end
 	timer.scheduleFunction(Desanmessage, {}, timer.getTime() + 60)
 end
@@ -1916,7 +1984,7 @@ function EMBD.LogisticUnload:onEvent(event)
 						takeofflandLocker[#takeofflandLocker+1] = {unitId = UNITID, action = "arrival", time = timer.getTime()}
 						if DSMC_debugProcessDetail == true then
 							env.info(("EMBD.LogisticUnload ha registrato un atterraggio, unità: " .. tostring(UNITID)))
-							trigger.action.outText("DSMC debug: EMBD.LogisticUnload ha registrato un atterraggio, unità: " .. tostring(UNITID), 10)
+							--trigger.action.outText("DSMC debug: EMBD.LogisticUnload ha registrato un atterraggio, unità: " .. tostring(UNITID), 10)
 						end
 
 					end
@@ -2152,10 +2220,9 @@ function EMBD.baseCapture:onEvent(event)
 			else
 				baseTYPE = "warehouses"
 			end	
-		
-			--env.info(("EMBD.baseCapture ha registrato un cambio di fazione della base: " .. tostring(baseName)))
-			--trigger.action.outText("EMBD.baseCapture ha registrato un cambio di fazione della base: " .. tostring(baseID), 10)
+			
 			if DSMC_debugProcessDetail == true then
+				--trigger.action.outText("EMBD.baseCapture ha registrato un cambio di fazione della base: " .. tostring(baseID), 10)
 				env.info(("EMBD.baseCapture base name: " .. tostring(baseName) .. " has been captured by: " .. tostring(conquerCoa)))
 			end	
 			tblConquer[#tblConquer+1] = {id = baseID, name = baseName, coa = conquerCoa, country = conquerCountry, baseType = baseTYPE}
@@ -2335,7 +2402,6 @@ function EMBD.collectSpawned:onEvent(event)
 end
 world.addEventHandler(EMBD.collectSpawned)
 
---
 EMBD.sceneryDestroyRefresh = {}
 function EMBD.sceneryDestroyRefresh:onEvent(event) -- used for scenery destruction obj
 	if event.id == world.event.S_EVENT_MISSION_START then 
@@ -2350,7 +2416,6 @@ function EMBD.sceneryDestroyRefresh:onEvent(event) -- used for scenery destructi
 	end
 end
 world.addEventHandler(EMBD.sceneryDestroyRefresh)
---]]--
 
 function EMBD.sceneryDestroyRefreshRemote()
 	local function setFlag()
@@ -2837,6 +2902,7 @@ end
 local function dumpThreats()
 	if DSMC_io and DSMC_lfs then
 		dumpTable("EMBD.tblThreatsRange.lua", EMBD.tblThreatsRange)
+		dumpTable("EMBD.dbWarehouse.lua", dbWarehouse)
 	end
 end
 timer.scheduleFunction(dumpThreats, {}, timer.getTime() + 2)

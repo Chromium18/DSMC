@@ -1238,51 +1238,6 @@ local standardHeloTypes = {
 			["gun"] = 100,
 		}, -- end of ["payload"]
 	}, -- end of [1]
-	["SA342Mistral"] = 
-	{
-		["hardpoint_racks"] = true,
-		["ropeLength"] = 15,
-		["type"] = "SA342Mistral",
-		["Radio"] = 
-		{
-			[1] = 
-			{
-				["modulations"] = 
-				{
-					[6] = 0,
-					[2] = 0,
-					[8] = 0,
-					[3] = 0,
-					[1] = 0,
-					[4] = 0,
-					[5] = 0,
-					[7] = 0,
-				}, -- end of ["modulations"]
-				["channels"] = 
-				{
-					[6] = 41,
-					[2] = 31,
-					[8] = 50,
-					[3] = 32,
-					[1] = 30,
-					[4] = 33,
-					[5] = 40,
-					[7] = 42,
-				}, -- end of ["channels"]
-			}, -- end of [1]
-		}, -- end of ["Radio"]
-		["payload"] = 
-		{
-			["pylons"] = 
-			{
-			}, -- end of ["pylons"]
-			["fuel"] = 0,
-			["flare"] = 32,
-			["chaff"] = 0,
-			["gun"] = 100,
-		}, -- end of ["payload"]
-	}, -- end of [1]
-
 	["Mi-24P"] = 
 	{
 		["ropeLength"] = 15,
@@ -1306,7 +1261,6 @@ local standardHeloTypes = {
 			["gun"] = 100,
 		}, -- end of ["payload"]
 	}, -- end of [1]
-
 	["AH-64D_BLK_II"] = 
 	{
 		["ropeLength"] = 15,
@@ -1435,7 +1389,6 @@ local standardHeloTypes = {
 			}, -- end of [3]
 		}, -- end of ["Radio"]
 	}, -- end of [1]
-
 }
 
 local permitAll = false

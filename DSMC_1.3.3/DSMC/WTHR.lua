@@ -14,6 +14,16 @@ local io 			= require('io')
 local lfs 			= require('lfs')
 local os 			= require('os')
 
+dofile (lfs.currentdir() .. 'LuaSocket/socket.lua')
+dofile (lfs.currentdir() .. 'LuaSocket/ltn12.lua')
+dofile (lfs.currentdir() .. 'LuaSocket/mime.lua')
+dofile (lfs.currentdir() .. 'LuaSocket/url.lua')
+dofile (lfs.currentdir() .. 'LuaSocket/http.lua')
+
+local socket 		= require('socket')
+local http 			= require('socket.http')
+--local metar 		= require("metar")
+
 --## SOURCES
 -- https://weatherspark.com/y/2228/Average-Weather-in-Las-Vegas-Nevada-United-States-Year-Round
 -- https://yandex.com/weather/ras-al-khaimah/month/january?via=cnav
@@ -26,6 +36,16 @@ WTHRloaded						= false
 DewPointCalc					= nil
 local rndFactorPerc				= 15 --% of randomization on calculated values
 local cloudFog					= false
+local WeatherAirport 			= "LIEO" 
+
+
+--## METAR
+--local m = METR.new(WeatherAirport)
+--ocal metarData = m:get_metar_data()
+
+
+--HOOK.writeDebugBase(ModuleName .. ": metarData " .. tostring(metarData))
+
 
 
 --# RND SEED
@@ -76,6 +96,12 @@ meanMapBaseHeight =
 		["Umax"] = 10,
 		["Umin"] = 5,
 	},
+	["SinaiMap"] = 
+	{
+		["Tbase"] = 200, 
+		["Umax"] = 40,
+		["Umin"] = 20,
+	},	
 }
 
 staticWeatherDb =  -- theatre, date.Month, probability data
@@ -300,6 +326,226 @@ staticWeatherDb =  -- theatre, date.Month, probability data
 		},
 
 	},	
+	["SinaiMap"] = -- same as syria
+	{
+		[1] = 
+		{
+			["Tmax"] = 13.4, 
+			["Tmin"] = -2,
+			["CL4_6"] = 0.40,
+			["CL7_8"] = 0.65,
+			["CL9_10"] = 0.80,
+			["Rain"] = 0.55,
+			["Storm"] = 0.995,
+			["WD_day"] = 225, 
+			["WD_night"] = 45,
+			["WD_speed"] = 4, 
+			["Pmax"] = 770, 
+			["Pmin"] = 735,
+			["fogAllowed"] = false,		
+			["sandAllowed"] = false,
+			["windVar"] = 0.15,				
+		},
+		[2] = 
+		{
+			["Tmax"] = 16.2,  
+			["Tmin"] = -1.5,
+			["CL4_6"] = 0.45, 
+			["CL7_8"] = 0.67,
+			["CL9_10"] = 0.75,
+			["Rain"] = 0.6,
+			["Storm"] = 0.995,
+			["WD_day"] = 225, 
+			["WD_night"] = 45,
+			["WD_speed"] = 4, 
+			["Pmax"] = 768, 
+			["Pmin"] = 742,
+			["fogAllowed"] = false,		
+			["sandAllowed"] = false,	
+			["windVar"] = 0.15,		
+		},	
+		[3] = 
+		{
+			["Tmax"] = 21, 
+			["Tmin"] = 6,
+			["CL4_6"] = 0.45, 
+			["CL7_8"] = 0.70,
+			["CL9_10"] = 0.78,
+			["Rain"] = 0.65,
+			["Storm"] = 0.985,
+			["WD_day"] = 225, 
+			["WD_night"] = 45,
+			["WD_speed"] = 5, 
+			["Pmax"] = 769, 
+			["Pmin"] = 736,
+			["fogAllowed"] = true,		
+			["sandAllowed"] = false,
+			["windVar"] = 0.15,			
+		},		
+		[4] = 
+		{
+			["Tmax"] = 26, 
+			["Tmin"] = 9,
+			["CL4_6"] = 0.60, 
+			["CL7_8"] = 0.70,
+			["CL9_10"] = 0.85,
+			["Rain"] = 0.75,
+			["Storm"] = 0.98,
+			["WD_day"] = 225, 
+			["WD_night"] = 45,
+			["WD_speed"] = 5, 
+			["Pmax"] = 770, 
+			["Pmin"] = 736,
+			["fogAllowed"] = false,		
+			["sandAllowed"] = false,	
+			["windVar"] = 0.15,		
+		},			
+		[5] = 
+		{
+			["Tmax"] = 31, 
+			["Tmin"] = 13,
+			["CL4_6"] = 0.65, 
+			["CL7_8"] = 0.81,
+			["CL9_10"] = 0.84,
+			["Rain"] = 0.85,
+			["Storm"] = 0.96,
+			["WD_day"] = 225, 
+			["WD_night"] = 45,
+			["WD_speed"] = 5, 
+			["Pmax"] = 775, 
+			["Pmin"] = 748,
+			["fogAllowed"] = false,		
+			["sandAllowed"] = false,	
+			["windVar"] = 0.15,		
+		},		
+		[6] = 
+		{
+			["Tmax"] = 35, 
+			["Tmin"] = 17,
+			["CL4_6"] = 0.84, 
+			["CL7_8"] = 0.86,
+			["CL9_10"] = 0.88,
+			["Rain"] = 0.92,
+			["Storm"] = 0.95,
+			["WD_day"] = 225, 
+			["WD_night"] = 45,
+			["WD_speed"] = 6, 
+			["Pmax"] = 769, 
+			["Pmin"] = 756,
+			["fogAllowed"] = false,		
+			["sandAllowed"] = false,		
+			["windVar"] = 0.15,	
+		},	
+		[7] = 
+		{
+			["Tmax"] = 38, 
+			["Tmin"] = 19,
+			["CL4_6"] = 0.93, 
+			["CL7_8"] = 0.94,
+			["CL9_10"] = 0.95,
+			["Rain"] = 0.96,
+			["Storm"] = 0.97,
+			["WD_day"] = 225, 
+			["WD_night"] = 45,
+			["WD_speed"] = 6, 
+			["Pmax"] = 771, 
+			["Pmin"] = 752,
+			["fogAllowed"] = false,		
+			["sandAllowed"] = false,			
+			["windVar"] = 0.15,
+		},	
+		[8] = 
+		{
+			["Tmax"] = 38, 
+			["Tmin"] = 20,
+			["CL4_6"] = 0.865, 
+			["CL7_8"] = 0.87,
+			["CL9_10"] = 0.875,
+			["Rain"] = 0.88,
+			["Storm"] = 0.91,
+			["WD_day"] = 225, 
+			["WD_night"] = 45,
+			["WD_speed"] = 5, 
+			["Pmax"] = 763.8, 
+			["Pmin"] = 751.3,
+			["fogAllowed"] = false,		
+			["sandAllowed"] = false,	
+			["windVar"] = 0.15,		
+		},	
+		[9] = 
+		{
+			["Tmax"] = 35, 
+			["Tmin"] = 17,
+			["CL4_6"] = 0.70, 
+			["CL7_8"] = 0.80,
+			["CL9_10"] = 0.82,
+			["Rain"] = 0.84,
+			["Storm"] = 0.96,
+			["WD_day"] = 225, 
+			["WD_night"] = 45,
+			["WD_speed"] = 5, 
+			["Pmax"] = 770.2, 
+			["Pmin"] = 763.8,
+			["fogAllowed"] = false,		
+			["sandAllowed"] = false,	
+			["windVar"] = 0.15,		
+		},	
+		[10] = 
+		{
+			["Tmax"] = 28, 
+			["Tmin"] = 12,
+			["CL4_6"] = 0.60, 
+			["CL7_8"] = 0.68,
+			["CL9_10"] = 0.77,
+			["Rain"] = 0.65,
+			["Storm"] = 0.98,
+			["WD_day"] = 225, 
+			["WD_night"] = 45,
+			["WD_speed"] = 2.5, 
+			["Pmax"] = 773.5, 
+			["Pmin"] = 742.4,
+			["fogAllowed"] = false,		
+			["sandAllowed"] = false,	
+			["windVar"] = 0.15,		
+		},
+		[11] = 
+		{
+			["Tmax"] = 21, 
+			["Tmin"] = 6,
+			["CL4_6"] = 0.40, 
+			["CL7_8"] = 0.65,
+			["CL9_10"] = 0.72,
+			["Rain"] = 0.78,
+			["Storm"] = 0.995,
+			["WD_day"] = 225, 
+			["WD_night"] = 45,
+			["WD_speed"] = 1.7, 
+			["Pmax"] = 776.8, 
+			["Pmin"] = 749.1,
+			["fogAllowed"] = false,		
+			["sandAllowed"] = false,
+			["windVar"] = 0.15,			
+		},
+		[12] = 
+		{
+			["Tmax"] = 15, 
+			["Tmin"] = 2,
+			["CL4_6"] = 0.35, 
+			["CL7_8"] = 0.50,
+			["CL9_10"] = 0.68,
+			["Rain"] = 0.72,
+			["Storm"] = 0.995,
+			["WD_day"] = 225, 
+			["WD_night"] = 45,
+			["WD_speed"] = 2, 
+			["Pmax"] = 770, 
+			["Pmin"] = 746.1,
+			["fogAllowed"] = false,		
+			["sandAllowed"] = false,
+			["windVar"] = 0.15,			
+		},
+
+	},		
 	["Caucasus"] = -- Kutaisi
 	{
 		[1] = 
@@ -2200,6 +2446,385 @@ function getVisibility(Humidity)  --https://meetingorganizer.copernicus.org/FOGD
 		HOOK.writeDebugDetail(ModuleName .. ": getVisibility error: variable missing")
 	end
 end
+
+-- #########################################################
+-- ########## Real time weather built from Metar ###########
+-- #########################################################
+
+-- This code overwrites anything done with the standard "randomized" cod
+
+function pushRealTimeWeather(loadedMissionPath)
+	
+	HOOK.writeDebugBase(ModuleName .. ": pushRealTimeWeather - starting with path: " .. tostring(loadedMissionPath))
+	if HOOK.wh_update == false then
+		--check new name
+		local missionName = "DSMC_wthTempFile.miz"
+		
+		-- local curHour = tostring(os.date('%Y-%m-%d_%H_%M_%S'))
+		local mizPath = HOOK.missionfilesdirectory .. missionName
+		
+		HOOK.writeDebugDetail(ModuleName .. ": pushRealTimeWeather - mizPath path: " .. tostring(mizPath))
+		
+		if mizPath then
+			
+			lfs.mkdir(HOOK.missionfilesdirectory .. "TestTemp/" .. HOOK.NewMizTempDir)	
+			
+			local zipFile, err = minizip.unzOpen(loadedMissionPath, 'rb')
+			zipFile:unzGoToFirstFile() --vai al primo file dello zip		
+			local DSMC_NewSaveresourceFiles = {}
+			local CreatedDirectories = {}
+			local tobeModifiedMizFile = nil
+			local function Unpack()
+				local SaveresourceFiles = {}
+				while true do --scompattalo e passa al prossimo
+					local filename = zipFile:unzGetCurrentFileName()
+					local BaseTempDir = HOOK.missionfilesdirectory .. "TestTemp/" .. HOOK.NewMizTempDir
+					local fullPath = BaseTempDir .. filename
+
+					--create subdirectories
+					local subdir1_string = nil
+					local subdir2_string = nil
+					local subdir3_string = nil
+					local subdir4_string = nil
+					local subdir5_string = nil
+					local subdir6_string = nil
+					local subdir7_string = nil
+					local subdir8_string = nil
+					local subdir9_string = nil
+					local subdir1_end = nil
+					local subdir2_end = nil
+					local subdir3_end = nil
+					local subdir4_end = nil
+					local subdir5_end = nil
+					local subdir6_end = nil
+					local subdir7_end = nil
+					local subdir8_end = nil
+					local subdir9_end = nil
+					local subdir1 = nil
+					local subdir2 = nil
+					local subdir3 = nil
+					local subdir4 = nil
+					local subdir5 = nil
+					local subdir6 = nil
+					local subdir7 = nil
+					local subdir8 = nil
+					local subdir9 = nil				
+						
+					-- check if a subdir exist
+					subdir1_string = string.sub(filename, 1)
+					
+					-- identify first subdir string
+					if subdir1_string then
+						subdir1_end = string.find(subdir1_string, "/")
+						if subdir1_end then
+							subdir1 = string.sub(subdir1_string, 1, subdir1_end-1)					
+							lfs.mkdir(BaseTempDir .. subdir1 .. "/")
+							CreatedDirectories[#CreatedDirectories + 1] = BaseTempDir .. subdir1 .. "/"
+							BaseTempDir = BaseTempDir .. subdir1 .. "/"							
+							subdir2_string = string.sub(subdir1_string, subdir1_end+1)
+						end	
+					end
+					
+					-- identify second subdir string
+					if subdir2_string then
+						subdir2_end = string.find(subdir2_string, "/")
+						if subdir2_end then
+							subdir2 = string.sub(subdir2_string, 1, subdir2_end-1)						
+							lfs.mkdir(BaseTempDir .. subdir2 .. "/")
+							CreatedDirectories[#CreatedDirectories + 1] = BaseTempDir .. subdir2 .. "/"
+							BaseTempDir = BaseTempDir .. subdir2 .. "/"							
+							subdir3_string = string.sub(subdir2_string, subdir2_end+1)
+						end	
+					end				
+					
+					-- identify third subdir string
+					if subdir3_string then
+						subdir3_end = string.find(subdir3_string, "/")
+						if subdir3_end then
+							subdir3 = string.sub(subdir3_string, 1, subdir3_end-1)						
+							lfs.mkdir(BaseTempDir .. subdir3 .. "/")
+							CreatedDirectories[#CreatedDirectories + 1] = BaseTempDir .. subdir3 .. "/"
+							BaseTempDir = BaseTempDir .. subdir3 .. "/"							
+							subdir4_string = string.sub(subdir3_string, subdir3_end+1)
+						end	
+					end							
+
+					-- identify fourth and last subdir string
+					if subdir4_string then
+						subdir4_end = string.find(subdir4_string, "/")
+						if subdir4_end then
+							subdir4 = string.sub(subdir4_string, 1, subdir4_end-1)						
+							lfs.mkdir(BaseTempDir .. subdir4 .. "/")
+							CreatedDirectories[#CreatedDirectories + 1] = BaseTempDir .. subdir4 .. "/"
+							BaseTempDir = BaseTempDir .. subdir4 .. "/"	
+							subdir5_string = string.sub(subdir4_string, subdir4_end+1)
+						end	
+					end
+
+					-- identify fifth subdir string
+					if subdir5_string then
+						subdir5_end = string.find(subdir5_string, "/")
+						if subdir5_end then
+							subdir5 = string.sub(subdir5_string, 1, subdir5_end-1)						
+							lfs.mkdir(BaseTempDir .. subdir5 .. "/")
+							CreatedDirectories[#CreatedDirectories + 1] = BaseTempDir .. subdir5 .. "/"
+							BaseTempDir = BaseTempDir .. subdir5 .. "/"		
+							subdir6_string = string.sub(subdir5_string, subdir5_end+1)
+						end	
+					end
+
+					-- identify sixth subdir string
+					if subdir6_string then
+						subdir6_end = string.find(subdir6_string, "/")
+						if subdir6_end then
+							subdir6 = string.sub(subdir6_string, 1, subdir6_end-1)						
+							lfs.mkdir(BaseTempDir .. subdir6 .. "/")
+							CreatedDirectories[#CreatedDirectories + 1] = BaseTempDir .. subdir6 .. "/"
+							BaseTempDir = BaseTempDir .. subdir6 .. "/"	
+							subdir7_string = string.sub(subdir6_string, subdir6_end+1)
+						end	
+					end
+
+					-- identify seventh subdir string
+					if subdir7_string then
+						subdir7_end = string.find(subdir7_string, "/")
+						if subdir7_end then
+							subdir7 = string.sub(subdir7_string, 1, subdir7_end-1)						
+							lfs.mkdir(BaseTempDir .. subdir7 .. "/")
+							CreatedDirectories[#CreatedDirectories + 1] = BaseTempDir .. subdir7 .. "/"
+							BaseTempDir = BaseTempDir .. subdir7 .. "/"	
+							subdir8_string = string.sub(subdir7_string, subdir7_end+1)
+						end	
+					end			
+
+
+					-- identify eight subdir string
+					if subdir8_string then
+						subdir8_end = string.find(subdir8_string, "/")
+						if subdir8_end then
+							subdir8 = string.sub(subdir8_string, 1, subdir8_end-1)						
+							lfs.mkdir(BaseTempDir .. subdir8 .. "/")
+							CreatedDirectories[#CreatedDirectories + 1] = BaseTempDir .. subdir8 .. "/"
+							BaseTempDir = BaseTempDir .. subdir8 .. "/"
+							subdir9_string = string.sub(subdir8_string, subdir8_end+1)
+						end	
+					end	
+					
+
+					-- identify nineth subdir string
+					if subdir9_string then
+						subdir9_end = string.find(subdir9_string, "/")
+						if subdir9_end then
+							subdir9 = string.sub(subdir9_string, 1, subdir9_end-1)						
+							lfs.mkdir(BaseTempDir .. subdir9 .. "/")
+							CreatedDirectories[#CreatedDirectories + 1] = BaseTempDir .. subdir9 .. "/"
+							BaseTempDir = BaseTempDir .. subdir9 .. "/"								
+						end	
+					end	
+					
+					zipFile:unzUnpackCurrentFile(fullPath) 
+					SaveresourceFiles[filename] = fullPath
+
+					if (fullPath:sub(-7) == "mission") then
+						local f = io.open(fullPath, 'r')
+						local mis_path = nil
+						if f then
+							local fline = f:read()
+							if fline and fline:sub(1,7) == 'mission' then
+								mis_path = fullPath
+							end
+							f:close()
+						end										
+						if mis_path then
+							local f = io.open(mis_path, 'r')
+							if f then
+								HOOK.writeDebugDetail(ModuleName .. ": pushRealTimeWeather - found tobeModifiedMizFile")
+								tobeModifiedMizFile = f:read('*all')
+								f:close()								
+							end
+						end
+					end
+
+					if not zipFile:unzGoToNextFile() then 
+						break
+					end
+				end
+				zipFile:unzClose()
+				return SaveresourceFiles
+			end
+			DSMC_NewSaveresourceFiles = Unpack() -- execute the unpacking
+			HOOK.writeDebugDetail(ModuleName .. ": pushRealTimeWeather - unpack ok")
+
+			-- test repack amminchia
+			local function changeWth()
+				local wth = {
+					["name_ru"] = "Зима. Снегопад",
+					["wind"] = 
+					{
+						["at8000"] = 
+						{
+							["speed"] = 7,
+							["dir"] = 57,
+						}, -- end of ["at8000"]
+						["atGround"] = 
+						{
+							["speed"] = 3,
+							["dir"] = 328,
+						}, -- end of ["atGround"]
+						["at2000"] = 
+						{
+							["speed"] = 5,
+							["dir"] = 36,
+						}, -- end of ["at2000"]
+					}, -- end of ["wind"]
+					["enable_fog"] = true,
+					["season"] = 
+					{
+						["temperature"] = -2,
+					}, -- end of ["season"]
+					["qnh"] = 735,
+					["cyclones"] = 
+					{
+					}, -- end of ["cyclones"]
+					["name_de"] = "Winter, starker Schneefall und Wolken",
+					["dust_density"] = 0,
+					["enable_dust"] = false,
+					["clouds"] = 
+					{
+						["thickness"] = 1100,
+						["density"] = 9,
+						["preset"] = "RainyPreset2",
+						["base"] = 2500,
+						["iprecptns"] = 3,
+					}, -- end of ["clouds"]
+					["atmosphere_type"] = 0,
+					["groundTurbulence"] = 7,
+					["name_fr"] = "Hiver, fortes averses de neige et nuages",
+					["halo"] = 
+					{
+						["preset"] = "off",
+					}, -- end of ["halo"]
+					["type_weather"] = 0,
+					["modifiedTime"] = true,
+					["name"] = "Winter. Heavy snow & clouds",
+					["fog"] = 
+					{
+						["thickness"] = 800,
+						["visibility"] = 500,
+						["dust_density"] = 3000,
+					}, -- end of ["fog"]
+					["visibility"] = 
+					{
+						["distance"] = 80000,
+					}, -- end of ["visibility"]
+					["name_es"] = "Invierno. Nevada intensa y nubes",
+					["name_cn"] = "冬季 暴雪+多云",
+				} -- end of ["weather"]
+
+				if not tobeModifiedMizFile then
+					HOOK.writeDebugDetail(ModuleName .. ": changeWth, errore: tobeModifiedMizFile non disponibile")
+					return false
+				end	
+				local mixFun, mErrStr 	= loadstring(tobeModifiedMizFile);
+				HOOK.writeDebugDetail(ModuleName .. ": changeWth fun's loaded")
+				if mixFun then
+		
+					local wth_env = {}
+
+					setfenv(mixFun, wth_env)
+					mixFun()		
+					HOOK.writeDebugDetail(ModuleName .. ": changeWth mixFun available")
+					
+					wth_env.mission.weather = wth
+
+					lfs.mkdir(HOOK.missionfilesdirectory .. "TestTemp/")
+					--mission
+					local fName = "mission"
+					local missName = HOOK.missionfilesdirectory .. "TestTemp/" .. fName
+					local outFile = io.open(missName, "w");
+					local newMissionStr = UTIL.Integratedserialize('mission', wth_env.mission);
+					outFile:write(newMissionStr);
+					io.close(outFile);
+					HOOK.writeDebugDetail(ModuleName .. ": pushRealTimeWeather - new 'mission' file created")
+
+				end
+
+			end
+			changeWth()
+			--UTIL.moveFile(HOOK.missionfilesdirectory .. "TestTemp/" .. "mission", HOOK.NewMissionPath)
+
+			UTIL.moveFile(HOOK.missionfilesdirectory .. "TestTemp/" .. "mission", HOOK.missionfilesdirectory .. "TestTemp/" .. HOOK.NewMizTempDir .. "mission")
+			UTIL.dumpTable("DSMC_NewSaveresourceFiles.lua",DSMC_NewSaveresourceFiles)
+
+			--("DSMC_NewSaveresourceFiles.lua", DSMC_NewSaveresourceFiles)
+
+			local miz = minizip.zipCreate(mizPath)
+			if miz then
+				HOOK.writeDebugDetail(ModuleName .. ": pushRealTimeWeather - new miz zip created")
+				
+				local function packMissionResources(miz)
+					for file, fullPath in pairs(DSMC_NewSaveresourceFiles) do
+						local fileIsThere = UTIL.fileExist(fullPath)
+						if fileIsThere == true then
+							miz:zipAddFile(file, fullPath)
+						else
+							HOOK.writeDebugBase(ModuleName .. ": missing files to repack: " .. tostring(file))			
+						end
+						os.remove(fullPath)
+					end
+				end
+				packMissionResources(miz)
+				miz:zipClose()
+				zipFile:unzClose()		
+				HOOK.writeDebugDetail(ModuleName .. ": pushRealTimeWeather - repack ok")	
+				
+				--UTIL.dumpTable("CreatedDirectories.lua", CreatedDirectories)			
+				
+				while #CreatedDirectories>0 do
+					local maxId = 0
+					for id, path in pairs(CreatedDirectories) do
+						if id > maxId then
+							maxId = id
+						end
+					end			
+					
+					for id, path in pairs(CreatedDirectories) do
+						if id == maxId then
+							lfs.rmdir(path)
+							table.remove(CreatedDirectories, id)
+						end
+					end	
+				end
+
+				lfs.rmdir(HOOK.missionfilesdirectory .. "TestTemp/" .. HOOK.NewMizTempDir  .. "Scripts/")
+				lfs.rmdir(HOOK.missionfilesdirectory .. "TestTemp/" .. HOOK.NewMizTempDir)
+				--lfs.rmdir(HOOK.missionfilesdirectory .. "TestTemp/")
+				HOOK.writeDebugDetail(ModuleName .. ": pushRealTimeWeather - dir removed ok")	
+				--]]--
+				
+				DSMC_NewSaveresourceFiles = nil
+				HOOK.writeDebugDetail(ModuleName .. ": pushRealTimeWeather - repack done, restarting mission")
+				HOOK.wh_update = true
+				HOOK.writeDebugDetail(ModuleName .. ": pushRealTimeWeather - wh_update: " .. tostring(HOOK.wh_update))
+				net.load_mission(mizPath)
+				HOOK.writeDebugDetail(ModuleName .. ": pushRealTimeWeather - repack done, reload started")
+
+			else
+				HOOK.writeDebugDetail(ModuleName .. ": pushRealTimeWeather - no miz created")
+			end
+			
+		else
+			HOOK.writeDebugBase(ModuleName .. ": pushRealTimeWeather, errors: tblAirbases or tblUnitsUpdate missing")	
+		end
+	else
+		HOOK.writeDebugBase(ModuleName .. ": pushRealTimeWeather, whupdate true, skipping procedure")	
+		HOOK.wh_update = false
+		HOOK.writeDebugDetail(ModuleName .. ": pushRealTimeWeather - wh_update: " .. tostring(HOOK.wh_update))
+	end
+
+end
+
+
 
 function elabWeather(missionEnv)
 	DewPointCalc = nil

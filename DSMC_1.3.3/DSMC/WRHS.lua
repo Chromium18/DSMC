@@ -345,28 +345,39 @@ function elabCratesLogistic(inj_tblLogistic, inj_tempWarehouses)
 								
 								HOOK.writeDebugDetail(ModuleName .. ": elabCratesLogistic placeId ok: " .. tostring(afbId))
 								local tempAfbData = UTIL.deepCopy(afbData)
-								if tempAfbData.unlimitedFuel == false and LogData.directfuel then
-									tempAfbData.jet_fuel.InitFuel = tempAfbData.jet_fuel.InitFuel + LogData.directfuel
-									HOOK.writeDebugDetail(ModuleName .. ": elabCratesLogistic fuel added: " ..tostring(LogData.directfuel) .. "\n")
-								elseif tempAfbData.unlimitedMunitions == false and LogData.directammo and LogData.dirQty then
-									HOOK.writeDebugDetail(ModuleName .. ": elabCratesLogistic directammo request, category: " .. tostring(LogData.directammo)  .. ", qty: " .. tostring(LogData.dirQty))	
-									
-									for _, wData in pairs(tempAfbData.weapons) do
-										local agreed = false
-										for wsId, wsData in pairs(wData.wsType) do
-											if wsId == 3 then
-												if wsData == tonumber(LogData.directammo) then
-													agreed = true
+								if LogData.directfuel then
+									if tempAfbData.unlimitedFuel == false or tempAfbData.jet_fuel.InitFuel < 1000 then
+										local newVal = tempAfbData.jet_fuel.InitFuel + LogData.directfuel
+										if newVal < 0 then newVal = 0 end
+										tempAfbData.jet_fuel.InitFuel = newVal
+										HOOK.writeDebugDetail(ModuleName .. ": elabCratesLogistic fuel added: " ..tostring(LogData.directfuel) .. "\n")
+									end
+								elseif LogData.directammo and LogData.dirQty then
+									if tempAfbData.unlimitedMunitions == false then 
+										HOOK.writeDebugDetail(ModuleName .. ": elabCratesLogistic directammo request, category: " .. tostring(LogData.directammo)  .. ", qty: " .. tostring(LogData.dirQty))	
+										
+										for _, wData in pairs(tempAfbData.weapons) do
+											local agreed = false
+											for wsId, wsData in pairs(wData.wsType) do
+												if wsId == 3 then
+													if wsData == tonumber(LogData.directammo) then
+														agreed = true
+													end
+												end
+											end
+
+											if agreed then
+												if wData.initialAmount < 1000 then
+													HOOK.writeDebugDetail(ModuleName .. ": elabCratesLogistic directammo adding weapon, quantity: " .. tostring(LogData.dirQty))	
+													local newVal = wData.initialAmount + tonumber(LogData.dirQty)
+													if newVal < 0 then newVal = 0 end
+								
+													wData.initialAmount = newVal
 												end
 											end
 										end
 
-										if agreed then
-											HOOK.writeDebugDetail(ModuleName .. ": elabCratesLogistic directammo adding weapon, quantity: " .. tostring(LogData.dirQty))	
-											wData.initialAmount = wData.initialAmount + tonumber(LogData.dirQty)
-										end
 									end
-
 								end
 
 								afbIds[afbId] = tempAfbData

@@ -296,6 +296,15 @@ function doSpawned(missionEnv, tblSpawned, whEnv) -- , dictEnv
 				
 							local gPosX = sgUnits[1]["x"]
 							local gPosY = sgUnits[1]["y"]
+
+							local hiddenMFD = sgData.gTable.hiddenOnMFD
+							if not hiddenMFD then
+								hiddenMFD = true
+							end
+							local hiddenPlanner = sgData.gTable.hiddenOnPlanner
+							if not hiddenPlanner then
+								hiddenPlanner = true
+							end
 							
 							local NewGroupTable = 
 							{
@@ -350,6 +359,8 @@ function doSpawned(missionEnv, tblSpawned, whEnv) -- , dictEnv
 								["name"] = GrpNameAssigned, -- GrpDictEntry,
 								["heading"] = 0, -- this also in new structure!
 								["start_time"] = 0,
+								["hiddenOnPlanner"] = hiddenPlanner,
+								["hiddenOnMFD"] = hiddenMFD,
 							}	
 
 							if sgData.gType == "static" then
