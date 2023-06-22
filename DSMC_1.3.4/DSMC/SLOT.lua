@@ -841,6 +841,36 @@ local standardPlaneTypes = {
 		}, -- end of ["payload"]
 	},
 
+	["F-15ESE"] = {
+		["type"] = "F-15ESE",
+		["payload"] = 
+		{
+			["pylons"] = 
+			{
+			}, -- end of ["pylons"]
+			["fuel"] = "0",
+			["flare"] = 60,
+			["ammo_type"] = 1,
+			["chaff"] = 120,
+			["gun"] = 100,
+		}, -- end of ["payload"]
+		["AddPropAircraft"] = 
+		{
+			["InitAirborneTime"] = 0,
+			["LCFTLaserCode"] = 688,
+			["Sta5LaserCode"] = 688,
+			["Sta2LaserCode"] = 688,
+			["needsGCAlign"] = false,
+			["HumanOrchestra"] = false,
+			["NetCrewControlPriority"] = 0,
+			["SoloFlight"] = false,
+			["InitAlertStatus"] = false,
+			["RCFTLaserCode"] = 688,
+			["Sta8LaserCode"] = 688,
+			["MountNVG"] = false,
+		}, -- end of ["AddPropAircraft"]
+	},
+
 }
 
 local standardHeloTypes = {
