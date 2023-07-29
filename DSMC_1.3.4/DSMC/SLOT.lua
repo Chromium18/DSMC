@@ -97,7 +97,7 @@ local standardPlaneTypes = {
 			["FW_MW50TankContents"] = 0,
 		}, -- end of ["AddPropAircraft"]
 	},		
-	
+		
 	["FW-190D9"] = {
 		["type"] = "FW-190D9",
 		["payload"] = 
@@ -117,7 +117,6 @@ local standardPlaneTypes = {
 		}, -- end of ["AddPropAircraft"]
 	},		
 	
-	
 	["I-16"] = {
 		["type"] = "I-16",
 		["payload"] = 
@@ -135,7 +134,6 @@ local standardPlaneTypes = {
 			["landingTorch"] = false,
 		}, -- end of ["AddPropAircraft"]
 	},			
-	
 	
 	["P-47D-30"] = {
 		["type"] = "P-47D-30",
@@ -223,7 +221,6 @@ local standardPlaneTypes = {
 			["gun"] = 100,
 		}, -- end of ["payload"]
 	},	
-
 	
 	["SpitfireLFMkIX"] = {
 		["type"] = "SpitfireLFMkIX",
@@ -254,7 +251,6 @@ local standardPlaneTypes = {
 			["gun"] = 100,
 		}, -- end of ["payload"]
 	},
-
 	
 	["MosquitoFBMkVI"] = {
 		["type"] = "MosquitoFBMkVI",
@@ -285,6 +281,7 @@ local standardPlaneTypes = {
 			["gun"] = 100,
 		}, -- end of ["payload"]
 	},
+
 	["A-10C"] = {
 		["type"] = "A-10C",
 		["payload"] = 
@@ -299,6 +296,7 @@ local standardPlaneTypes = {
 			["gun"] = 100,
 		}, -- end of ["payload"]
 	},
+
 	["A-10C_2"] = {
 		["type"] = "A-10C_2",
 		["payload"] = 
@@ -313,6 +311,7 @@ local standardPlaneTypes = {
 			["gun"] = 100,
 		}, -- end of ["payload"]
 	},
+
 	["AJS37"] = {
 		["type"] = "AJS37",
 		["payload"] = 
@@ -333,6 +332,7 @@ local standardPlaneTypes = {
 			["MissionGeneratorSetting"] = 0,
 		}, -- end of ["AddPropAircraft"]
 	},
+
 	["AV8BNA"] = {
 		["type"] = "AV8BNA",
 		["payload"] = 
@@ -569,7 +569,6 @@ local standardPlaneTypes = {
 		}, -- end of ["AddPropAircraft"]
 		["hardpoint_racks"] = true,
 	},
-
 
 	["Mirage-F1CE"] = {
 		["type"] = "Mirage-F1CE",
@@ -1419,6 +1418,7 @@ local standardHeloTypes = {
 			}, -- end of [3]
 		}, -- end of ["Radio"]
 	}, -- end of [1]
+	
 }
 
 local permitAll = false
@@ -1789,6 +1789,11 @@ function createHeloGroups(mission) -- , dictionary
 												HOOK.writeDebugBase(ModuleName .. ": createHeloGroups, linkType not found! error")
 												return false
 											end
+
+											local groupGeneralFreq = 251
+											if string.find(sData.acfType, "SA342") then
+												groupGeneralFreq = 124
+											end
 											
 											local groupTable = {
 
@@ -1817,7 +1822,7 @@ function createHeloGroups(mission) -- , dictionary
 												["communication"] = true,
 												["start_time"] = 0,
 												["uncontrollable"] = false,
-												["frequency"] = 251,
+												["frequency"] = groupGeneralFreq,
 											}
 
 											-- now check standard unit
