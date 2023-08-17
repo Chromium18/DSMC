@@ -58,7 +58,6 @@ function updateStTime(missionEnv)
 		local CURsec					= 0 
 		local CURday					= os.time{year=CURstartDateYear, month=CURstartDateMonth, day=CURstartDateDay, hour=0}
 		local CURtime					= CURday + missionEnv["start_time"]
-		HOOK.writeDebugDetail(ModuleName .. ": CURday = " ..tostring(CURday))
 		HOOK.writeDebugDetail(ModuleName .. ": CURtime = " ..tostring(CURtime))
 		HOOK.writeDebugDetail(ModuleName .. ": DCS.getRealTime() = " ..tostring(DCS.getRealTime()))
 		HOOK.writeDebugDetail(ModuleName .. ": DCS.getModelTime() = " ..tostring(DCS.getModelTime()))
@@ -101,16 +100,13 @@ function updateStTime(missionEnv)
 			--]]--
 		
 			local RandomTime			= RandomHour*60*60
-			local NEWtime 				= CURday + 24*60*60+60 -- + RandomTime
-			HOOK.writeDebugDetail(ModuleName .. ": NEWtime = " ..tostring(NEWtime))
+			local NEWtime 				= CURday + 24*60*60 -- + RandomTime
 			--local NEWtimeTable			= os.date("*t", NEWtime)			
 			NEWstartDateYear			= tonumber(os.date("%Y", NEWtime))
 			NEWstartDateMonth			= tonumber(os.date("%m", NEWtime))
 			NEWstartDateDay				= tonumber(os.date("%d", NEWtime))
 			NEWstartTime				= RandomTime	
 			
-			HOOK.writeDebugDetail(ModuleName .. ": updateStTime 2b: NEWstartDateDay=" .. tostring(NEWstartDateDay) .. ", NEWstartDateMonth=" .. tostring(NEWstartDateMonth) .. ", NEWstartDateYear=" .. tostring(NEWstartDateYear) .. ", NEWstartTime=" .. tostring(NEWstartTime) )
-
 			if added == true then
 				NEWstartDateYear			= NEWstartDateYear - 100
 			end
@@ -126,14 +122,10 @@ function updateStTime(missionEnv)
 		
 		end
 
-		
-
 		missionEnv.start_time 			= NEWstartTime
 		missionEnv["date"]["Day"] 		= NEWstartDateDay
 		missionEnv["date"]["Year"] 		= NEWstartDateYear
 		missionEnv["date"]["Month"] 	= NEWstartDateMonth	
-
-		HOOK.writeDebugDetail(ModuleName .. ": updateStTime 3: NEWstartDateDay=" .. tostring(NEWstartDateDay) .. ", NEWstartDateMonth=" .. tostring(NEWstartDateMonth) .. ", NEWstartDateYear=" .. tostring(NEWstartDateYear) .. ", NEWstartTime=" .. tostring(NEWstartTime) )
 			
 		HOOK.writeDebugDetail(ModuleName .. ": updateStTime ok")
 	else

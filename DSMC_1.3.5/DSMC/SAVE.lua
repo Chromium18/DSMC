@@ -84,9 +84,9 @@ function updateAirbaseTable(missionEnv)
 				admData["fw_parkNum"] = fwPk
 				admData["rw_parkNum"] = rwPk
 
-				HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: added parkings")			
+				HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: added parkings")
 			else
-					HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: unable to identify parking table")
+				HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: unable to identify parking table")
 			end
 
 		elseif admData.desc.category == 1 then
@@ -923,10 +923,10 @@ function updateMissionStartTime(missionEnv)
 end
 HOOK.writeDebugDetail(ModuleName .. ": updateMissionStartTime loaded")
 
-function updateWarehouse(tblLogistic, tbl)
-	if WRHS and tblLogistic and tbl and WRHS.WRHSloaded == true then		
-		
-		local lthStr, lthStrErr = WRHS.warehouseUpdateCycle(tblLogistic, tbl)		
+function updateWarehouse(tblWarehousesContent, tbl)
+	if WRHS and tblWarehousesContent and tbl and WRHS.WRHSloaded == true then
+		 
+		local lthStr, lthStrErr = WRHS.warehouseUpdateCycle(tblWarehousesContent, tbl)
 		if not lthStrErr then
 			HOOK.writeDebugDetail(ModuleName .. ": updateWarehouse, warehouseUpdateCycle errors: " .. tostring(lthStr))
 		end
@@ -936,7 +936,7 @@ function updateWarehouse(tblLogistic, tbl)
 			WRHS.tblWarehouses = nil
 			HOOK.writeDebugDetail(ModuleName .. ": updateWarehouse ok")
 		else
-			HOOK.writeDebugDetail(ModuleName .. ": updateWarehouse: tblLogistic not found")
+			HOOK.writeDebugDetail(ModuleName .. ": updateWarehouse: tblWarehousesContent not found")
 		end
 	else
 		HOOK.writeDebugDetail(ModuleName .. ": updateWarehouse: WRHS not found")
@@ -1024,7 +1024,7 @@ function save()
 		setfenv(mResFun, mRes_env)
 		mResFun()	
 		HOOK.writeDebugDetail(ModuleName .. ": save mixFun, dictFun, wrhsFun & mResFun available")
-		
+		 
 		updateAirbaseTable(env.mission)
 		
 		updateUnits(env.mission)	
@@ -1085,7 +1085,7 @@ function save()
 				if HOOK.WRHS_rblt == true then
 					UTIL.reBuildSupplyNet(wrhs_env.warehouses, env.mission)
 				end
-				updateWarehouse(tblLogistic, wrhs_env.warehouses)
+				updateWarehouse(tblWarehousesContent, wrhs_env.warehouses)
 			end
 		end		
 
@@ -1416,7 +1416,7 @@ function getMizFiles(loadedMissionPath)
 				break
 			end
 		end
-		--zipFile:unzClose() --moved below
+		--zipFile:unzClose()
 		return NewSaveresourceFiles
 	end
 	Unpack() -- execute the unpacking	
@@ -1430,8 +1430,8 @@ function getMizFiles(loadedMissionPath)
 			end
 		end
 	end
-	deleteFiles()	
 	zipFile:unzClose()
+	deleteFiles()	
 	HOOK.writeDebugDetail(ModuleName .. ": getMizFiles - files deleted")
 	
 	-- remove directories
@@ -1473,7 +1473,6 @@ end
 HOOK.writeDebugDetail(ModuleName .. ": getMizFiles loaded")
 
 function getNewMissionName(currentName)
-
 	if currentName then
 		local lenght 		= string.len(currentName)
 		local initLenght 	= lenght - 2
@@ -1677,6 +1676,7 @@ function buildNewMizFile(loadedMissionPath, loadedMizFileName, cpm_path)
 					break
 				end
 			end
+			zipFile:unzClose()
 			return SaveresourceFiles
 		end
 		DSMC_NewSaveresourceFiles = Unpack() -- execute the unpacking
@@ -1765,7 +1765,7 @@ function buildNewMizFile(loadedMissionPath, loadedMizFileName, cpm_path)
 	tblDeadScenObj					= nil
 	tblUnitsUpdate					= nil
 	tblAirbases						= nil
-	tblLogistic						= nil
+	tblWarehousesContent			= nil
 	tblSpawned						= nil
 	tblDictEntries					= nil
 	tblToBeKilled					= {}
