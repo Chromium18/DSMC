@@ -90,10 +90,6 @@ if DSMC_debugProcessDetail == true then
 	
 end		
 
-if dbWarehouse and DSMC_debugProcessDetail == true then
-	env.info(("DSMC dbWarehouse exist"))
-end
-
 if wsTypesTbl and DSMC_debugProcessDetail == true then
 	env.info(("DSMC wsTypesTbl exist"))
 end
@@ -2215,7 +2211,6 @@ end
 local function dumpThreats()
 	if DSMC_io and DSMC_lfs then
 		dumpTable("EMBD.tblThreatsRange.lua", EMBD.tblThreatsRange)
-		dumpTable("EMBD.dbWarehouse.lua", dbWarehouse)
 	end
 end
 timer.scheduleFunction(dumpThreats, {}, timer.getTime() + 2)

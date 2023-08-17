@@ -22,9 +22,6 @@ HOOK.writeDebugBase(ModuleName .. ": local required loaded")
 -- ## LOCAL VARIABLES
 UTILloaded						= false
 tblFARP 						= {}
---basic_fuel_amount				= 6
---basic_AGM_amount				= 30
---basic_RCK_amount				= 100
 
 -- ## UTILS
 function copyFile(old, new)
@@ -413,176 +410,6 @@ end
 
 -- #### CAMPAIGN BUILD UTILITIES, MANUAL CONTROLLED ####
 
-
-
---[[
-local xEnv = {}
-local basicPylonDB = {}
-function basicPylonDB_builder(database)
-	local tempPdb = {}
-	--populate index
-	for dbId, dbData in pairs(database) do
-		if dbId == "unit_by_type" then
-			for uType, uData in pairs(dbData) do
-				for cId, cData in pairs(uData) do
-					if cId == "attribute" then
-						for aId, aData in pairs(cData) do
-							if aData == "Planes" or aData == "Helicopters" then
-								local addfuel = 0
-								if uData.MaxFuelWeight then
-									addfuel = tonumber(uData.MaxFuelWeight)
-								end
-								tempPdb[uType] = {pylons = {}, fuel = addfuel}
-							end
-						end
-					end
-				end
-			end
-		end
-	end
-	--UTIL.dumpTable("tempPdb_a.lua", tempPdb) 
-
-	-- populate pylons
-	for hId, hData in pairs(tempPdb) do
-		if hData.pylons then
-			for dbId, dbData in pairs(database) do
-				if dbId == "unit_by_type" then
-					for uType, uData in pairs(dbData) do
-						if uType == hId then
-							if uData.Pylons then
-								--local Piloni = {}
-								for pId, pData in pairs(uData.Pylons) do
-									hData.pylons[pId] = {}
-									
-									if pData.Launchers then
-										for lId, lData in pairs(pData.Launchers) do
-											if lData.CLSID then
-												hData.pylons[pId][lData.CLSID] = {}
-											end
-										end
-									end
-								end
-							end
-						end
-					end
-				end
-			end
-		end
-	end
-	--UTIL.dumpTable("tempPdb_b.lua", tempPdb) 
-
-	-- populate wpnInfo
-	for hId, hData in pairs(tempPdb)do
-		if hData.pylons then
-			--HOOK.writeDebugDetail(ModuleName .. ": x1")
-			for bId, bData in pairs(hData.pylons)do
-				--for pyId, pyData in pairs(bData) do
-					for clId, clData in pairs(bData) do -- pyData
-						--HOOK.writeDebugDetail(ModuleName .. ": x2")
-
-						for dbId, dbData in pairs(database) do
-							if dbId == "category_by_weapon_CLSID" then
-								for cId, cData in pairs(dbData) do
-									if cData.Launchers then
-										for wId, wData in pairs(cData.Launchers) do
-											
-											-- check direct weapons
-											if wData.CLSID then
-												if tostring(wData.CLSID) == tostring(clId) then
-													--HOOK.writeDebugDetail(ModuleName .. ": x3")
-													local attrTbl 	= wData.attribute
-													local wsTble 	= wData.wsTypeOfWeapon
-													local wpnName 	= wData.displayName
-													local wpnweight	= wData.Weight
-													local wpnCount	= wData.Count
-													--HOOK.writeDebugDetail(ModuleName .. ": wpnDBbuilder, aircraft: " .. tostring(bId) ..  ", adding: " .. tostring(wpnName))
-
-													bData[clId] = {name = wpnName, wsType = wsTble, attrType = attrTbl, weight = wpnweight, count = wpnCount} -- pyData
-												end
-											end
-										end	
-									end
-								end
-							end
-						end
-					end
-				--end
-			end
-		end
-	end
-	--UTIL.dumpTable("tempPdb_c.lua", tempPdb) 
-	return tempPdb
-end
-
-local wpnDB = {}
-function wpnDB_builder(pDB)  
-
-if HOOK.SBEO_var == true then
-	HOOK.writeDebugDetail(ModuleName .. ": HOOK.SBEO_var true")
-	if fileExist(HOOK.DSMCdirectory .. "wpnDB.lua") then
-		local f = io.open(HOOK.DSMCdirectory ..  "wpnDB.lua", 'r')
-		if f then
-			local fileContent = f:read('*all')
-			f:close()
-			local strFun = loadstring(fileContent)
-			if strFun then
-				setfenv(strFun, xEnv)
-				strFun()
-				HOOK.writeDebugDetail(ModuleName .. ": used existing, wpnDB.lua")
-
-				if xEnv.wpnDB then
-					wpnDB = xEnv.wpnDB
-				end
-			end
-		end
-
-	else
-
-		if fileExist(HOOK.DSMCdirectory ..  "basicPylonDB.lua") then
-			local f = io.open(HOOK.DSMCdirectory ..  "basicPylonDB.lua", 'r')
-			if f then
-				local fileContent = f:read('*all')
-				f:close()
-				local strFun = loadstring(fileContent)
-				if strFun then	
-					setfenv(strFun, xEnv)
-					strFun()
-					HOOK.writeDebugDetail(ModuleName .. ": used existing, basicPylonDB.lua")
-					--UTIL.dumpTable("basicPylonDB_xEnv.lua", xEnv.basicPylonDB) 
-					
-					if xEnv.basicPylonDB then
-						basicPylonDB = xEnv.basicPylonDB
-					end	
-
-				end
-			end
-
-		else
-			basicPylonDB = basicPylonDB_builder(ME_DB)
-			--UTIL.dumpTable("basicPylonDB_fine.lua", basicPylonDB) 
-			local bName = "basicPylonDB.lua"
-			local bpath = HOOK.DSMCdirectory .. bName
-			local boutFile = io.open(bpath, "w");
-			local bStr = Integratedserialize("basicPylonDB", basicPylonDB)
-			boutFile:write(bStr);
-			io.close(boutFile);
-		end
-		wpnDB = wpnDB_builder(basicPylonDB)
-		--UTIL.dumpTable("wpnDB_fine.lua", wpnDB) 
-		local fName = "wpnDB.lua"
-		local path = HOOK.DSMCdirectory .. fName
-		local outFile = io.open(path, "w");
-		local fStr = Integratedserialize("wpnDB", wpnDB)
-		outFile:write(fStr);
-		io.close(outFile);
-		--UTIL.dumpTable("basicPylonDB_loaded.lua", basicPylonDB) 
-		--UTIL.dumpTable("wpnDB_loaded.lua", wpnDB) 
-
-	end
-end
---]]--
-
-
 function exportWpnDb()
 	
 	DSMC_wpnDB = {version = _G._APP_VERSION, database = {}}
@@ -753,20 +580,20 @@ function addFARPwhBase(unitId, coa, wh, voidIt)
 	local defaultWhTbl = {
 		["gasoline"] = 
 		{
-			["InitFuel"] = 100,
+			["InitFuel"] = 10,
 		}, -- end of ["gasoline"]
 		["unlimitedMunitions"] = true,
 		["methanol_mixture"] = 
 		{
-			["InitFuel"] = 100,
+			["InitFuel"] = 10,
 		}, -- end of ["methanol_mixture"]
 		["OperatingLevel_Air"] = 1,
 		["diesel"] = 
 		{
-			["InitFuel"] = 100,
+			["InitFuel"] = 10,
 		}, -- end of ["diesel"]
 		["speed"] = 1,
-		["size"] = 200,
+		["size"] = 1,
 		["periodicity"] = 1000,
 		["suppliers"] = 
 		{
@@ -774,7 +601,7 @@ function addFARPwhBase(unitId, coa, wh, voidIt)
 		["coalition"] = coa,
 		["jet_fuel"] = 
 		{
-			["InitFuel"] = 100,
+			["InitFuel"] = 10,
 		}, -- end of ["jet_fuel"]
 		["OperatingLevel_Eqp"] = 1,
 		["unlimitedFuel"] = true,
@@ -802,8 +629,6 @@ function addFARPwhBase(unitId, coa, wh, voidIt)
 				end
 			end
 		end
-
-		--HOOK.writeDebugDetail(ModuleName .. ": addFARPwhBase c3")
 
 		if toZero then
 			-- zero weapons
@@ -836,7 +661,7 @@ function addFARPwhBase(unitId, coa, wh, voidIt)
 			toZero.OperatingLevel_Eqp			= 1
 			toZero.OperatingLevel_Fuel			= 1
 			toZero.speed						= 1
-			toZero.size							= 200
+			toZero.size							= 1
 			toZero.periodicity					= 1000
 			toZero.suppliers					= {}
 
@@ -855,26 +680,16 @@ end
 function addFARPwh(wh)
 	if tblFARP then
 		HOOK.writeDebugDetail(ModuleName .. ": addFARPwh start!")
-		--UTIL.dumpTable("tblFARP.lua", tblFARP)
 		for _id, _FARPdata in pairs(tblFARP) do
 			HOOK.writeDebugDetail(ModuleName .. ": checking id: " .. tostring(_id))
 			wh["warehouses"][tonumber(_id)] = _FARPdata
 			HOOK.writeDebugDetail(ModuleName .. ": addFARPwh adding warehouse entry for id: " .. tostring(_id))
-			--for wCat, wIds in pairs(wh) do
-			--	if wCat == "warehouses" then
-			--		HOOK.writeDebugDetail(ModuleName .. ": addFARPwh adding warehouse entry for id: " .. tostring(_id))
-			--		wIds[tostring(_id)] = _FARPdata
-			--	end
-			--end
 		end
 		tblFARP = {}
-		--UTIL.dumpTable("wh.lua", wh)
 		return wh
 	end
 	HOOK.writeDebugDetail(ModuleName .. ": addFARPwh done")
 end
-
-
 
 function makeWhZero(whData, whTbl, base_qty) -- used in whRestart
 	local zWpn = nil
@@ -1008,7 +823,6 @@ function getZeroedAirbase(whTbl) -- used here and in SAVE
 	end
 end
 
-
 local wpnMultiplier = 1 
 function setWeaponsAndFuel(whData, wpnDb)
 	if whData.jet_fuel.InitFuel and whData.aircrafts.helicopters and whData.aircrafts.planes and table.getn(whData.weapons) > 0 then
@@ -1069,7 +883,6 @@ function setWeaponsAndFuel(whData, wpnDb)
 		HOOK.writeDebugDetail(ModuleName .. ": setWeaponsAndFuel, error on data format, missing correct structure")
 	end
 end
-
 
 local depositMultiplier = 5
 function whRestart(warehouse, airbases, mission)
@@ -2189,10 +2002,8 @@ function reBuildSupplyNet(warehouse, mission)
 
 end
 
-
 HOOK.writeDebugBase(ModuleName .. ": Loaded " .. MainVersion .. "." .. SubVersion .. "." .. Build .. ", released " .. Date)
 UTILloaded = true
---UTIL.dumpTable("_G_server.lua", _G) 
 --~=
 
 --
@@ -2203,8 +2014,6 @@ local bStr = Integratedserialize("ctld_c.dbYears", _G.dbYears)
 boutFile:write(bStr);
 io.close(boutFile);
 --]]--
-
-
 
 -- ## ADDED GLOBAL TABLES
 
@@ -2528,6 +2337,3 @@ if ME_DB.db.CountriesByName then
 	end
 end
 dumpTable("ctryList_pre.lua", ctryList)
---inJectTable("ctryList", ctryList) -- fatto quando la missione è avviata!
-
---inJectTable("tblFOBnames", tblFOBnames)

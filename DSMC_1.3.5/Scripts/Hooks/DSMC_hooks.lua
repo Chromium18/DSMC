@@ -38,7 +38,7 @@ DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "3"
 DSMC_SubSubVersion 	= "5"
-DSMC_Build 			= "2601"
+DSMC_Build 			= "2602"
 DSMC_Date			= "17/08/2023"
 
 -- ## DEBUG TO TEXT FUNCTION DO NOT TOUCH THIS
@@ -789,6 +789,11 @@ function startDSMCprocess()
 							end
 						end
 
+						-- from old wrhs module
+						UTIL.inJectTable("dbWeapon", WRHS.dbWeapon)
+						UTIL.inJectCode("WRHS_active", "WRHS_module_active = true")
+						UTIL.inJectTable("dbWarehouse", SAVE.tempEnv.warehouses)
+
 						-- code from WRHS module
 						local wsTypesTbl = {}
 						local found = false
@@ -886,7 +891,7 @@ function startDSMCprocess()
 						local tblThreats = UTIL.getUnitData()
 						if tblThreats then
 							UTIL.inJectTable("EMBD.tblThreatsRange", tblThreats)
-							UTIL.dumpTable("EMBD.tblThreatsRange_int", tblThreats, "int")
+							--UTIL.dumpTable("EMBD.tblThreatsRange_int.lua", tblThreats, "int")
 							writeDebugDetail(DSMC_ModuleName .. ": tblThreats injected in EMBD")
 						else
 							writeDebugDetail(DSMC_ModuleName .. ": can't inject tblThreats in EMBD")

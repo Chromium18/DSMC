@@ -2,7 +2,7 @@
 -- please check mission designer manual before changing any paramterer. If you have issues, log in the DSMC discord and report as described in chapter 5 of the manual.
 
 -- Debug. Leave this true only for bugtracking!!!
-DSMC_DebugMode					= false		-- true / false
+DSMC_DebugMode					= true		-- true / false
 
 -- ##################################################################
 -- SAVED SCENERY FILE (.miz) CUSTOMIZATION & PREFERENCES ############

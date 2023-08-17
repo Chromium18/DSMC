@@ -1587,7 +1587,7 @@ function createHeloGroups(mission) -- , dictionary
 					for countryID,country in pairs(coalition["country"]) do
 						if sData.cntyID == country.id then
 							
-							if sData.acfType == "AV8BNA" then
+							if sData.acfType == "AV8BNA" or sData.acfType == "AJS37" then
 								
 								HOOK.writeDebugDetail(ModuleName .. ": createHeloGroups, country found, for AV-8B: " .. tostring(country.name))
 
