@@ -1711,32 +1711,53 @@ function EMBD.collectSpawned:onEvent(event)
 end
 world.addEventHandler(EMBD.collectSpawned)
 
-EMBD.sceneryDestroyRefresh = {}
-function EMBD.sceneryDestroyRefresh:onEvent(event)
-	if event.id == world.event.S_EVENT_MISSION_START then 
 
-		trigger.action.setUserFlag("12345" , true )
-		env.info(("EMBD.sceneryDestroyRefresh at mission start, flag set"))
+EMBD.sceneryDestroyRefreshOnEvent = {}
+function EMBD.sceneryDestroyRefreshOnEvent:onEvent(event) -- used for scenery destruction obj
+	if event.id == world.event.S_EVENT_MISSION_START or event.id == world.event.S_EVENT_PLAYER_ENTER_UNIT then 
+
+		env.info(("EMBD.sceneryDestroyRefreshOnEvent started"))
+
+		local function setFlag()
+			trigger.action.setUserFlag("12345" , true )
+			env.info(("EMBD.sceneryDestroyRefreshOnEvent flag set"))
+		end
+
 		local function resetFlag()
 			trigger.action.setUserFlag("12345" , false )
-			env.info(("EMBD.sceneryDestroyRefresh at mission start, flag reset done"))
+			env.info(("EMBD.sceneryDestroyRefreshOnEvent flag reset done"))
 		end
-		timer.scheduleFunction(resetFlag, {}, timer.getTime() + 5)
+		
+		if trigger.misc.getUserFlag("12345") == true then
+			timer.scheduleFunction(resetFlag, {}, timer.getTime() + 2)
+		end
+		timer.scheduleFunction(setFlag, {}, timer.getTime() + 4)
+		timer.scheduleFunction(resetFlag, {}, timer.getTime() + 6)
+
 	end
 end
-world.addEventHandler(EMBD.sceneryDestroyRefresh)
+world.addEventHandler(EMBD.sceneryDestroyRefreshOnEvent)
 
 function EMBD.sceneryDestroyRefreshRemote()
+
+	env.info(("EMBD.sceneryDestroyRefreshRemote started"))
+
 	local function setFlag()
 		trigger.action.setUserFlag("12345" , true )
-		env.info(("EMBD.sceneryDestroyRefreshRemote is a client, flag set done"))
-	end	
+		env.info(("EMBD.sceneryDestroyRefreshRemote flag set"))
+	end
+
 	local function resetFlag()
 		trigger.action.setUserFlag("12345" , false )
-		env.info(("EMBD.sceneryDestroyRefreshRemote is a client, flag reset done"))
+		env.info(("EMBD.sceneryDestroyRefreshRemote flag reset done"))
 	end
-	timer.scheduleFunction(setFlag, {}, timer.getTime() + 1)	
-	timer.scheduleFunction(resetFlag, {}, timer.getTime() + 2)
+	
+	if trigger.misc.getUserFlag("12345") == true then
+		timer.scheduleFunction(resetFlag, {}, timer.getTime() + 2)
+	end
+	timer.scheduleFunction(setFlag, {}, timer.getTime() + 4)
+	timer.scheduleFunction(resetFlag, {}, timer.getTime() + 6)
+
 end
 
 --
@@ -1865,15 +1886,23 @@ end
 
 
 EMBD.setDestroyedObjectAtStart = function()
-	local function fxc()
+	env.info(("EMBD.setDestroyedObjectAtStart started"))
+
+	local function setFlag()
 		trigger.action.setUserFlag("12345" , true )
-		local function resetFlag()
-			trigger.action.setUserFlag("12345" , false )
-			env.info(("EMBD.sceneryDestroyRefresh is a client, flag reset done"))
-		end
-		timer.scheduleFunction(resetFlag, {}, timer.getTime() + 1)
+		env.info(("EMBD.setDestroyedObjectAtStart flag set"))
 	end
-	timer.scheduleFunction(fxc, {}, timer.getTime() + 1)
+
+	local function resetFlag()
+		trigger.action.setUserFlag("12345" , false )
+		env.info(("EMBD.setDestroyedObjectAtStart flag reset done"))
+	end
+	
+	if trigger.misc.getUserFlag("12345") == true then
+		timer.scheduleFunction(resetFlag, {}, timer.getTime() + 2)
+	end
+	timer.scheduleFunction(setFlag, {}, timer.getTime() + 4)
+	timer.scheduleFunction(resetFlag, {}, timer.getTime() + 6)
 end
 EMBD.setDestroyedObjectAtStart()
 
