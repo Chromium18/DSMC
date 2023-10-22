@@ -333,7 +333,7 @@ if DSMC_io and DSMC_lfs then
 		end
 	end
 	
-	dumpTable("_G_SSE.lua", _G)
+	--dumpTable("_G_SSE.lua", _G)
 
 	env.info(("EMBD desanitized additional function loaded"))
 end
@@ -1007,8 +1007,8 @@ function EMBD.getWarehouses()
 	--]]--
 
 
-	dumpTable("tblWarehousesContentNew.lua", tblWarehousesContent, "int")
-	dumpTable("tblWarehousesWsTable.lua", tblWarehousesWsTable, "int")
+	--dumpTable("tblWarehousesContentNew.lua", tblWarehousesContent, "int")
+	--dumpTable("tblWarehousesWsTable.lua", tblWarehousesWsTable, "int")
 
 end
 --EMBD.getWarehouses()
@@ -1094,6 +1094,7 @@ EMBD.oncallworkflow = function(sanivar, recall)
 		cur_Stack = cur_Stack + prt_stack	
 	
 		if recall == "recall" then
+			trigger.action.outText("DSMC is generating the new scenery file. It can take minutes, don't force DCS to stop", 30)
 			timer.scheduleFunction(saveProcess, {}, timer.getTime() + cur_Stack)
 		end
 		
@@ -1211,6 +1212,7 @@ EMBD.oncallworkflow = function(sanivar, recall)
 		cur_Stack = cur_Stack + msg_Stack	
 
 		if recall == "recall" then
+			trigger.action.outText("DSMC is generating the new scenery file. It can take minutes, don't force DCS to stop", 30)
 			timer.scheduleFunction(saveProcess, {}, timer.getTime() + cur_Stack)
 		end
 		
@@ -1555,8 +1557,8 @@ function EMBD.collectSpawned:onEvent(event)
 					local ei_gName = Unit.getGroup(event.initiator):getName()
 
 					if ei_gName and type(ei_gName) == "string" then
-						if string.find(ei_gName, "Downed Pilot") or string.find(ei_gName, ExclusionTag) then
-							env.info(("EMBD.collectSpawned unit is a downed pilot or an excluded unit, skipping: " .. tostring(ei_gName)))
+						if string.find(ei_gName, "Downed Pilot") or string.find(string.lower(ei_gName), "dropped") or string.find(ei_gName, ExclusionTag) or string.find(string.lower(ei_gName), "dsmc_resupply_") then
+							env.info(("EMBD.collectSpawned unit is a downed pilot, a dropped troop or an excluded unit, skipping: " .. tostring(ei_gName)))
 							return
 						end
 					end
@@ -1585,7 +1587,7 @@ function EMBD.collectSpawned:onEvent(event)
 							else
 								if not _eiUnitData:hasAttribute("Infantry") then  -- infantry wont't be tracked
 									DSMC_baseUcounter = DSMC_baseUcounter + 1
-									ei_unitTable[#ei_unitTable+1] = {uID = DSMC_baseUcounter, uName = _eiUnitData:getName(), uPos = uPosition, uHdg = uHeading, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true}
+									ei_unitTable[#ei_unitTable+1] = {uID = DSMC_baseUcounter, uName = _eiUnitData:getName(), uPos = uPosition, uHdg = unitHdg, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true}
 								end
 							end
 						end
@@ -1711,56 +1713,34 @@ function EMBD.collectSpawned:onEvent(event)
 end
 world.addEventHandler(EMBD.collectSpawned)
 
+EMBD.sceneryDestroyRefresh = {}
+function EMBD.sceneryDestroyRefresh:onEvent(event)
+	if event.id == world.event.S_EVENT_MISSION_START then 
 
-EMBD.sceneryDestroyRefreshOnEvent = {}
-function EMBD.sceneryDestroyRefreshOnEvent:onEvent(event) -- used for scenery destruction obj
-	if event.id == world.event.S_EVENT_MISSION_START or event.id == world.event.S_EVENT_PLAYER_ENTER_UNIT then 
-
-		env.info(("EMBD.sceneryDestroyRefreshOnEvent started"))
-
-		local function setFlag()
-			trigger.action.setUserFlag("12345" , true )
-			env.info(("EMBD.sceneryDestroyRefreshOnEvent flag set"))
-		end
-
+		trigger.action.setUserFlag("12345" , true )
+		env.info(("EMBD.sceneryDestroyRefresh at mission start, flag set"))
 		local function resetFlag()
 			trigger.action.setUserFlag("12345" , false )
-			env.info(("EMBD.sceneryDestroyRefreshOnEvent flag reset done"))
+			env.info(("EMBD.sceneryDestroyRefresh at mission start, flag reset done"))
 		end
-		
-		if trigger.misc.getUserFlag("12345") == true then
-			timer.scheduleFunction(resetFlag, {}, timer.getTime() + 2)
-		end
-		timer.scheduleFunction(setFlag, {}, timer.getTime() + 4)
-		timer.scheduleFunction(resetFlag, {}, timer.getTime() + 6)
-
+		timer.scheduleFunction(resetFlag, {}, timer.getTime() + 5)
 	end
 end
-world.addEventHandler(EMBD.sceneryDestroyRefreshOnEvent)
+world.addEventHandler(EMBD.sceneryDestroyRefresh)
 
 function EMBD.sceneryDestroyRefreshRemote()
-
-	env.info(("EMBD.sceneryDestroyRefreshRemote started"))
-
 	local function setFlag()
 		trigger.action.setUserFlag("12345" , true )
-		env.info(("EMBD.sceneryDestroyRefreshRemote flag set"))
-	end
-
+		env.info(("EMBD.sceneryDestroyRefreshRemote is a client, flag set done"))
+	end	
 	local function resetFlag()
 		trigger.action.setUserFlag("12345" , false )
-		env.info(("EMBD.sceneryDestroyRefreshRemote flag reset done"))
+		env.info(("EMBD.sceneryDestroyRefreshRemote is a client, flag reset done"))
 	end
-	
-	if trigger.misc.getUserFlag("12345") == true then
-		timer.scheduleFunction(resetFlag, {}, timer.getTime() + 2)
-	end
-	timer.scheduleFunction(setFlag, {}, timer.getTime() + 4)
-	timer.scheduleFunction(resetFlag, {}, timer.getTime() + 6)
-
+	timer.scheduleFunction(setFlag, {}, timer.getTime() + 1)	
+	timer.scheduleFunction(resetFlag, {}, timer.getTime() + 2)
 end
 
---
 EMBD.airbaseFuelIndex = {}
 EMBD.fuelTest = {}
 function EMBD.fuelTest:onEvent(event)
@@ -1886,23 +1866,15 @@ end
 
 
 EMBD.setDestroyedObjectAtStart = function()
-	env.info(("EMBD.setDestroyedObjectAtStart started"))
-
-	local function setFlag()
+	local function fxc()
 		trigger.action.setUserFlag("12345" , true )
-		env.info(("EMBD.setDestroyedObjectAtStart flag set"))
+		local function resetFlag()
+			trigger.action.setUserFlag("12345" , false )
+			env.info(("EMBD.sceneryDestroyRefresh is a client, flag reset done"))
+		end
+		timer.scheduleFunction(resetFlag, {}, timer.getTime() + 1)
 	end
-
-	local function resetFlag()
-		trigger.action.setUserFlag("12345" , false )
-		env.info(("EMBD.setDestroyedObjectAtStart flag reset done"))
-	end
-	
-	if trigger.misc.getUserFlag("12345") == true then
-		timer.scheduleFunction(resetFlag, {}, timer.getTime() + 2)
-	end
-	timer.scheduleFunction(setFlag, {}, timer.getTime() + 4)
-	timer.scheduleFunction(resetFlag, {}, timer.getTime() + 6)
+	timer.scheduleFunction(fxc, {}, timer.getTime() + 1)
 end
 EMBD.setDestroyedObjectAtStart()
 
@@ -2185,9 +2157,7 @@ EMBD.scheduleCTLDsupport = function()
 											
 											if countInf == countTot and unitsCoa then
 
-													env.info(ModuleName .. " AddInfantriesOnBirth all units in the group are infantry")
-
-					
+												env.info(ModuleName .. " AddInfantriesOnBirth all units in the group are infantry")
 												local groupID = group:getID()
 												local groupName = group:getName()
 												local placefree = true
@@ -2226,22 +2196,22 @@ EMBD.scheduleCTLDsupport = function()
 end
 EMBD.scheduleCTLDsupport()
 
-env.info((ModuleName .. ": Loaded " .. MainVersion .. "." .. SubVersion .. "." .. Build .. ", released " .. Date))
 
 
---timer.scheduleFunction(EMBD.executeSAVE, {}, timer.getTime() + 30)
 if DSMC_lfs and DSMC_io then
 	EMBD.oncallworkflow("desanitized")
 else
 	EMBD.oncallworkflow("sanitized")
 end	
 
-
-local function dumpThreats()
-	if DSMC_io and DSMC_lfs then
-		dumpTable("EMBD.tblThreatsRange.lua", EMBD.tblThreatsRange)
+if DSMC_debugProcessDetail == true then
+	local function dumpThreats()
+		if DSMC_io and DSMC_lfs then
+			dumpTable("EMBD.tblThreatsRange.lua", EMBD.tblThreatsRange)
+		end
 	end
+	timer.scheduleFunction(dumpThreats, {}, timer.getTime() + 2)
 end
-timer.scheduleFunction(dumpThreats, {}, timer.getTime() + 2)
 
+env.info((ModuleName .. ": Loaded " .. MainVersion .. "." .. SubVersion .. "." .. Build .. ", released " .. Date))
 --~=

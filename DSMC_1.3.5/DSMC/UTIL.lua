@@ -2336,4 +2336,8 @@ if ME_DB.db.CountriesByName then
 		ctryList[#ctryList+1] = {n = cName, i = cData.WorldID}
 	end
 end
-dumpTable("ctryList_pre.lua", ctryList)
+--dumpTable("ctryList_pre.lua", ctryList)
+
+HOOK.writeDebugBase(ModuleName .. ": Loaded " .. MainVersion .. "." .. SubVersion .. "." .. Build .. ", released " .. Date)
+UTILloaded = true
+--~=

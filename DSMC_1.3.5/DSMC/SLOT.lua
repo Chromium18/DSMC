@@ -1298,11 +1298,14 @@ local standardHeloTypes = {
 		{
 			["CpgNVG"] = true,
 			["FlareSalvoInterval"] = 0,
+			["OverrideIFF"] = 0,
 			["PltNVG"] = true,
-			["FCR_RFI_removed"] = false,
+			["HumanOrchestra"] = false,
+			["AIDisabled"] = false,
+			["FCR_RFI_removed"] = true,
 			["NetCrewControlPriority"] = 0,
 			["FlareBurstCount"] = 0,
-			["AIDisabled"] = false,
+			["TrackAirTargets"] = true,
 			["FlareBurstInterval"] = 0,
 			["FlareSalvoCount"] = 0,
 			["FlareProgramDelay"] = 0,
@@ -1323,100 +1326,112 @@ local standardHeloTypes = {
 		{
 			[1] = 
 			{
+				["channelsNames"] = 
+				{
+				}, -- end of ["channelsNames"]
 				["modulations"] = 
 				{
-					[7] = 0,
 					[1] = 0,
 					[2] = 0,
+					[3] = 0,
 					[4] = 0,
+					[5] = 0,
+					[6] = 0,
+					[7] = 0,
 					[8] = 0,
 					[9] = 0,
-					[5] = 0,
 					[10] = 0,
-					[3] = 0,
-					[6] = 0,
 				}, -- end of ["modulations"]
 				["channels"] = 
 				{
-					[7] = 141,
 					[1] = 127.5,
 					[2] = 135,
+					[3] = 136,
 					[4] = 127,
+					[5] = 125,
+					[6] = 121,
+					[7] = 141,
 					[8] = 128,
 					[9] = 126,
-					[5] = 125,
 					[10] = 137,
-					[3] = 136,
-					[6] = 121,
 				}, -- end of ["channels"]
 			}, -- end of [1]
 			[2] = 
 			{
+				["channelsNames"] = 
+				{
+				}, -- end of ["channelsNames"]
 				["modulations"] = 
 				{
-					[7] = 0,
 					[1] = 0,
 					[2] = 0,
+					[3] = 0,
 					[4] = 0,
+					[5] = 0,
+					[6] = 0,
+					[7] = 0,
 					[8] = 0,
 					[9] = 0,
-					[5] = 0,
 					[10] = 0,
-					[3] = 0,
-					[6] = 0,
 				}, -- end of ["modulations"]
 				["channels"] = 
 				{
-					[7] = 325,
-					[1] = 127.5,
+					[1] = 225,
 					[2] = 240,
+					[3] = 255,
 					[4] = 270,
+					[5] = 285,
+					[6] = 300,
+					[7] = 325,
 					[8] = 350,
 					[9] = 375,
-					[5] = 285,
 					[10] = 390,
-					[3] = 255,
-					[6] = 300,
 				}, -- end of ["channels"]
 			}, -- end of [2]
-			[4] = 
-			{
-				["modulations"] = 
-				{
-				}, -- end of ["modulations"]
-				["channels"] = 
-				{
-					[7] = 30.035,
-					[1] = 30,
-					[2] = 30.01,
-					[4] = 30.02,
-					[8] = 30.04,
-					[9] = 30.045,
-					[5] = 30.025,
-					[10] = 30.05,
-					[3] = 30.015,
-					[6] = 30.03,
-				}, -- end of ["channels"]
-			}, -- end of [4]
 			[3] = 
 			{
+				["channelsNames"] = 
+				{
+				}, -- end of ["channelsNames"]
 				["modulations"] = 
 				{
 				}, -- end of ["modulations"]
 				["channels"] = 
 				{
-					[7] = 30.035,
 					[1] = 30,
 					[2] = 30.01,
+					[3] = 30.015,
 					[4] = 30.02,
+					[5] = 30.025,
+					[6] = 30.03,
+					[7] = 30.035,
 					[8] = 30.04,
 					[9] = 30.045,
-					[5] = 30.025,
 					[10] = 30.05,
-					[3] = 30.015,
-					[6] = 30.03,
 				}, -- end of ["channels"]
 			}, -- end of [3]
+			[4] = 
+			{
+				["channelsNames"] = 
+				{
+				}, -- end of ["channelsNames"]
+				["modulations"] = 
+				{
+				}, -- end of ["modulations"]
+				["channels"] = 
+				{
+					[1] = 30,
+					[2] = 30.01,
+					[3] = 30.015,
+					[4] = 30.02,
+					[5] = 30.025,
+					[6] = 30.03,
+					[7] = 30.035,
+					[8] = 30.04,
+					[9] = 30.045,
+					[10] = 30.05,
+				}, -- end of ["channels"]
+			}, -- end of [4]
 		}, -- end of ["Radio"]
 	}, -- end of [1]
 
@@ -1568,7 +1583,7 @@ function createCallsign(country, category)
 
 end
 
-function createHeloGroups(mission) -- , dictionary
+function createHeloGroups(mission)
 	local maxG, maxU = setMaxId(mission)
 	local MaxDict = mission.maxDictId
 
@@ -2139,7 +2154,12 @@ function createPlaneGroups(mission)
 														HOOK.writeDebugBase(ModuleName .. ": createPlaneGroups, airport not found! error")
 														return false
 													end
-													
+
+													local groupGeneralFreq = 124
+													if string.find(sData.acfType, "M-2000C") then
+														groupGeneralFreq = 251
+													end		
+
 													local groupTable = {
 
 														["y"] = sData.y,
@@ -2167,7 +2187,7 @@ function createPlaneGroups(mission)
 														["communication"] = true,
 														["start_time"] = 0,
 														["uncontrollable"] = false,
-														["frequency"] = 124,
+														["frequency"] = groupGeneralFreq,
 													}
 
 													-- now check standard unit
