@@ -2,7 +2,7 @@
 -- please check mission designer manual before changing any paramterer. If you have issues, log in the DSMC discord and report as described in chapter 5 of the manual.
 
 -- Debug. Leave this true only for bugtracking!!!
-DSMC_DebugMode					= true		-- true / false
+DSMC_DebugMode					= false		-- true / false
 
 -- ##################################################################
 -- SAVED SCENERY FILE (.miz) CUSTOMIZATION & PREFERENCES ############
@@ -26,9 +26,9 @@ DSMC_Excl_Tag                   = "DSMC_NoUp"     -- text. Any not flying group 
 
 DSMC_DisableF10save				= false     -- true / false. F10 menù save option disable switch
 DSMC_AutosaveProcess			= true		-- true / false. --> Choosing Auto-Save will activate the light auto-save process. BEWARE: if this option is active, it will make DSMC automatically desanitizatize MissionScripting.lua
-DSMC_AutosaveProcess_min		= 6			-- minutes, number, from 2 to 480. DSMC_AutosaveProcess must be true.
+DSMC_AutosaveProcess_min		= 5			-- minutes, number, from 2 to 480. DSMC_AutosaveProcess must be true.
 
-DSMC_24_7_serverStandardSetup   = 0.10         -- multiple valid values. This option is a simplified setup for the specific server autosave layout. You can input:
+DSMC_24_7_serverStandardSetup   = 6         -- multiple valid values. This option is a simplified setup for the specific server autosave layout. You can input:
 --  false 							: boolean, this will disable the option
 -- 	0-> 23 (number) 				: number, this will set the automatic restart every "n" hours. Values as 0 or > 24 will be read as false
 --  "19:00" (text, hh:mm format) 	: text, this will set the automatic save & restart exactly at 19:00, or any other hour you set in "hh:mm". This MUST be a text value. Any non valid "hh:mm" format will be read as false
@@ -59,7 +59,7 @@ DSMC_ctld_recognizeVehicles     = true     -- true / false. If true, any Truck, 
 -- !BEWARE! you still need to have a working and correctly configured SRS server and the environment desanitization MUST be on. Else, it won't work and it also could create errors!
 -- If you need to "hack" a little bit more on TTS, like using google credentials or changing SRS port, you want to check this file: \DSMC\STTS_inj.lua. Please consider that any additional changes to that file can't be supported by me while debugging. 
 -- Currently DSMC main code does not use this features: this addition is provided for future code integration and for your simplified usage.
-DSMC_STTS                       = true     -- true / false. If true, DSMC will load STTS at mission start.
+DSMC_STTS                       = false     -- true / false. If true, DSMC will load STTS at mission start.
 DSMC_STTS_method                = "both"   -- text, can be "both", "audio", "text". With "audio", only audio messages will be sent (no text!), with "text", the opposite as it usually be. With "both", audio will be played and text will be prompted
 DSMC_STTS_SRSpath               = "H:\\SRSinstallDir\\DCS-SimpleRadio-Standalone"     -- path of the SRS installation, and of DCS-SR-ExternalAudio.exe file. !BEWARE!: errors happens when this is not properly configured
 DSMC_STTS_RadioFreq_AM          = 303      -- number, must be between 128 and 370. It's the frequency used for broadcasting audio communications in AM.

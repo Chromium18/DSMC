@@ -404,6 +404,7 @@ function EMBD.sendUnitsData(missionEnv)
 						if (group) then						
 
 							-- check excluded
+							--[[--
 							local exclude = false
 							local gName = nil
 							if group.name then
@@ -416,17 +417,11 @@ function EMBD.sendUnitsData(missionEnv)
 									end
 								end
 							end
+							--]]--
 
-							if exclude == false then
+							--if exclude == false then
 								for unitID, unit in pairs(group["units"]) do																			
-									local isAlive = true
-
-									-- filter dead units // REMOVED CHECK 2022.06.26 due to death units bug
-									--for id, deadData in pairs (tblDeadUnits) do
-									--	if tonumber(deadData.unitId) == tonumber(unit.unitId) then
-									--		isAlive = false
-									--	end
-									--end																
+									local isAlive = true															
 									
 									if isAlive == true and group and unit then							
 										if attrID == "plane" then	--or attrID == "plane" 	
@@ -454,75 +449,116 @@ function EMBD.sendUnitsData(missionEnv)
 											end										
 
 										elseif attrID == "static" then
-											--DICTPROBLEM
-											--local uName 		= env.getValueDictByKey(unit.name)
+
 											local uName 		= unit.name
-											local uCat			= unit.category
-											if uCat == "Cargos" then
-												curUnit 		= StaticObject.getByName(uName)																					
-												if curUnit then -- cargo still exist
-													curUnitPos 		= curUnit:getPosition().p
-													if curUnitPos then
-														tblUnitsUpdate[#tblUnitsUpdate + 1] = {unitId = unit.unitId, x = curUnitPos.x, y = curUnitPos.y, z = curUnitPos.z, aircraft = false, carrier = false}
-														
-														for dId, dData in pairs(tblDeadUnits) do
-															if dData.unitId == unit.unitId then
-																tblDeadUnits[dId] = nil
+
+											-- check excluded
+											local exclude = false
+											if string.find(uName, ExclusionTag) then
+												exclude = true
+											end
+
+											if exclude == false then
+												local uCat			= unit.category
+												if uCat == "Cargos" then
+													curUnit 		= StaticObject.getByName(uName)																					
+													if curUnit then -- cargo still exist
+														curUnitPos 		= curUnit:getPosition().p
+														if curUnitPos then
+															tblUnitsUpdate[#tblUnitsUpdate + 1] = {unitId = unit.unitId, x = curUnitPos.x, y = curUnitPos.y, z = curUnitPos.z, aircraft = false, carrier = false}
+															
+															for dId, dData in pairs(tblDeadUnits) do
+																if dData.unitId == unit.unitId then
+																	tblDeadUnits[dId] = nil
+																end
 															end
-														end
-														
+															
+															if DSMC_debugProcessDetail == true then
+																--env.info(("EMBD.sendUnitsData add a record in tblUnitsUpdate, cargo"))
+															end
+														else													
+															if DSMC_debugProcessDetail == true then
+																--env.info(("EMBD.sendUnitsData can't find the cargo position, assuming dead!"))
+															end			
+															tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unit.unitId), unitInfantry = true}		
+														end												
+													else
 														if DSMC_debugProcessDetail == true then
-															--env.info(("EMBD.sendUnitsData add a record in tblUnitsUpdate, cargo"))
-														end
-													else													
-														if DSMC_debugProcessDetail == true then
-															--env.info(("EMBD.sendUnitsData can't find the cargo position, assuming dead!"))
-														end			
-														tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unit.unitId), unitInfantry = true}		
-													end												
-												else
-													if DSMC_debugProcessDetail == true then
-														--env.info(("EMBD.sendUnitsData add a record in tblDeadUnits to remove cargo"))
-													end		
-													tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unit.unitId), unitInfantry = true}												
-												end										
+															--env.info(("EMBD.sendUnitsData add a record in tblDeadUnits to remove cargo"))
+														end		
+														tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unit.unitId), unitInfantry = true}												
+													end										
+												end
+											else
+												if DSMC_debugProcessDetail == true then
+													env.info(("EMBD.sendUnitsData static object excluded"))
+												end	
 											end
 										
 										else
-											--DICTPROBLEM
-											--local uName 		= env.getValueDictByKey(unit.name)
-											local uName 		= unit.name
-											if uName then
-												local curUnit 		= Unit.getByName(uName)
-												
-												if curUnit then
-													curUnitPos 		= curUnit:getPosition().p
-													curUnitCarrier	= curUnit:hasAttribute("Aircraft Carriers")
-													if curUnitPos then
-														tblUnitsUpdate[#tblUnitsUpdate + 1] = {unitId = unit.unitId, x = curUnitPos.x, y = curUnitPos.y, z = curUnitPos.z, aircraft = false, carrier = curUnitCarrier}
-														if DSMC_debugProcessDetail == true then
-															--env.info(("EMBD.sendUnitsData add a record in tblUnitsUpdate, unit id " .. tostring(unit.unitId) ))
-														end	
 
-														for dId, dData in pairs(tblDeadUnits) do
-															if dData.unitId == unit.unitId then
-																if DSMC_debugProcessDetail == true then
-																	--env.info(("EMBD.sendUnitsData unit was recorded death, removing from table, unit id " .. tostring(unit.unitId) ))
+											local uName 		= unit.name
+
+											if uName then
+
+												-- check excluded
+												local exclude = false
+												if string.find(uName, ExclusionTag) then
+													exclude = true
+												end
+												if exclude == false then
+
+													local curUnit 		= Unit.getByName(uName)
+													
+													if curUnit then
+														curUnitPos 		= curUnit:getPosition().p
+														curUnitCarrier	= curUnit:hasAttribute("Aircraft Carriers")
+														if curUnitPos then
+															tblUnitsUpdate[#tblUnitsUpdate + 1] = {unitId = unit.unitId, x = curUnitPos.x, y = curUnitPos.y, z = curUnitPos.z, aircraft = false, carrier = curUnitCarrier}
+															if DSMC_debugProcessDetail == true then
+																--env.info(("EMBD.sendUnitsData add a record in tblUnitsUpdate, unit id " .. tostring(unit.unitId) ))
+															end	
+
+															for dId, dData in pairs(tblDeadUnits) do
+																if dData.unitId == unit.unitId then
+																	if DSMC_debugProcessDetail == true then
+																		--env.info(("EMBD.sendUnitsData unit was recorded death, removing from table, unit id " .. tostring(unit.unitId) ))
+																	end
+																	table.remove(tblDeadUnits, dId)
+																	--tblDeadUnits[dId] = nil
 																end
-																table.remove(tblDeadUnits, dId)
-																--tblDeadUnits[dId] = nil
+															end
+
+				
+														else
+															--if DSMC_debugProcessDetail == true then
+															--	env.info(("EMBD.sendUnitsData can't find the unit position, assuming dead as infantry to prevent spawning wreckage!"))
+															--end		
+															--tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unit.unitId), unitInfantry = true}
+
+															if DSMC_debugProcessDetail == true then
+																--env.info(("EMBD.sendUnitsData can't find the unit position, assuming dead due to ed dead tracking, unit id " .. tostring(unit.unitId)))
+															end	
+
+															-- check if already there, registered with a standard kill or death
+															local proceed = true
+															for dId, dData in pairs(tblDeadUnits) do 
+																if dData.unitId == unit.unitId then
+																	if DSMC_debugProcessDetail == true then
+																		--env.info(("EMBD.sendUnitsData unit identified as already in the table due to death event, unit id " .. tostring(unit.unitId)))
+																	end
+																	proceed = false
+																end
+															end
+
+															if proceed == true then
+																tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unit.unitId), unitInfantry = false}
 															end
 														end
-
-			
 													else
-														--if DSMC_debugProcessDetail == true then
-														--	env.info(("EMBD.sendUnitsData can't find the unit position, assuming dead as infantry to prevent spawning wreckage!"))
-														--end		
-														--tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unit.unitId), unitInfantry = true}
 
 														if DSMC_debugProcessDetail == true then
-															--env.info(("EMBD.sendUnitsData can't find the unit position, assuming dead due to ed dead tracking, unit id " .. tostring(unit.unitId)))
+															--env.info(("EMBD.sendUnitsData can't find the unit, assuming dead due to ed dead tracking, unit id " .. tostring(unit.unitId)))
 														end	
 
 														-- check if already there, registered with a standard kill or death
@@ -541,33 +577,17 @@ function EMBD.sendUnitsData(missionEnv)
 														end
 													end
 												else
-
 													if DSMC_debugProcessDetail == true then
-														--env.info(("EMBD.sendUnitsData can't find the unit, assuming dead due to ed dead tracking, unit id " .. tostring(unit.unitId)))
-													end	
-
-													-- check if already there, registered with a standard kill or death
-													local proceed = true
-													for dId, dData in pairs(tblDeadUnits) do 
-														if dData.unitId == unit.unitId then
-															if DSMC_debugProcessDetail == true then
-																--env.info(("EMBD.sendUnitsData unit identified as already in the table due to death event, unit id " .. tostring(unit.unitId)))
-															end
-															proceed = false
-														end
-													end
-
-													if proceed == true then
-														tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unit.unitId), unitInfantry = false}
+														env.info(("EMBD.sendUnitsData unit excluded"))
 													end
 												end
 											end
 										end
 									end
 								end
-							else
-								env.info(("EMBD.sendUnitsData excluded group from update: " .. tostring(gName)))
-							end
+							--else
+							--	env.info(("EMBD.sendUnitsData excluded group from update: " .. tostring(gName)))
+							--end
 						end
 					end
 				end
@@ -730,12 +750,12 @@ function EMBD.updateSpawnedPosition(tblSpawned, missionEnv)
 				env.info(("EMBD.updateSpawnedPosition checking group " ..tostring(idData.gName)))
 			end
 
-			local exclude = false
-			if string.find(idData.gName, ExclusionTag) then
-				exclude = true
-			end
+			--local exclude = false
+			--if string.find(idData.gName, ExclusionTag) then
+			--	exclude = true
+			--end
 
-			if exclude == false then
+			--if exclude == false then
 				-- verify existing
 				local proceed = true
 				for coalitionID,coalition in pairs(missionEnv["coalition"]) do
@@ -887,7 +907,7 @@ function EMBD.updateSpawnedPosition(tblSpawned, missionEnv)
 						end
 					end
 				end
-			end
+			--end
 		end
 	end
 	if DSMC_debugProcessDetail == true then
@@ -1278,208 +1298,226 @@ function EMBD.deathRecorder:onEvent(event)
 			local SOcategory 	= event.initiator:getCategory()
 			local SOpos 		= event.initiator:getPosition().p
 			local SOtypeName	= event.initiator:getTypeName()	
-			env.info(("EMBD.deathRecorder death event "))
+			if DSMC_debugProcessDetail == true then
+				env.info(("EMBD.deathRecorder death event "))	
+			end		
+			
 
 			if SOcategory and SOpos and SOtypeName then
-				if type(SOcategory) == "number" and type(SOpos) == "table" and type(SOtypeName) == "string" then
-				
-					if SOcategory == 5 then -- map object
+				local n = event.initiator:getName()
+				local exclude = false
+				if string.find(n, ExclusionTag) then
+					exclude = true
+					if DSMC_debugProcessDetail == true then
+						env.info(("EMBD.deathRecorder unit excluded"))	
+					end		
+				end
+
+				if exclude == false then
+					if type(SOcategory) == "number" and type(SOpos) == "table" and type(SOtypeName) == "string" then
 					
-						mapObj_deathcounter = mapObj_deathcounter + 1
-						if DSMC_debugProcessDetail == true then
-							env.info(("EMBD.deathRecorder death event category 5, map object"))		
-						end		
+						if SOcategory == 5 then -- map object
 						
-						local exist = false
-						for _, deadData in pairs(tblDeadScenObj) do 
-							if tostring(deadData.objId) == tostring(event.initiator:getName()) then
-								env.info(("EMBD.deathRecorder death event category 5, skipped cause already there"))
-								exist = true
-							end
-						end
-						if exist == false then
-							local Objdesc = event.initiator:getDesc()
-							if Objdesc.life > 1 then
-
-								local y = env.mission.date.Year
-								local m = env.mission.date.Month
-								local d = env.mission.date.Day
-
-								local dayValue = nil
-
-								if y and m and d then
-									if type(y) == "number" and type(m) == "number" and type(d) == "number" then 
-										dayValue = y*365+m*30+d -- (can't use os.time and os.date cause I can't be sure to have os available!)	
-									end
-								end
-
-								tblDeadScenObj[#tblDeadScenObj + 1] = {id = mapObj_deathcounter, x = SOpos.x, y = SOpos.z, objId = event.initiator:getName(), SOdesc = Objdesc, deathDay = dayValue} 
-							end
-						end
-
-
-					elseif SOcategory == 3 then 
-						local ObjdescCat = event.initiator:getDesc().category
-						if DSMC_debugProcessDetail == true then
-							env.info(("EMBD.deathRecorder death event category 3, static object"))	
-							env.info(("EMBD.deathRecorder Objdesc: " .. tostring(ObjdescCat)))
-							env.info(("EMBD.deathRecorder SOtypeName: " .. tostring(SOtypeName)))
-
-
-						end							
-						
-						local y = env.mission.date.Year
-						local m = env.mission.date.Month
-						local d = env.mission.date.Day
-
-						local dayValue = nil
-
-						if y and m and d then
-							if type(y) == "number" and type(m) == "number" and type(d) == "number" then 
-								dayValue = y*365+m*30+d -- (can't use os.time and os.date cause I can't be sure to have os available!)	
-							end
-						end
-
-						tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(event.initiator:getID()), objCategory = 3, deathDay = dayValue}		
-
-					elseif SOcategory == 1 then -- unit. Cargos, Bases and Weapons are left out 
-					
-						if DSMC_debugProcessDetail == true then
-							env.info(("EMBD.deathRecorder death event di category 1, unit"))	
-						end	
-
-						local y = env.mission.date.Year
-						local m = env.mission.date.Month
-						local d = env.mission.date.Day
-
-						local dayValue = nil
-
-						if y and m and d then
-							if type(y) == "number" and type(m) == "number" and type(d) == "number" then 
-								dayValue = y*365+m*30+d -- (can't use os.time and os.date cause I can't be sure to have os available!)
-							end
-						end
-					
-						--dead
-						local unitName		 	= nil
-						local unitTable			= nil
-						local unitPos			= nil
-						local unitCategory		= nil
-						local unitCoalition		= nil
-						local unitCountry		= nil
-						local unitTypeName		= nil
-						local unitID			= nil
-						
-						local groupTable 	= {}
-						if event.initiator then
-							unitName 			= event.initiator:getName()
+							mapObj_deathcounter = mapObj_deathcounter + 1
 							if DSMC_debugProcessDetail == true then
-								env.info(("EMBD.deathRecorder dead unit name: " .. tostring(unitName)))	
-							end					
-							unitTable 			= event.initiator -- Unit.getByName(unitName)
-							if unitTable then
-								unitPos 		= SOpos
-								unitCategory 	= unitTable:getDesc().category
-								unitCatEnum		= SOcategory
-								unitCoalition 	= unitTable:getCoalition()
-								unitCountry 	= unitTable:getCountry()
-								unitTypeName	= SOtypeName
-								unitID			= event.initiator:getID()
-								unitInfantry	= event.initiator:hasAttribute("Infantry")
-								unitShip		= event.initiator:hasAttribute("Ships")
-							end
-						end			
-						
-						if unitName and unitTable and unitCategory and unitCategory ~= 3 and unitInfantry == false and unitShip == false then
-						
-							local HiddenSet = true		
+								env.info(("EMBD.deathRecorder death event category 5, map object"))		
+							end		
 							
-							local correctCategory = nil
-							if unitCategory == 0 then
-								correctCategory = "Planes"
-							elseif unitCategory == 1 then
-								correctCategory = "Helicopters"				
-							elseif unitCategory == 2 then
-								correctCategory = "Unarmed"
-							elseif unitCategory == 4 then
-								correctCategory = "Fortifications"				
+							local exist = false
+							for _, deadData in pairs(tblDeadScenObj) do 
+								if tostring(deadData.objId) == tostring(event.initiator:getName()) then
+									env.info(("EMBD.deathRecorder death event category 5, skipped cause already there"))
+									exist = true
+								end
 							end
-							
-							local surface = land.getSurfaceType({x = unitPos.x, y = unitPos.z})
+							if exist == false then
+								local Objdesc = event.initiator:getDesc()
+								if Objdesc.life > 1 then
 
-							local groupTable = nil
-							if surface == 1 or surface == 2 or surface == 3 then
-								DSMC_baseUcounter = DSMC_baseUcounter + 1
-								DSMC_baseGcounter = DSMC_baseGcounter + 1
-								groupTable = 	{
-													["heading"] = 0,
-													["route"] = 
-													{
-														["points"] = 
+									local y = env.mission.date.Year
+									local m = env.mission.date.Month
+									local d = env.mission.date.Day
+
+									local dayValue = nil
+
+									if y and m and d then
+										if type(y) == "number" and type(m) == "number" and type(d) == "number" then 
+											dayValue = y*365+m*30+d -- (can't use os.time and os.date cause I can't be sure to have os available!)	
+										end
+									end
+
+									tblDeadScenObj[#tblDeadScenObj + 1] = {id = mapObj_deathcounter, x = SOpos.x, y = SOpos.z, objId = event.initiator:getName(), SOdesc = Objdesc, deathDay = dayValue} 
+								end
+							end
+
+
+						elseif SOcategory == 3 then 
+							local ObjdescCat = event.initiator:getDesc().category
+							if DSMC_debugProcessDetail == true then
+								env.info(("EMBD.deathRecorder death event category 3, static object"))	
+								env.info(("EMBD.deathRecorder Objdesc: " .. tostring(ObjdescCat)))
+								env.info(("EMBD.deathRecorder SOtypeName: " .. tostring(SOtypeName)))
+
+
+							end							
+							
+							local y = env.mission.date.Year
+							local m = env.mission.date.Month
+							local d = env.mission.date.Day
+
+							local dayValue = nil
+
+							if y and m and d then
+								if type(y) == "number" and type(m) == "number" and type(d) == "number" then 
+									dayValue = y*365+m*30+d -- (can't use os.time and os.date cause I can't be sure to have os available!)	
+								end
+							end
+
+							tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(event.initiator:getID()), objCategory = 3, deathDay = dayValue}		
+
+						elseif SOcategory == 1 then -- unit. Cargos, Bases and Weapons are left out 
+						
+							if DSMC_debugProcessDetail == true then
+								env.info(("EMBD.deathRecorder death event di category 1, unit"))	
+							end	
+
+							local y = env.mission.date.Year
+							local m = env.mission.date.Month
+							local d = env.mission.date.Day
+
+							local dayValue = nil
+
+							if y and m and d then
+								if type(y) == "number" and type(m) == "number" and type(d) == "number" then 
+									dayValue = y*365+m*30+d -- (can't use os.time and os.date cause I can't be sure to have os available!)
+								end
+							end
+						
+							--dead
+							local unitName		 	= nil
+							local unitTable			= nil
+							local unitPos			= nil
+							local unitCategory		= nil
+							local unitCoalition		= nil
+							local unitCountry		= nil
+							local unitTypeName		= nil
+							local unitID			= nil
+							
+							local groupTable 	= {}
+							if event.initiator then
+								unitName 			= event.initiator:getName()
+								if DSMC_debugProcessDetail == true then
+									env.info(("EMBD.deathRecorder dead unit name: " .. tostring(unitName)))	
+								end					
+								unitTable 			= event.initiator -- Unit.getByName(unitName)
+								if unitTable then
+									unitPos 		= SOpos
+									unitCategory 	= unitTable:getDesc().category
+									unitCatEnum		= SOcategory
+									unitCoalition 	= unitTable:getCoalition()
+									unitCountry 	= unitTable:getCountry()
+									unitTypeName	= SOtypeName
+									unitID			= event.initiator:getID()
+									unitInfantry	= event.initiator:hasAttribute("Infantry")
+									unitShip		= event.initiator:hasAttribute("Ships")
+								end
+							end			
+							
+							if unitName and unitTable and unitCategory and unitCategory ~= 3 and unitInfantry == false and unitShip == false then
+							
+								local HiddenSet = true		
+								
+								local correctCategory = nil
+								if unitCategory == 0 then
+									correctCategory = "Planes"
+								elseif unitCategory == 1 then
+									correctCategory = "Helicopters"				
+								elseif unitCategory == 2 then
+									correctCategory = "Unarmed"
+								elseif unitCategory == 4 then
+									correctCategory = "Fortifications"				
+								end
+								
+								local surface = land.getSurfaceType({x = unitPos.x, y = unitPos.z})
+
+								local groupTable = nil
+								if surface == 1 or surface == 2 or surface == 3 then
+									DSMC_baseUcounter = DSMC_baseUcounter + 1
+									DSMC_baseGcounter = DSMC_baseGcounter + 1
+									groupTable = 	{
+														["heading"] = 0,
+														["route"] = 
+														{
+															["points"] = 
+															{
+																[1] = 
+																{
+																	["alt"] = unitPos.y,
+																	["type"] = "",
+																	["name"] = "",
+																	["y"] = unitPos.z,
+																	["speed"] = 0,
+																	["x"] = unitPos.x,
+																	["formation_template"] = "",
+																	["action"] = "",
+																}, -- end of [1]
+															}, -- end of ["points"]
+														}, -- end of ["route"]
+														["groupId"] = DSMC_baseGcounter,
+														["hidden"] = true,
+														["units"] = 
 														{
 															[1] = 
 															{
-																["alt"] = unitPos.y,
-																["type"] = "",
-																["name"] = "",
+																["type"] = unitTypeName,
+																["unitId"] = DSMC_baseUcounter,
+																["livery_id"] = "autumn",
+																["rate"] = 20,
 																["y"] = unitPos.z,
-																["speed"] = 0,
 																["x"] = unitPos.x,
-																["formation_template"] = "",
-																["action"] = "",
+																["name"] = "DSMC_CreatedStatic_unit_" .. tostring(DSMC_baseUcounter),
+																["category"] = correctCategory,
+																["canCargo"] = false,
+																["heading"] = 0,
 															}, -- end of [1]
-														}, -- end of ["points"]
-													}, -- end of ["route"]
-													["groupId"] = DSMC_baseGcounter,
-													["hidden"] = true,
-													["units"] = 
-													{
-														[1] = 
-														{
-															["type"] = unitTypeName,
-															["unitId"] = DSMC_baseUcounter,
-															["livery_id"] = "autumn",
-															["rate"] = 20,
-															["y"] = unitPos.z,
-															["x"] = unitPos.x,
-															["name"] = "DSMC_CreatedStatic_unit_" .. tostring(DSMC_baseUcounter),
-															["category"] = correctCategory,
-															["canCargo"] = false,
-															["heading"] = 0,
-														}, -- end of [1]
-													}, -- end of ["units"]
-													["y"] = unitPos.z,
-													["x"] = unitPos.x,
-													["name"] = unitName .. "_dsmc_dd_" .. tostring(dayValue),
-													["dead"] = true,
-												} -- end of [1]			
-							else
-								groupTable = "none"
-							end	
-						
-							tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unitID), coalitionID = unitCoalition, countryID = unitCountry, staticTable = groupTable, objCategory = unitCatEnum, objTypeName = unitTypeName, deathDay = dayValue}
+														}, -- end of ["units"]
+														["y"] = unitPos.z,
+														["x"] = unitPos.x,
+														["name"] = unitName .. "_dsmc_dd_" .. tostring(dayValue),
+														["dead"] = true,
+													} -- end of [1]			
+								else
+									groupTable = "none"
+								end	
+							
+								tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unitID), coalitionID = unitCoalition, countryID = unitCountry, staticTable = groupTable, objCategory = unitCatEnum, objTypeName = unitTypeName, deathDay = dayValue}
+								if DSMC_debugProcessDetail == true then
+									env.info(("EMBD.deathRecorder added unit"))	
+								end	
+							elseif unitShip == true then
+								tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unitID), unitShip = true}
+								if DSMC_debugProcessDetail == true then
+									env.info(("EMBD.deathRecorder added ship"))	
+								end	
+							elseif unitInfantry == true then
+								tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unitID), unitInfantry = true}
+								if DSMC_debugProcessDetail == true then
+									env.info(("EMBD.deathRecorder added infantry"))	
+								end					
+							end
+						else
 							if DSMC_debugProcessDetail == true then
-								env.info(("EMBD.deathRecorder added unit"))	
+								env.info(("EMBD.deathRecorder no object found, skip"))	
 							end	
-						elseif unitShip == true then
-							tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unitID), unitShip = true}
-							if DSMC_debugProcessDetail == true then
-								env.info(("EMBD.deathRecorder added ship"))	
-							end	
-						elseif unitInfantry == true then
-							tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unitID), unitInfantry = true}
-							if DSMC_debugProcessDetail == true then
-								env.info(("EMBD.deathRecorder added infantry"))	
-							end					
 						end
 					else
 						if DSMC_debugProcessDetail == true then
-							env.info(("EMBD.deathRecorder no object found, skip"))	
+							env.info(("EMBD.deathRecorder skip: SO variable type is wrong!"))	
 						end	
 					end
 				else
 					if DSMC_debugProcessDetail == true then
-						env.info(("EMBD.deathRecorder skip: SO variable type is wrong!"))	
+						env.info(("EMBD.deathRecorder excluded group"))	
 					end	
 				end
 			else
@@ -1549,165 +1587,183 @@ EMBD.collectSpawned = {}
 function EMBD.collectSpawned:onEvent(event)
 	if event.id == world.event.S_EVENT_BIRTH and timer.getTime0() < timer.getAbsTime() then
 		env.info(("EMBD.collectSpawned started"))
-		
-		if Object.getCategory(event.initiator) == 1 then -- unit
-			if event.initiator:hasAttribute("Air") == false then
-				if not Unit.getPlayerName(event.initiator) then					
-					env.info(("EMBD.collectSpawned unit, non-player"))
-					local ei_gName = Unit.getGroup(event.initiator):getName()
 
-					if ei_gName and type(ei_gName) == "string" then
-						if string.find(ei_gName, "Downed Pilot") or string.find(string.lower(ei_gName), "dropped") or string.find(ei_gName, ExclusionTag) or string.find(string.lower(ei_gName), "dsmc_resupply_") then
-							env.info(("EMBD.collectSpawned unit is a downed pilot, a dropped troop or an excluded unit, skipping: " .. tostring(ei_gName)))
-							return
+		local uName = event.initiator:getName()
+
+		-- check excluded
+		local exclude = false
+		if string.find(uName, ExclusionTag) then
+			exclude = true
+		end
+
+		if exclude == false then
+
+			if Object.getCategory(event.initiator) == 1 then -- unit
+				if event.initiator:hasAttribute("Air") == false then
+					if not Unit.getPlayerName(event.initiator) then					
+						env.info(("EMBD.collectSpawned unit, non-player"))
+						local ei_gName = Unit.getGroup(event.initiator):getName()
+
+						if ei_gName and type(ei_gName) == "string" then
+							if string.find(ei_gName, "Downed Pilot") or string.find(string.lower(ei_gName), "dropped") or string.find(string.lower(ei_gName), "dsmc_resupply_") then --  or string.find(ei_gName, ExclusionTag)
+								env.info(("EMBD.collectSpawned unit is a downed pilot, a dropped troop or an excluded unit, skipping: " .. tostring(ei_gName)))
+								return
+							end
 						end
-					end
 
 
-					local ei = Unit.getGroup(event.initiator)
-					local ei_pos = event.initiator:getPosition().p
-					local ei_unitTableSource = ei:getUnits()
-					local ei_unitTable = {}
-					local ei_coalition = ei:getCoalition()
-					local ei_country = event.initiator:getCountry()
-					DSMC_baseGcounter = DSMC_baseGcounter + 1
-					local ei_ID = DSMC_baseGcounter -- ei:getID()
-					local ei_Altitude = land.getHeight({x = ei_pos.x, y = ei_pos.z})
-					env.info(("EMBD.collectSpawned unit data collected"))
+						local ei = Unit.getGroup(event.initiator)
+						local ei_pos = event.initiator:getPosition().p
+						local ei_unitTableSource = ei:getUnits()
+						local ei_unitTable = {}
+						local ei_coalition = ei:getCoalition()
+						local ei_country = event.initiator:getCountry()
+						DSMC_baseGcounter = DSMC_baseGcounter + 1
+						local ei_ID = DSMC_baseGcounter -- ei:getID()
+						local ei_Altitude = land.getHeight({x = ei_pos.x, y = ei_pos.z})
+						env.info(("EMBD.collectSpawned unit data collected"))
 
-					if ei_unitTableSource and #ei_unitTableSource > 0 then
-						for _id, _eiUnitData in pairs(ei_unitTableSource) do
+						if ei_unitTableSource and #ei_unitTableSource > 0 then
+							for _id, _eiUnitData in pairs(ei_unitTableSource) do
 
-							local unitHdg	= EMBD.getHeading(_eiUnitData, true)	
-							local uPosition = _eiUnitData:getPosition().p
+								local unitHdg	= EMBD.getHeading(_eiUnitData, true)	
+								local uPosition = _eiUnitData:getPosition().p
 
-							if DSMC_trackspawnedinfantry == true then
-								DSMC_baseUcounter = DSMC_baseUcounter + 1
-								ei_unitTable[#ei_unitTable+1] = {uID = DSMC_baseUcounter, uName = _eiUnitData:getName(), uPos = uPosition, uHdg = unitHdg, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true}
-							else
-								if not _eiUnitData:hasAttribute("Infantry") then  -- infantry wont't be tracked
+								if DSMC_trackspawnedinfantry == true then
 									DSMC_baseUcounter = DSMC_baseUcounter + 1
 									ei_unitTable[#ei_unitTable+1] = {uID = DSMC_baseUcounter, uName = _eiUnitData:getName(), uPos = uPosition, uHdg = unitHdg, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true}
+								else
+									if not _eiUnitData:hasAttribute("Infantry") then  -- infantry wont't be tracked
+										DSMC_baseUcounter = DSMC_baseUcounter + 1
+										ei_unitTable[#ei_unitTable+1] = {uID = DSMC_baseUcounter, uName = _eiUnitData:getName(), uPos = uPosition, uHdg = unitHdg, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true}
+									end
 								end
 							end
 						end
-					end
-					env.info(("EMBD.collectSpawned units data collected"))
-					if #ei_unitTable > 0 then
-						if ei and not tblSpawned[ei_gName] then
-							tblSpawnedcounter = tblSpawnedcounter + 1
-							tblSpawned[ei_gName] = {gID = tonumber(ei_ID), gCat = Object.getCategory(event.initiator), gAlt= ei_Altitude, gName = ei_gName, gCoalition = ei_coalition, gCountry = ei_country, gType = "vehicle", gCounter = tblSpawnedcounter, gTable = ei, gPos = ei_pos, gUnits = ei_unitTable, gStaticAlive = true}
-							env.info(("EMBD.collectSpawned data added to tblSpawned"))
+						env.info(("EMBD.collectSpawned units data collected"))
+						if #ei_unitTable > 0 then
+							if ei and not tblSpawned[ei_gName] then
+								tblSpawnedcounter = tblSpawnedcounter + 1
+								tblSpawned[ei_gName] = {gID = tonumber(ei_ID), gCat = Object.getCategory(event.initiator), gAlt= ei_Altitude, gName = ei_gName, gCoalition = ei_coalition, gCountry = ei_country, gType = "vehicle", gCounter = tblSpawnedcounter, gTable = ei, gPos = ei_pos, gUnits = ei_unitTable, gStaticAlive = true}
+								env.info(("EMBD.collectSpawned data added to tblSpawned"))
+							end
 						end
+						
 					end
-					
+
+				else
+					env.info(("EMBD.collectSpawned unit is a flying thing, removed"))
 				end
-			else
-				env.info(("EMBD.collectSpawned unit is a flying thing, removed"))
-			end
 
-		elseif Object.getCategory(event.initiator) == 4 then -- FARP
-			env.info(("EMBD.collectSpawned FARP"))
-			local _eiUnitData = event.initiator
-			local ei_gName = Airbase.getName(event.initiator)
+			elseif Object.getCategory(event.initiator) == 4 then -- FARP
+				env.info(("EMBD.collectSpawned FARP"))
+				local _eiUnitData = event.initiator
+				local ei_gName = Airbase.getName(event.initiator)
 
-			if ei_gName and type(ei_gName) == "string" then
-				if string.find(ei_gName, ExclusionTag) then
-					env.info(("EMBD.collectSpawned unit is an excluded object, skipping: " .. tostring(ei_gName)))
-					return
+				--[[
+				if ei_gName and type(ei_gName) == "string" then
+					if string.find(ei_gName, ExclusionTag) then
+						env.info(("EMBD.collectSpawned unit is an excluded object, skipping: " .. tostring(ei_gName)))
+						return
+					end
 				end
-			end
+				--]]--
 
-			local ei = Airbase.getByName(ei_gName)
-			local ei_pos = ei:getPosition().p
-			local ei_unitTable = {}
-			local ei_coalition = ei:getCoalition()
-			local ei_country = event.initiator:getCountry()
-			DSMC_baseGcounter = DSMC_baseGcounter + 1
-			local ei_ID = DSMC_baseGcounter -- ei:getID()
-			env.info(("EMBD.collectSpawned FARP data collected, ei_gName: " .. tostring(ei_gName)))
-			
-			if ei_gName then
-				ei_unitTable[#ei_unitTable+1] = {uID = tonumber(_eiUnitData:getID()), uName = _eiUnitData:getName(), uPos = _eiUnitData:getPosition().p, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true}
-			end
-
-			if ei and not tblSpawned[ei_gName] then
-				tblSpawnedcounter = tblSpawnedcounter + 1
-				env.info(("EMBD.collectSpawned airbase_farp added"))
-				tblSpawned[ei_gName] = {gID = tonumber(ei_ID), gCat = Object.getCategory(event.initiator), gAlt= ei_Altitude, gName = ei_gName, gCoalition = ei_coalition, gCountry = ei_country, gType = "static", gCounter = tblSpawnedcounter, gTable = ei, gPos = ei_pos, gUnits = ei_unitTable, gStaticAlive = true}
-			end
-		elseif Object.getCategory(event.initiator) == 6 then -- cargo
-			env.info(("EMBD.collectSpawned cargo"))
-			local _eiUnitData = event.initiator
-			local ei_gName = StaticObject.getName(event.initiator)
-
-			if ei_gName and type(ei_gName) == "string" then
-				if string.find(ei_gName, ExclusionTag) then
-					env.info(("EMBD.collectSpawned unit is an excluded object, skipping: " .. tostring(ei_gName)))
-					return
-				end
-			end
-
-			local ei = StaticObject.getByName(ei_gName)
-			local ei_pos = ei:getPosition().p
-			--local ei_unitTableSource = ei:getUnits()
-			local ei_unitTable = {}
-			local ei_coalition = ei:getCoalition()
-			local ei_country = event.initiator:getCountry()
-			DSMC_baseGcounter = DSMC_baseGcounter + 1
-			local ei_ID = DSMC_baseGcounter -- ei:getID()
-			local ei_Weight = event.initiator:getCargoWeight()
-
-			env.info(("EMBD.collectSpawned static, ei_gName " .. tostring(ei_gName)))
-			
-			if ei_gName then
-				ei_unitTable[#ei_unitTable+1] = {uID = tonumber(_eiUnitData:getID()), uName = _eiUnitData:getName(), uPos = _eiUnitData:getPosition().p, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true, uWeight = ei_Weight}
-			end
-
-			if ei and not tblSpawned[ei_gName] then
-				env.info(("EMBD.collectSpawned static, adding " .. tostring(ei_gName) .. " to the tblSpawned table"))
-				tblSpawnedcounter = tblSpawnedcounter + 1
-				tblSpawned[ei_gName] = {gID = tonumber(ei_ID), gCat = Object.getCategory(event.initiator), gAlt= ei_Altitude, gName = ei_gName, gCoalition = ei_coalition, gCountry = ei_country, gType = "static", gCounter = tblSpawnedcounter, gTable = ei, gPos = ei_pos, gUnits = ei_unitTable, gStaticAlive = true}					
-			end		
-		elseif Object.getCategory(event.initiator) == 3 then -- static
-			env.info(("EMBD.collectSpawned static"))
-			local _eiUnitData = event.initiator
-			local ei_gName = StaticObject.getName(event.initiator)
-
-			if ei_gName and type(ei_gName) == "string" then
-				if string.find(ei_gName, ExclusionTag) then
-					env.info(("EMBD.collectSpawned unit is an excluded object, skipping: " .. tostring(ei_gName)))
-					return
-				end
-			end
-
-			local ei = StaticObject.getByName(ei_gName)
-			if ei then
+				local ei = Airbase.getByName(ei_gName)
 				local ei_pos = ei:getPosition().p
 				local ei_unitTable = {}
 				local ei_coalition = ei:getCoalition()
 				local ei_country = event.initiator:getCountry()
 				DSMC_baseGcounter = DSMC_baseGcounter + 1
 				local ei_ID = DSMC_baseGcounter -- ei:getID()
-				env.info(("EMBD.collectSpawned static data collected, ei_gName: " .. tostring(ei_gName)))
+				env.info(("EMBD.collectSpawned FARP data collected, ei_gName: " .. tostring(ei_gName)))
 				
 				if ei_gName then
-
-					local unitHdg	= EMBD.getHeading(_eiUnitData, true)	
-					local uPosition = _eiUnitData:getPosition().p
-
-					ei_unitTable[#ei_unitTable+1] = {uID = tonumber(_eiUnitData:getID()), uName = _eiUnitData:getName(), uPos = uPosition, uHdg = unitHdg, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true}
+					ei_unitTable[#ei_unitTable+1] = {uID = tonumber(_eiUnitData:getID()), uName = _eiUnitData:getName(), uPos = _eiUnitData:getPosition().p, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true}
 				end
 
 				if ei and not tblSpawned[ei_gName] then
 					tblSpawnedcounter = tblSpawnedcounter + 1
-					env.info(("EMBD.collectSpawned static added"))
-					tblSpawned[ei_gName] = {gID = tonumber(ei_ID), gCat = Object.getCategory(event.initiator), gAlt= ei_Altitude, gName = ei_gName, gCoalition = ei_coalition, gCountry = ei_country, gType = "static", gCounter = tblSpawnedcounter, gTable = ei, gPos = ei_pos, gUnits = ei_unitTable, gStaticAlive = true}			
+					env.info(("EMBD.collectSpawned airbase_farp added"))
+					tblSpawned[ei_gName] = {gID = tonumber(ei_ID), gCat = Object.getCategory(event.initiator), gAlt= ei_Altitude, gName = ei_gName, gCoalition = ei_coalition, gCountry = ei_country, gType = "static", gCounter = tblSpawnedcounter, gTable = ei, gPos = ei_pos, gUnits = ei_unitTable, gStaticAlive = true}
 				end
-			end
-		else
-			env.info(("EMBD.collectSpawned can't add object, category not found: " .. tostring(Object.getCategory(event.initiator))))
+			elseif Object.getCategory(event.initiator) == 6 then -- cargo
+				env.info(("EMBD.collectSpawned cargo"))
+				local _eiUnitData = event.initiator
+				local ei_gName = StaticObject.getName(event.initiator)
 
+				--[[
+				if ei_gName and type(ei_gName) == "string" then
+					if string.find(ei_gName, ExclusionTag) then
+						env.info(("EMBD.collectSpawned unit is an excluded object, skipping: " .. tostring(ei_gName)))
+						return
+					end
+				end
+				--]]--
+
+				local ei = StaticObject.getByName(ei_gName)
+				local ei_pos = ei:getPosition().p
+				--local ei_unitTableSource = ei:getUnits()
+				local ei_unitTable = {}
+				local ei_coalition = ei:getCoalition()
+				local ei_country = event.initiator:getCountry()
+				DSMC_baseGcounter = DSMC_baseGcounter + 1
+				local ei_ID = DSMC_baseGcounter -- ei:getID()
+				local ei_Weight = event.initiator:getCargoWeight()
+
+				env.info(("EMBD.collectSpawned static, ei_gName " .. tostring(ei_gName)))
+				
+				if ei_gName then
+					ei_unitTable[#ei_unitTable+1] = {uID = tonumber(_eiUnitData:getID()), uName = _eiUnitData:getName(), uPos = _eiUnitData:getPosition().p, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true, uWeight = ei_Weight}
+				end
+
+				if ei and not tblSpawned[ei_gName] then
+					env.info(("EMBD.collectSpawned static, adding " .. tostring(ei_gName) .. " to the tblSpawned table"))
+					tblSpawnedcounter = tblSpawnedcounter + 1
+					tblSpawned[ei_gName] = {gID = tonumber(ei_ID), gCat = Object.getCategory(event.initiator), gAlt= ei_Altitude, gName = ei_gName, gCoalition = ei_coalition, gCountry = ei_country, gType = "static", gCounter = tblSpawnedcounter, gTable = ei, gPos = ei_pos, gUnits = ei_unitTable, gStaticAlive = true}					
+				end		
+			elseif Object.getCategory(event.initiator) == 3 then -- static
+				env.info(("EMBD.collectSpawned static"))
+				local _eiUnitData = event.initiator
+				local ei_gName = StaticObject.getName(event.initiator)
+
+				--[[
+				if ei_gName and type(ei_gName) == "string" then
+					if string.find(ei_gName, ExclusionTag) then
+						env.info(("EMBD.collectSpawned unit is an excluded object, skipping: " .. tostring(ei_gName)))
+						return
+					end
+				end
+				--]]--
+
+				local ei = StaticObject.getByName(ei_gName)
+				if ei then
+					local ei_pos = ei:getPosition().p
+					local ei_unitTable = {}
+					local ei_coalition = ei:getCoalition()
+					local ei_country = event.initiator:getCountry()
+					DSMC_baseGcounter = DSMC_baseGcounter + 1
+					local ei_ID = DSMC_baseGcounter -- ei:getID()
+					env.info(("EMBD.collectSpawned static data collected, ei_gName: " .. tostring(ei_gName)))
+					
+					if ei_gName then
+
+						local unitHdg	= EMBD.getHeading(_eiUnitData, true)	
+						local uPosition = _eiUnitData:getPosition().p
+
+						ei_unitTable[#ei_unitTable+1] = {uID = tonumber(_eiUnitData:getID()), uName = _eiUnitData:getName(), uPos = uPosition, uHdg = unitHdg, uType = _eiUnitData:getTypeName(), uDesc = _eiUnitData:getDesc(), uAlive = true}
+					end
+
+					if ei and not tblSpawned[ei_gName] then
+						tblSpawnedcounter = tblSpawnedcounter + 1
+						env.info(("EMBD.collectSpawned static added"))
+						tblSpawned[ei_gName] = {gID = tonumber(ei_ID), gCat = Object.getCategory(event.initiator), gAlt= ei_Altitude, gName = ei_gName, gCoalition = ei_coalition, gCountry = ei_country, gType = "static", gCounter = tblSpawnedcounter, gTable = ei, gPos = ei_pos, gUnits = ei_unitTable, gStaticAlive = true}			
+					end
+				end
+			else
+				env.info(("EMBD.collectSpawned can't add object, category not found: " .. tostring(Object.getCategory(event.initiator))))
+
+			end
 		end
 	end
 end
