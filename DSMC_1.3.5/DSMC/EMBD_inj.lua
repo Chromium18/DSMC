@@ -622,7 +622,7 @@ function EMBD.changeWarehouseCoalition(missionEnv)
 										end										
 										if curUnit then -- obj still exist
 											if curUnit:getLife() > 1 then
-												local curUnitCat 		= curUnit:getCategory()
+												local curUnitCat 		= Object.getCategory(curUnit)
 												if curUnitCat == 3 then
 													local curUnitPos 		= curUnit:getPosition().p
 													local curUnitCoa 		= curUnit:getCoalition()
@@ -929,7 +929,7 @@ function EMBD.getWarehouses()
 			local aptID	  = Adata:getID()
 			local aptCoa = Adata:getCoalition()
 			local aptWh = Adata:getWarehouse()
-			local aptCat = Adata:getCategory()
+			local aptCat = Object.getCategory(Adata)
 
 			local contentTbl = aptWh:getInventory()
 			local resMap = aptWh:getResourceMap()
@@ -1005,7 +1005,7 @@ function EMBD.getWarehouses()
 			local stName = foundItem:getName()
 			local stID	  = foundItem:getID()
 			local stCoa = foundItem:getCoalition()		
-			local stCat = foundItem:getCategory()	
+			local stCat = Object.getCategory(foundItem)	
 
 			local contentTbl = {}
 			for wsTypeId, wsTypeData in pairs(wsTypesTbl) do
@@ -1295,7 +1295,7 @@ function EMBD.deathRecorder:onEvent(event)
 
 	if event.id == world.event.S_EVENT_DEAD or event.id ==  world.event.S_EVENT_CRASH then --world.event.S_EVENT_DEAD
 		if event.initiator then
-			local SOcategory 	= event.initiator:getCategory()
+			local SOcategory 	= Object.getCategory(event.initiator)
 			local SOpos 		= event.initiator:getPosition().p
 			local SOtypeName	= event.initiator:getTypeName()	
 			if DSMC_debugProcessDetail == true then
