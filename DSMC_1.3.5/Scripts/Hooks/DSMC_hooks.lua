@@ -38,8 +38,8 @@ DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "3"
 DSMC_SubSubVersion 	= "5"
-DSMC_Build 			= "2614"
-DSMC_Date			= "05/11/2023"
+DSMC_Build 			= "2615"
+DSMC_Date			= "17/11/2023"
 
 -- ## DEBUG TO TEXT FUNCTION DO NOT TOUCH THIS
 local forceServerMode 	= false -- OCCHIOOOO
