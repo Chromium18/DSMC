@@ -1,8 +1,0 @@
-PLAN
-- testare l'assegnazione del recon e l'aggiunta della funzione DSMC_awo_HoldOnContact
-
-RTAI
-- refactoring del codice per separarlo dal DCMD
-- tenere le funzioni di reazione
-- tenere le funzioni di dismount automatico
-- aggiungere real time artillery

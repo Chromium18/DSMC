@@ -1,2 +1,0 @@
--- Well, now you're being too courious: there's nothing here but you.
--- but you should follow the message: Read That Fucking Manual. dot lua.
