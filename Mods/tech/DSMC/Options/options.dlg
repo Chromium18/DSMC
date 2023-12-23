@@ -1,0 +1,972 @@
+--Main options
+
+local leftMargin1 = 54
+local width = 450
+local leftMargin2 = leftMargin1 + width + 50
+local verticalStack = 31
+local verticalBound = 20
+local checkboxWidth = 50
+
+-- Skins
+
+local EditBoxSkin = {
+	["params"] = {
+		["name"] = "editBoxSkin_login",
+	}
+}
+
+local CheckBoxSkin = {
+	["params"] = {
+		["name"] = "checkBoxSkin_options",
+	}
+}
+
+local TitleSkin = {
+	["params"] = {
+		["name"] = "staticOptionsTitleSkin",
+	},
+	["states"] = {
+		["released"] = {
+			[1] = {
+				["text"] = {
+					["horzAlign"] = {
+						["type"] = "min"
+					}
+				}
+			}
+		}
+	}
+}
+
+
+local LabelSkin = {
+	["params"] = {
+		["name"] = "staticOptionsCaptionSkin",
+	}
+}
+
+local HelpSkin = {
+	["params"] = {
+		["name"] = "staticSkin2",
+	},
+	["states"] = {
+		["released"] = {
+			[1] = {
+				["text"] = {
+					["fontSize"] = 10,
+					["horzAlign"] = {
+						["type"] = "min"
+					}
+				}
+			}
+		}
+	}
+}
+
+local ComboListSkin = {
+	["params"] = {
+		["name"] = "comboListSkin_options",
+	}
+}
+
+dialog = {
+	["children"] = {
+		["containerPlugin"] = {
+			["children"] = {
+
+				["DSMC_Title_MAIN_label"] = {
+					["params"] = {
+						["bounds"] = {
+							["h"] = verticalBound,
+							["w"] = 850,
+							["x"] = leftMargin1,
+							["y"] = verticalStack,
+						},
+						["enabled"] = true,
+						["text"] = "$DSMC_Title_MAIN",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = TitleSkin,
+					["type"] = "Static",
+				},
+				--[[ -- this must be active only if a DCS restart is required to change options
+				["DSMC_Title_Footnote_label"] = {
+					["params"] = {
+						["bounds"] = {
+							["h"] = verticalBound,
+							["w"] = 850,
+							["x"] = leftMargin1,
+							["y"] = verticalStack*1.5,
+						},
+						["enabled"] = true,
+						["text"] = "$DSMC_Title_Footnote",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = HelpSkin,
+					["type"] = "Static",
+				},
+				--]]--
+
+				["SavedFile_Preference_Title_label"] = { -- DSMC_Title_SAVE
+					["params"] = {
+						["bounds"] = {
+							["h"] = verticalBound,
+							["w"] = width,
+							["x"] = leftMargin1,
+							["y"] = verticalStack*3,
+						},
+						["enabled"] = true,
+						["text"] = "$SavedFile_Preference_Title",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = TitleSkin,
+					["type"] = "Static",
+				},				
+
+				["CRSTCheckbox"] = {
+					["params"] = {
+						["bounds"] = {
+								["h"] = verticalBound,
+								["w"] = width, 
+								["x"] = leftMargin1,
+								["y"] = verticalStack*4,
+						},
+						["enabled"] = true,
+						["state"] = false,
+						["tabOrder"] = 0,
+						["text"] = "$CRST_txt",
+						["tooltip"] = "if checked all destroyed vehicles will be replaced in the next mission with a dead static object. That will also be true for planes, so you will be able to check the exact position of an air killing and mock up a SAR mission in the next sortie. Dead vehicles could aslo act as landmark of event. Those static are set hidden in the mission editor, you could always remove them as for any static object.",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = CheckBoxSkin,
+					["type"] = "CheckBox",
+				},	
+				["TMUP_cont_trueRadioButton"] = {
+					["params"] = {
+						["bounds"] = {
+								["h"] = verticalBound,
+								["w"] = width,
+								["x"] = leftMargin1,
+								["y"] = verticalStack*4.75, -- 7.75
+						},
+						["enabled"] = true,
+						["state"] = false,
+						["tabOrder"] = 0,
+						["text"] = "$TMUP_cont_TRUE",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = {
+						["params"] = {
+							["name"] = "radioButtonSkin_options",
+						},
+						["states"] = {
+							["hover"] = {
+								[1] = {
+									["text"] = {
+										["vertAlign"] = {
+											["offset"] = 0,
+										},
+									},
+								},
+								[2] = {
+									["text"] = {
+										["vertAlign"] = {
+											["offset"] = 0,
+										},
+									},
+								},
+							},
+							["pressed"] = {
+								[1] = {
+									["text"] = {
+										["vertAlign"] = {
+											["offset"] = 0,
+										},
+									},
+								},
+								[2] = {
+									["text"] = {
+										["vertAlign"] = {
+											["offset"] = 0,
+										},
+									},
+								},
+							},
+							["released"] = {
+								[1] = {
+									["text"] = {
+										["vertAlign"] = {
+											["offset"] = 0,
+										},
+									},
+								},
+								[2] = {
+									["text"] = {
+										["vertAlign"] = {
+											["offset"] = 0,
+										},
+									},
+								},
+							},
+						},
+					},
+					["type"] = "RadioButton",
+				},
+				["TMUP_cont_falseRadioButton"] = {
+					["params"] = {
+						["bounds"] = {
+								["h"] = verticalBound,
+								["w"] = width,
+								["x"] = leftMargin1,
+								["y"] = verticalStack*5.5,
+						},
+						["enabled"] = true,
+						["state"] = false,
+						["tabOrder"] = 0,
+						["text"] = "$TMUP_cont_FALSE",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = {
+						["params"] = {
+							["name"] = "radioButtonSkin_options",
+						},
+						["states"] = {
+							["hover"] = {
+								[1] = {
+									["text"] = {
+										["vertAlign"] = {
+											["offset"] = 0,
+										},
+									},
+								},
+								[2] = {
+									["text"] = {
+										["vertAlign"] = {
+											["offset"] = 0,
+										},
+									},
+								},
+							},
+							["pressed"] = {
+								[1] = {
+									["text"] = {
+										["vertAlign"] = {
+											["offset"] = 0,
+										},
+									},
+								},
+								[2] = {
+									["text"] = {
+										["vertAlign"] = {
+											["offset"] = 0,
+										},
+									},
+								},
+							},
+							["released"] = {
+								[1] = {
+									["text"] = {
+										["vertAlign"] = {
+											["offset"] = 0,
+										},
+									},
+								},
+								[2] = {
+									["text"] = {
+										["vertAlign"] = {
+											["offset"] = 0,
+										},
+									},
+								},
+							},
+						},
+					},
+					["type"] = "RadioButton",
+				},
+				["TMUP_cont_realRadioButton"] = {
+					["params"] = {
+						["bounds"] = {
+								["h"] = verticalBound,
+								["w"] = width,
+								["x"] = leftMargin1,
+								["y"] = verticalStack*6.25,
+						},
+						["enabled"] = true,
+						["state"] = false,
+						["tabOrder"] = 0,
+						["text"] = "$TMUP_cont_REAL",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = {
+						["params"] = {
+							["name"] = "radioButtonSkin_options",
+						},
+						["states"] = {
+							["hover"] = {
+								[1] = {
+									["text"] = {
+										["vertAlign"] = {
+											["offset"] = 0,
+										},
+									},
+								},
+								[2] = {
+									["text"] = {
+										["vertAlign"] = {
+											["offset"] = 0,
+										},
+									},
+								},
+							},
+							["pressed"] = {
+								[1] = {
+									["text"] = {
+										["vertAlign"] = {
+											["offset"] = 0,
+										},
+									},
+								},
+								[2] = {
+									["text"] = {
+										["vertAlign"] = {
+											["offset"] = 0,
+										},
+									},
+								},
+							},
+							["released"] = {
+								[1] = {
+									["text"] = {
+										["vertAlign"] = {
+											["offset"] = 0,
+										},
+									},
+								},
+								[2] = {
+									["text"] = {
+										["vertAlign"] = {
+											["offset"] = 0,
+										},
+									},
+								},
+							},
+						},
+					},
+					["type"] = "RadioButton",
+				},
+				["TMUP_minComboList"] = {
+					["params"] = {
+						["bounds"] = {
+								["h"] = verticalBound,
+								["w"] = 55,
+								["x"] = leftMargin1+310,
+								["y"] = verticalStack*5.5,
+						},
+						["enabled"] = true,
+						["tabOrder"] = 0,
+						["text"] = "Item1",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 2,
+					},
+					["skin"] = {
+						["params"] = {
+							["name"] = "comboListSkin_options",
+						},
+					},
+					["type"] = "ComboList",
+				},
+				["TMUP_maxComboList"] = {
+					["params"] = {
+						["bounds"] = {
+								["h"] = verticalBound,
+								["w"] = 55,
+								["x"] = leftMargin1+395,
+								["y"] = verticalStack*5.5,
+						},
+						["enabled"] = true,
+						["tabOrder"] = 0,
+						["text"] = "Item1",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 2,
+					},
+					["skin"] = {
+						["params"] = {
+							["name"] = "comboListSkin_options",
+						},
+					},
+					["type"] = "ComboList",
+				},
+				["SLOTCheckbox"] = {
+					["params"] = {
+						["bounds"] = {
+								["h"] = verticalBound,
+								["w"] = width, 
+								["x"] = leftMargin1,
+								["y"] = verticalStack*7, -- 5.5
+						},
+						["enabled"] = true,
+						["state"] = false,
+						["tabOrder"] = 0,
+						["text"] = "$SLOT_txt",
+						["tooltip"] = "if checked DSMC will automatically create 2-ships helicopter group in each FARP of the proper coalition, choosing any flyable helicopter type avaiable in the warehouse",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = CheckBoxSkin,
+					["type"] = "CheckBox",
+				},
+				["SLOT_abCheckbox"] = {
+					["params"] = {
+						["bounds"] = {
+								["h"] = verticalBound,
+								["w"] = width, 
+								["x"] = leftMargin1,
+								["y"] = verticalStack*7.75,
+						},
+						["enabled"] = true,
+						["state"] = false,
+						["tabOrder"] = 0,
+						["text"] = "$SLOT_ab_txt",
+						["tooltip"] = "if checked DSMC will automatically create 2-ships groups of helicopters and airplanes in each airbase of the proper coalition, choosing any flyable type avaiable in the warehouse and consistent to available parkings",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = CheckBoxSkin,
+					["type"] = "CheckBox",
+				},
+				["SLOT_txt_Help_label"] = {
+					["params"] = {
+						["bounds"] = {
+							["h"] = verticalBound,
+							["w"] = 850,
+							["x"] = leftMargin1,
+							["y"] = verticalStack*8.5,
+						},
+						["enabled"] = true,
+						["text"] = "$SLOT_txt_Help",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = HelpSkin,
+					["type"] = "Static",
+				},
+				["SLOT_coa_label"] = {
+					["params"] = {
+						["bounds"] = {
+								["h"] = verticalBound,
+								["w"] = 250, 
+								["x"] = leftMargin1,
+								["y"] = verticalStack*9.25, -- 5.5
+						},
+						["enabled"] = true,
+						["text"] = "$SLOT_coa_txt",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = LabelSkin,
+					["type"] = "Static",
+				},
+				["SLOT_coaComboList"] = {
+					["params"] = {
+						["bounds"] = {
+								["h"] = verticalBound,
+								["w"] = 150, 
+								["x"] = leftMargin1+250,
+								["y"] = verticalStack*9.25, -- 5.5
+						},
+						["enabled"] = true,
+						["tabOrder"] = 0,
+						["text"] = "Item1",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = {
+						["params"] = {
+							["name"] = "comboListSkin_options",
+						},
+					},
+					["type"] = "ComboList",
+				},
+				["WRHSCheckbox"] = {
+					["params"] = {
+						["bounds"] = {
+								["h"] = verticalBound,
+								["w"] = width, 
+								["x"] = leftMargin1,
+								["y"] = verticalStack*10,
+						},
+						["enabled"] = true,
+						["state"] = false,
+						["tabOrder"] = 0,
+						["text"] = "$WRHS_txt",
+						["tooltip"] = "if checked DSMC will automatically re-built the supply net at each mission save accordingly to the manual",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = CheckBoxSkin,
+					["type"] = "CheckBox",
+				},
+				["WTHRCheckbox"] = {
+					["params"] = {
+						["bounds"] = {
+								["h"] = verticalBound,
+								["w"] = width, 
+								["x"] = leftMargin1,
+								["y"] = verticalStack*10.75,
+						},
+						["enabled"] = true,
+						["state"] = false,
+						["tabOrder"] = 0,
+						["text"] = "$WTHR_txt",
+						["tooltip"] = "if not checked, DSMC weather system won't work and therefore the weather won't be updated.",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = CheckBoxSkin,
+					["type"] = "CheckBox",
+				},
+				["WTHRfogCheckbox"] = {
+					["params"] = {
+						["bounds"] = {
+								["h"] = verticalBound,
+								["w"] = width, 
+								["x"] = leftMargin1,
+								["y"] = verticalStack*11.5,
+						},
+						["enabled"] = true,
+						["state"] = false,
+						["tabOrder"] = 0,
+						["text"] = "$WTHRfog_txt",
+						["tooltip"] = "if not checked, DSMC weather system will create fog when could be expected due to moisture levels. If true, it will prevent fog formation in any conditions.",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = CheckBoxSkin,
+					["type"] = "CheckBox",
+				},								
+
+				["SWG_Preference_Title_label"] = {
+					["params"] = {
+						["bounds"] = {
+							["h"] = verticalBound,
+							["w"] = width,
+							["x"] = leftMargin1,
+							["y"] = verticalStack*12.5,
+						},
+						["enabled"] = true,
+						["text"] = "$SWG_Preference_Title",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = TitleSkin,
+					["type"] = "Static",
+				},
+				["SWG_Preference_Foot1_label"] = {
+					["params"] = {
+						["bounds"] = {
+							["h"] = verticalBound,
+							["w"] = width, 
+							["x"] = leftMargin1,
+							["y"] = verticalStack*13,
+						},
+						["enabled"] = true,
+						["text"] = "$SWG_Preference_Foot1",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = HelpSkin,
+					["type"] = "Static",
+				},	
+				["SWG_Preference_Foot2_label"] = {
+					["params"] = {
+						["bounds"] = {
+							["h"] = verticalBound,
+							["w"] = width, 
+							["x"] = leftMargin1,
+							["y"] = verticalStack*13.5,
+						},
+						["enabled"] = true,
+						["text"] = "$SWG_Preference_Foot2",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = HelpSkin,
+					["type"] = "Static",
+				},	
+				["SWG_Preference_Foot3_label"] = {
+					["params"] = {
+						["bounds"] = {
+							["h"] = verticalBound,
+							["w"] = width, 
+							["x"] = leftMargin1,
+							["y"] = verticalStack*14,
+						},
+						["enabled"] = true,
+						["text"] = "$SWG_Preference_Foot3",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = HelpSkin,
+					["type"] = "Static",
+				},	
+
+				["ATRLCheckbox"] = {
+					["params"] = {
+						["bounds"] = {
+								["h"] = verticalBound,
+								["w"] = 245, 
+								["x"] = leftMargin1,
+								["y"] = verticalStack*14.75,
+						},
+						["enabled"] = true,
+						["state"] = false,
+						["tabOrder"] = 0,
+						["text"] = "$ATRL_txt",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = CheckBoxSkin,
+					["type"] = "CheckBox",
+				},
+				["ATRL_timeSlider"] = {
+					["params"] = {
+						["bounds"] = {
+							["h"] = verticalBound,
+							["w"] = 180, 
+							["x"] = leftMargin1+250,
+							["y"] = verticalStack*14.75-5,
+						},
+						["enabled"] = true,
+						["pageStep"] = 2,
+						["range"] = {
+							["max"] = 60,
+							["min"] = 1,
+						},
+						["step"] = 2,
+						["tabOrder"] = 0,
+						["text"] = "",
+						["tooltip"] = "",
+						["value"] = 0,
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = {
+						["params"] = {
+							["name"] = "horzSliderSkin_options",
+						},
+					},
+					["type"] = "HorzSlider",
+				},
+				["ATRL_timeWidget"] = {
+					["params"] = {
+						["bounds"] = {
+							["h"] = verticalBound,
+							["w"] = 30, 
+							["x"] = leftMargin1+420,
+							["y"] = verticalStack*14.75,
+						},
+						["enabled"] = true,
+						["text"] = "0",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = {
+						["params"] = {
+							["name"] = "staticOptionsSliderValueSkin",
+						},
+					},
+					["type"] = "Static",
+				},
+				["S247Checkbox"] = {
+					["params"] = {
+						["bounds"] = {
+								["h"] = verticalBound,
+								["w"] = 245, 
+								["x"] = leftMargin1,
+								["y"] = verticalStack*15.5,
+						},
+						["enabled"] = true,
+						["state"] = false,
+						["tabOrder"] = 0,
+						["text"] = "$S247_txt",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = CheckBoxSkin,
+					["type"] = "CheckBox",
+				},
+				["S247_timeSlider"] = {
+					["params"] = {
+						["bounds"] = {
+							["h"] = verticalBound,
+							["w"] = 180, 
+							["x"] = leftMargin1+250,
+							["y"] = verticalStack*15.5-5,
+						},
+						["enabled"] = true,
+						["pageStep"] = 2,
+						["range"] = {
+							["max"] = 24,
+							["min"] = 1,
+						},
+						["step"] = 1,
+						["tabOrder"] = 0,
+						["text"] = "",
+						["tooltip"] = "",
+						["value"] = 0,
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = {
+						["params"] = {
+							["name"] = "horzSliderSkin_options",
+						},
+					},
+					["type"] = "HorzSlider",
+				},
+				["S247_timeWidget"] = {
+					["params"] = {
+						["bounds"] = {
+							["h"] = verticalBound,
+							["w"] = 30, 
+							["x"] = leftMargin1+420,
+							["y"] = verticalStack*15.5,
+						},
+						["enabled"] = true,
+						["text"] = "0",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = {
+						["params"] = {
+							["name"] = "staticOptionsSliderValueSkin",
+						},
+					},
+					["type"] = "Static",
+				},
+				["RF10Checkbox"] = {
+					["params"] = {
+						["bounds"] = {
+								["h"] = verticalBound,
+								["w"] = width, 
+								["x"] = leftMargin1,
+								["y"] = verticalStack*16.25,
+						},
+						["enabled"] = true,
+						["state"] = false,
+						["tabOrder"] = 0,
+						["text"] = "$RF10_txt",
+						["tooltip"] = "F10 menù save option disable switch",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = CheckBoxSkin,
+					["type"] = "CheckBox",
+				},					
+				["EXCL_coa_label"] = {
+					["params"] = {
+						["bounds"] = {
+								["h"] = verticalBound,
+								["w"] = 250, 
+								["x"] = leftMargin1,
+								["y"] = verticalStack*17,
+						},
+						["enabled"] = true,
+						["text"] = "$EXCL_txt",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = LabelSkin,
+					["type"] = "Static",
+				},
+				["EXCL_varComboList"] = {
+					["params"] = {
+						["bounds"] = {
+								["h"] = verticalBound,
+								["w"] = 150, 
+								["x"] = leftMargin1+250,
+								["y"] = verticalStack*17,
+						},
+						["enabled"] = true,
+						["state"] = false,
+						["tabOrder"] = 0,
+						["text"] = "Item1",
+						["tooltip"] = "Exclusion tag. Any group name with this text in their name won't be updated in saved file",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = {
+						["params"] = {
+							["name"] = "comboListSkin_options",
+						},
+					},
+					["type"] = "ComboList",
+				},		
+				
+				["DEBUGCheckbox"] = {
+					["params"] = {
+						["bounds"] = {
+								["h"] = verticalBound,
+								["w"] = 800, 
+								["x"] = leftMargin1,
+								["y"] = verticalStack*18,
+						},
+						["enabled"] = true,
+						["state"] = false,
+						["tabOrder"] = 0,
+						["text"] = "$DEBUG_txt",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = CheckBoxSkin,
+					["type"] = "CheckBox",
+				},		
+
+				["CTLD_Title_label"] = {
+					["params"] = {
+						["bounds"] = {
+							["h"] = verticalBound,
+							["w"] = width,
+							["x"] = leftMargin2,
+							["y"] = verticalStack*3,
+						},
+						["enabled"] = true,
+						["text"] = "$CTLD_Title",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = TitleSkin,
+					["type"] = "Static",
+				},
+				["CTLD1Checkbox"] = {
+					["params"] = {
+						["bounds"] = {
+								["h"] = verticalBound,
+								["w"] = width, 
+								["x"] = leftMargin2,
+								["y"] = verticalStack*4,
+						},
+						["enabled"] = true, -- THIS TO DISABLE FEATURE
+						["state"] = false,
+						["tabOrder"] = 0,
+						["text"] = "$CTLD1_txt",
+						["tooltip"] = "if checked any helicopter that spawns in the scenery will be added to ctld.transportPilotNames",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = CheckBoxSkin,
+					["type"] = "CheckBox",
+				},
+				["CTLD2Checkbox"] = {
+					["params"] = {
+						["bounds"] = {
+							["h"] = verticalBound,
+							["w"] = width, 
+							["x"] = leftMargin2,
+							["y"] = verticalStack*4.75, -- 5.5 with slingloadoption checkbox
+						},
+						["enabled"] = true,
+						["state"] = false,
+						["tabOrder"] = 0,
+						["text"] = "$CTLD2_txt",
+						["tooltip"] = "If checked, any Truck, IFV or APC vehicle from mission editor objects will be added to ctld.transportPilotNames (spawned won't be available)",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = CheckBoxSkin,
+					["type"] = "CheckBox",
+				},	
+				["CTLD_Footnote_label"] = { -- DSMC_Help_AIE_1
+					["params"] = {
+						["bounds"] = {
+							["h"] = verticalBound,
+							["w"] = width, 
+							["x"] = leftMargin2,
+							["y"] = verticalStack*5.50,
+						},
+						["enabled"] = true,
+						["text"] = "$CTLD_Footnote",
+						["tooltip"] = "",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = HelpSkin,
+					["type"] = "Static",
+				},
+
+
+			},
+			["params"] = {
+				["bounds"] = {
+					["h"] = 600,
+					["w"] = 974,
+					["x"] = 0,
+					["y"] = 0,
+				},
+				["enabled"] = true,
+				["text"] = "",
+				["tooltip"] = "",
+				["visible"] = true,
+				["zindex"] = 2,
+			},
+			["skin"] = {
+				["params"] = {
+					["name"] = "panelSkin",
+				},
+			},
+			["type"] = "Panel",
+		},
+	},
+	["params"] = {
+		["bounds"] = {
+			["h"] = 851,
+			["w"] = 1135,
+			["x"] = 0,
+			["y"] = 0,
+		},
+		["draggable"] = true,
+		["enabled"] = true,
+		["hasCursor"] = true,
+		["lockFlow"] = false,
+		["modal"] = false,
+		["offscreen"] = false,
+		["resizable"] = false,
+		["text"] = "New dialog",
+		["zOrder"] = 0,
+	},
+	["skin"] = {
+		["params"] = {
+			["name"] = "windowSkin",
+		},
+	},
+	["type"] = "Window",
+}
