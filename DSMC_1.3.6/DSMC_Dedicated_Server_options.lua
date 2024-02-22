@@ -2,7 +2,7 @@
 -- please check mission designer manual before changing any paramterer. If you have issues, log in the DSMC discord and report as described in chapter 5 of the manual.
 
 -- Debug. Leave this true only for bugtracking!!!
-DSMC_DebugMode					= false		-- true / false
+DSMC_DebugMode					= true		-- true / false
 
 -- ##################################################################
 -- SAVED SCENERY FILE (.miz) CUSTOMIZATION & PREFERENCES ############
@@ -46,6 +46,25 @@ DSMC_AutosaveExit_safe      	= true     -- true / false. If false, the autosaveE
 DSMC_AutoRestart_active     	= false    -- true / false. If true, the server won't close and will be automatically loaded the saved mission. If false, the DCS server will be closed completely and will require a fresh start with an external solution (not included)
 DSMC_updateMissionList          = true     -- true / false. If true, once the server closes, DSMC will automatically update the mission list by setting only the saved mission as first one, and removing the others. If false, the mission list won't be updated and therefore at restart the same mission (not the saved one) will be loaded. Works only if DSMC_AutoRestart_active is set to false
 DSMC_restartCampaign            = true     -- true / false. If true, DSMC will check DCS "mission goals" and when reached, instead of restarting the saved mission, will specifically look for the "_000" miz file and load that one, to restart the campaign
+
+-- ##################################################################
+-- DYNAMIC WAR AI ENHANCEMENT AND PLANNING  #########################
+-- ##################################################################
+
+-- dynamic campaign general setup
+DSMC_campaign_intensity         = 5         -- number, from 1 to 30 (above or below will be filtered to the min or max). Define the number of planned ground actions for each coailtion. The more, the faster/complex will be the campaign.
+DSMC_create_intel_miz           = true      -- true / false. If true, DSMC will create 2 additional miz files, one for each coalition, that summarize intel available data
+DSMC_Show_F10_drawings          = true      -- true / false. If true, DSMC will set the tasking drawing on each coalition visible for that coalition in F10 map, as long as boundary line
+
+-- dynamic ground planning
+DSMC_campaign_AI_blue           = true      -- true / false. If true, DSMC AI will plan actions for the blue coalition for the saved mission
+DSMC_campaign_AI_red            = true      -- true / false. If true, DSMC AI will plan actions for the red coalition for the saved mission
+
+-- real time AI enhancement    -- ## BOTH THESE REQUIRE AT LEAST ONE OF DSMC_campaign_AI_blue OR DSMC_campaign_AI_red TO BE TRUE!
+--DSMC_WarehouseConvoyResupply    = true      -- true / false. If true, DSMC will create resupply convoys to do the actual airbase/FARP warehouse resupplies. Require also "warehouse" static object class in mission.
+DSMC_enhancedAIbehaviour        = true      -- true / false. If true, DSMC will add AI dynamic reactions to threat, infantry dismount in battle, and artillery shooting when targets are available in real time. (might have performance hit in very complex scenario)
+DSMC_assetsCommand              = true      -- true / false. If true, DSMC will add some feature by F10 menù and map marks that will allow to request support by Drones, Fat Cows temporary FARPs, mechanized troops movement and artillery fire support. 
+
 
 -- ##################################################################
 -- EXTERNAL SCRIPT SUPPORT   ##  CTLD PERSISTENCY OPTIONS  ##########

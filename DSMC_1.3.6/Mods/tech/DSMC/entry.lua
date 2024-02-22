@@ -9,7 +9,7 @@ developerName   =   "Chromium & many DCS modder",
 installed 	 = true, -- if false that will be place holder , or advertising
 dirName	  	 = current_mod_path,
 fileMenuName = _("DSMC"),
-version		 = "1.3.0",
+version		 = "1.3.6",
 state		 = "installed",
 info		 = _("DSMC add extra capability to the scenery simulation, like being able to save a scenery state in any moment or enhancing AI behaviour"),
 
@@ -33,7 +33,6 @@ Options =
 })
 ----------------------------------------------------------------------------------------
 
---dofile(current_mod_path..'/AMVI_packadge.cfg.lua')
 
 ----------------------------------------------------------------------------------------
 

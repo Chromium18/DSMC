@@ -1459,7 +1459,7 @@ function getParkingForAircraftType(pk_list, uType, uCat)
 	local keepList = {}
 	local a_listP = UTIL.deepCopy(pk_list)
 
-	HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType starting, a_listP pre:" .. tostring(#a_listP))
+	--HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType starting, a_listP pre:" .. tostring(#a_listP))
     local unitDesc = ME_DB.unit_by_type[uType]
 
 	if unitDesc then
@@ -1482,7 +1482,7 @@ function getParkingForAircraftType(pk_list, uType, uCat)
 			a_listP[tonumber(v)] = nil
 		end
 
-		HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType, a_listP post type filter:" .. tostring(#a_listP))
+		--HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType, a_listP post type filter:" .. tostring(#a_listP))
 
 		if #a_listP > 0 then
 			-- get latest park position
@@ -1504,7 +1504,7 @@ function getParkingForAircraftType(pk_list, uType, uCat)
 				end
 			end
 			
-			HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType, max_pId: " .. tostring(max_pId) .. ", usedPname: " .. tostring(usedPname) .. ", usedPMEname: " .. tostring(usedPMEname) .. ", usedPx: " .. tostring(usedPx) .. ", usedPy: " .. tostring(usedPy))
+			--HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType, max_pId: " .. tostring(max_pId) .. ", usedPname: " .. tostring(usedPname) .. ", usedPMEname: " .. tostring(usedPMEname) .. ", usedPx: " .. tostring(usedPx) .. ", usedPy: " .. tostring(usedPy))
 			if usedPname and usedPx and usedPy then
 				for pkId, pkData in pairs(a_listP) do		
 					if pkData.name == usedPname then
@@ -1521,7 +1521,7 @@ function getParkingForAircraftType(pk_list, uType, uCat)
 				end
 
 				--HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType added used parking spot to " ..tostring(airportID) .. ", park num = " ..tostring(usedPname))
-				HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType, a_listP post:" .. tostring(#revList))
+				--HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType, a_listP post:" .. tostring(#revList))
 				return usedPname, usedPx, usedPy, revList, usedPMEname
 			else
 				--HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType no parking available")	
@@ -1531,7 +1531,7 @@ function getParkingForAircraftType(pk_list, uType, uCat)
 			return false
 		end
 	else
-		HOOK.writeDebugBase(ModuleName .. ": getParkingForAircraftType, uType does not exist in DB:" .. tostring(uType))
+		--HOOK.writeDebugBase(ModuleName .. ": getParkingForAircraftType, uType does not exist in DB:" .. tostring(uType))
 		return false
 	end
 end
@@ -2156,10 +2156,10 @@ function createPlaneGroups(mission)
 													end
 
 													local groupGeneralFreq = 124
-													if string.find(sData.acfType, "M-2000C") then
+													if string.find(sData.acfType, "M-2000C") or string.find(sData.acfType, "F-5E-3") then
 														groupGeneralFreq = 251
-													end		
-
+													end
+													
 													local groupTable = {
 
 														["y"] = sData.y,
@@ -2488,7 +2488,7 @@ function checkParkings(missionEnv, airbaseTbl)
 								for pId, pData in pairs(group.route.points) do
 									if pId == 1 then
 										if pData.airdromeId then
-											HOOK.writeDebugDetail(ModuleName .. ": checkParkings found group on airport. Airport: " .. tostring(pData.airdromeId) .. ", group: " .. tostring(group.name))
+											--HOOK.writeDebugDetail(ModuleName .. ": checkParkings found group on airport. Airport: " .. tostring(pData.airdromeId) .. ", group: " .. tostring(group.name))
 											afbId = pData.airdromeId
 										end
 
@@ -2498,7 +2498,7 @@ function checkParkings(missionEnv, airbaseTbl)
 								if afbId then
 									for _, unit in pairs(group["units"]) do
 										if unit.parking and unit.parking_id then
-											HOOK.writeDebugDetail(ModuleName .. ": checkParkings removing park. Airport: " .. tostring(afbId) .. ", park: " .. tostring(unit.parking_id))
+											--HOOK.writeDebugDetail(ModuleName .. ": checkParkings removing park. Airport: " .. tostring(afbId) .. ", park: " .. tostring(unit.parking_id))
 											tblPrksRemove[#tblPrksRemove+1] = {abId = afbId, prId = tostring(unit.parking_id), parDef = tostring(unit.parking), uType = unit.type}
 										end
 									end
@@ -2514,13 +2514,13 @@ function checkParkings(missionEnv, airbaseTbl)
 	-- remove parkings
 	if #tblPrksRemove > 0 then
 		--UTIL.dumpTable("tblPrksRemove.lua", tblPrksRemove)
-		HOOK.writeDebugDetail(ModuleName .. ": checkParkings tblPrksRemove has entries, n: " .. tostring(#tblPrksRemove))
+		--HOOK.writeDebugDetail(ModuleName .. ": checkParkings tblPrksRemove has entries, n: " .. tostring(#tblPrksRemove))
 		for pId, pData in pairs(tblPrksRemove) do
 			for afId, afData in pairs(airbaseTbl) do
 				if tonumber(pData.abId) == tonumber(afData.index) then
 					for pkId, pkData in pairs(afData.parkings) do 
 						if tostring(pData.prId) == tostring(pkData.name) then
-							HOOK.writeDebugDetail(ModuleName .. ": checkParkings removing using park: " .. tostring(#pkData.name) .. ", in " .. tostring(afData.name))
+							--HOOK.writeDebugDetail(ModuleName .. ": checkParkings removing using park: " .. tostring(#pkData.name) .. ", in " .. tostring(afData.name))
 							if pkData.params.FOR_HELICOPTERS == 1 then
 								afData.rw_parkNum = afData.rw_parkNum - 1
 							end
@@ -2993,7 +2993,6 @@ function fixGroupList(m)
 
 	return m
 end
-
 
 function addSlot(m, w) --, dictEnv
 

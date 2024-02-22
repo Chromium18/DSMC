@@ -23,7 +23,88 @@ HOOK.writeDebugBase(ModuleName .. ": local required loaded")
 UTILloaded						= false
 tblFARP 						= {}
 
+local tblMonths = {
+	[1] = "JAN",
+	[2] = "FEB",
+	[3] = "MAR",
+	[4] = "APR",
+	[5] = "MAY",
+	[6] = "JUN",
+	[7] = "JUL",
+	[8] = "AUG",
+	[9] = "SEP",
+	[10] = "OCT",	
+	[11] = "NOV",
+	[12] = "DEC",
+}
+
+local tbltimeZone = {
+	["Syria"] = "C",
+	["SinaiMap"] = "C",
+	["Caucasus"] = "D",
+	["PersianGulf"] = "D",
+	["Nevada"] = "T",
+	["TheChannel"] = "Z",
+	["MarianaIslands"] = "K",
+	["Falklands"] = "P",
+}
+
+--[[--
+local tblWhWpnMultiplier = {
+	[wsType_AA_Missile] = 20, -- wsType_AA_Missile = 7
+	[wsType_AS_Missile] = 30, -- wsType_AS_Missile = 8
+	[wsType_Snars] = 100, -- wsType_Snars    = 31
+	[wsType_Bomb_A] = 50, -- wsType_Bomb_A       = 9
+	[wsType_Bomb_Guided] = 10, -- wsType_Bomb_Guided  = 36
+	[wsType_Bomb_BetAB] = 6, -- wsType_Bomb_BetAB   = 37
+	[wsType_Bomb_Cluster] = 10, -- wsType_Bomb_Cluster = 38
+	[wsType_Bomb_Antisubmarine] = 10, -- wsType_Bomb_Antisubmarine = 39
+	[wsType_Bomb_ODAB] = 10, -- wsType_Bomb_ODAB    = 40
+	[wsType_Bomb_Fire] = 6, -- wsType_Bomb_Fire    = 41
+	[wsType_Bomb_Nuclear] = 1, -- wsType_Bomb_Nuclear = 42
+	[wsType_Bomb_Lighter] = 6, -- wsType_Bomb_Lighter = 49
+	[wsType_Container] = 100, -- wsType_Container    = 32
+	[wsType_Rocket] = 100, -- wsType_Rocket       = 33
+}
+--]]--
+
+local tblWhWpnMultiplier = {
+	["rocket"] = 100,
+	["missile"] = 20,
+	["other"] = 20,
+	["bomb"] = 30,
+}
+
 -- ## UTILS
+
+function getMilitaryDate(missionFile, delay)
+	
+	local startTime = missionFile.start_time
+	if delay and delay > 0 then
+		startTime = missionFile.start_time + delay
+	end
+
+	local hour 		= string.format("%02d", math.floor(startTime/3600))
+	local minute 	= string.format("%02d", math.floor((startTime-hour*3600)/60))
+	--local month 	= string.format("%02d", m)
+	local day 		= string.format("%02d", missionFile.date.Day)
+	local year		= string.sub(tostring(missionFile.date.Year), -2)
+
+	local zone = "e"
+	for zId, zVal in pairs(tbltimeZone) do 
+		if zId == missionFile.theatre then
+			zone = zVal
+		end
+	end
+
+	local month = tblMonths[missionFile.date.Month]
+	local miltime = day .. hour .. minute .. zone .. month .. year
+	--HOOK.writeDebugDetail(ModuleName .. ": getMilitaryDate: " .. tostring(miltime))
+
+	return miltime
+
+end
+
 function copyFile(old, new)
 	local i = io.open(old, "r")
 	local o = io.open(new, "w")
@@ -368,6 +449,243 @@ function filterNamingTables(mission)	 -- DICTPROBLEM: dictionary
 	end
 end
 
+-- #### WAREHOUSE ####
+
+function createWhWeaponsDb()
+
+	HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb starting")
+
+	-- check existing
+	local fullPath = lfs.writedir() .. "DSMC/db_planes.lua"
+	local fileIsThere = fileExist(fullPath)
+	HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb fileIsThere " .. tostring(fileIsThere))
+	if fileIsThere then
+		HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb db_planes file exist")
+		dofile(fullPath)
+	end
+
+	local proceed = true
+	if db_planes then
+		HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb db_planes exist and loaded")
+		if db_planes.version == _G._APP_VERSION then
+			proceed = false
+			HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb DCS is the same version, skipping")
+		end
+	end
+
+	-- debug
+	-- proceed = true -- (file will be overwritten each time even if it exists)
+
+	if proceed == true then
+
+		local ubt = {}
+		local wbc = {}
+		local rbun = resource_by_unique_name
+		for dbId, dbData in pairs(ME_DB) do
+			if dbId == "unit_by_type" then
+				ubt = dbData
+			elseif dbId == "category_by_weapon_CLSID" then
+				wbc = dbData
+			end
+		end
+
+		--HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb pre db_loadout")
+
+		-- build reference for each wpn
+		--HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb, building db_loadout")
+		db_planes = {}
+		db_planes.version = _G._APP_VERSION
+		
+		local db_loadout = {}
+		for uniID, uniData in pairs(rbun) do
+			local wsTable = uniData.wsTypeOfWeapon or uniData.ws_type or uniData.attribute --  <-- last one might be removed to exept fuel tanks etc
+			if wsTable then
+				if type(wsTable) == "table" then
+					if #wsTable == 4 then
+						--if uniData.type_name == "missile" or uniData.type_name == "rocket" or uniData.type_name == "bomb" then
+							--HOOK.writeDebugDetail(ModuleName .. ": createWhWeaponsDb, wsTable found for " .. tostring(uniID))
+							local wsString = wsTypeToString(wsTable)	
+							--HOOK.writeDebugDetail(ModuleName .. ": createWhWeaponsDb, wsString for  " .. tostring(uniID).. " is " .. tostring(wsString))
+							local nameMultiVersion = uniData.display_name or uniData.displayName
+							local category = uniData.type_name or "other"
+							if nameMultiVersion then
+								db_loadout[uniID] = {string = wsString, name = nameMultiVersion, mass = uniData.mass, cat = category}
+							end
+						--end
+					end
+				end
+			end
+		end
+
+		HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb done db_loadout")
+		dumpTable("db_loadout.lua", db_loadout, "int")
+
+		local db_CLSID = {} 
+		HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb db_CLSID start")
+		for dName, dData in pairs(db_loadout) do
+			local ws = dData.string
+			for wId, wData in pairs(wbc) do
+				for lId, lData in pairs(wData.Launchers) do
+					local parameter = lData.wsTypeOfWeapon or lData.attribute
+					if type(parameter) == "string" then
+						--HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb, parameter " .. tostring(parameter) .. ", dName " .. tostring(dName))
+						if dName == parameter then
+							--HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb, parameter found")
+							db_CLSID[lData.CLSID] = {w = ws, n = dData.name, c = lData.CLSID, u = dName, t = dData.cat, m = dData.mass}
+						end
+
+					else
+						local wbc_ws = wsTypeToString(parameter)
+
+						if ws == wbc_ws then
+							--HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb db_CLSID 4")
+							db_CLSID[lData.CLSID] = {w = ws, n = dData.name, c = lData.CLSID, u = dName, t = dData.cat, m = dData.mass}
+							--db_loadout[wName] = {w = ws, c = lData.CLSID}
+						end
+					end
+				end
+			end
+		end
+		HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb db_CLSID done")
+		dumpTable("db_CLSID.lua", db_CLSID, "int")
+		db_loadout = nil
+
+		HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb, building db_planes")
+		for uType, uData in pairs(ubt) do
+			local checkPlaneHelo = false
+			for cId, cData in pairs(uData) do
+				if cId == "attribute" then
+					for aId, aData in pairs(cData) do
+						if aData == "Planes" or aData == "Helicopters" then
+							checkPlaneHelo = true
+						end
+					end
+				end
+			end	
+			if checkPlaneHelo == true then
+				HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb, adding weapons to " .. tostring(uType))
+				local content = {}
+
+				-- weapons
+				local t_cl = {}
+				if uData.Pylons then
+					for pId, pData in pairs(uData.Pylons) do     --Launchers
+						if pData.Launchers then
+							for lId, lData in pairs(pData.Launchers) do
+								local x = db_CLSID[lData.CLSID]   -- {w = ws, n = dData.name, c = lData.CLSID, u = dName}
+								if x then
+									--HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb, identified " .. tostring(x.w) .. ", name " .. tostring(x.n))
+									t_cl[x.w] = {unique = x.u, name = x.n, mass = x.m, category = x.t}
+								else
+									--HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb, not in database: " .. tostring(lData.CLSID))
+								end
+							end
+						end
+					end
+					--db_planes[uType] = t_cl
+					content["weapons"] = t_cl
+				end
+
+				-- pods & tanks?
+
+				-- fuel
+				content["fuel"] = tonumber(uData.MaxFuelWeight)
+
+				-- close the table
+				db_planes[uType] = content
+			end
+		end
+		HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb done")
+
+		saveTable("db_planes", db_planes, lfs.writedir() .. "DSMC/", "int")
+	end
+end
+
+function whAutoReset(warehouse)
+
+	HOOK.writeDebugDetail(ModuleName .. ": whAutoReset starting")
+	for ztCat, ztData in pairs(warehouse) do			
+		for zbId, zbData in pairs(ztData) do
+			HOOK.writeDebugDetail(ModuleName .. ": whAutoReset; checking cat: " .. tostring(ztCat) .. ", zbId " .. tostring(zbId))
+
+			-- ### update fuel ###
+			local totalfuel = 0
+			if zbData.unlimitedAircrafts == false and zbData.unlimitedFuel == false then -- aircraft
+				for aCat, aTbl in pairs(zbData.aircrafts) do
+					for aType, aData in pairs(aTbl) do
+						local fuelQty= nil
+						local acfQty = aData.initialAmount
+						if acfQty > 0 then
+							for pType, pData in pairs(db_planes) do
+								if aType == pType then
+									fuelQty = pData.fuel
+								end
+							end 
+
+							if fuelQty then
+								totalfuel = totalfuel + (fuelQty*acfQty) * 5 -- (means 5 times max fuel per single aircraft available)
+							end
+						end
+					end
+				end
+				-- conversion in tons
+				local newFuel = math.floor(totalfuel/1000)
+				if newFuel > 5000 then
+					newFuel = 5000
+				end
+				-- update value
+				zbData.jet_fuel.InitFuel = newFuel
+				HOOK.writeDebugDetail(ModuleName .. ": whAutoReset; cat: " .. tostring(ztCat) .. ", zbId " .. tostring(zbId) .. ", new jet fuel " .. tostring(newFuel))
+			else
+				HOOK.writeDebugDetail(ModuleName .. ": whAutoReset; cat: " .. tostring(ztCat) .. ", zbId " .. tostring(zbId) .. ", warehouse is set aircraft unlimited, so also fuel will be same")
+				zbData.jet_fuel.InitFuel = 100
+				zbData.unlimitedFuel = true
+			end
+
+			-- ### update ammo ###
+			if zbData.unlimitedAircrafts == false and zbData.unlimitedMunitions == false then -- aircraft
+				for aCat, aTbl in pairs(zbData.aircrafts) do
+					for aType, aData in pairs(aTbl) do
+						local acfQty  = aData.initialAmount
+						 -- MODIFY
+						if acfQty > 0 then
+							for pType, pData in pairs(db_planes) do
+								if aType == pType then
+									for wId, wData in pairs(pData.weapons) do 
+										local multiplier = 20
+										for mCat, mNum in pairs(tblWhWpnMultiplier) do
+											if mCat == wData.category then
+												multiplier = mNum
+											end
+										end
+										local expQty = multiplier * acfQty
+
+										for _, wpnData in pairs(zbData.weapons) do
+											
+											local wpnString = wsTypeToString(wpnData.wsType)
+											if wpnString == wId then
+												HOOK.writeDebugDetail(ModuleName .. ": whAutoReset; cat: " .. tostring(ztCat) .. ", zbId " .. tostring(zbId) .. ", multiplier " .. tostring(multiplier))
+												wpnData.initialAmount = wpnData.initialAmount + expQty
+												HOOK.writeDebugDetail(ModuleName .. ": whAutoReset; cat: " .. tostring(ztCat) .. ", zbId " .. tostring(zbId) .. ", wpnData.initialAmount " .. tostring(wpnData.initialAmount))
+											end
+										end
+									end
+								end
+							end 
+						end
+					end
+				end
+			else
+				HOOK.writeDebugDetail(ModuleName .. ": whAutoReset; cat: " .. tostring(ztCat) .. ", zbId " .. tostring(zbId) .. ", warehouse is set aircraft unlimited, so also ammo will be same")
+				zbData.unlimitedMunitions = true
+				zbData.weapons = {}
+			end
+
+		end
+	end
+end
+
+
 -- #### UNITS DATA INFO UTILITIES
 function dbYearsBuilder()
 	if _G.dbYears then	
@@ -555,6 +873,7 @@ function exportWpnDb()
 	--UTIL.dumpTable("DSMC_wpnDB.lua", DSMC_wpnDB) 	
 	saveTable("DSMC_wpnDB", DSMC_wpnDB, HOOK.DSMCdirectory, "int")
 end
+--]]--
 
 function deepCopy(object)
     local lookup_table = {}
@@ -2001,11 +2320,6 @@ function reBuildSupplyNet(warehouse, mission)
 	end
 
 end
-
-HOOK.writeDebugBase(ModuleName .. ": Loaded " .. MainVersion .. "." .. SubVersion .. "." .. Build .. ", released " .. Date)
-UTILloaded = true
---~=
-
 --
 local bName = "dbYears.lua"
 local bpath = HOOK.DSMCdirectory .. bName
@@ -2341,3 +2655,41 @@ end
 HOOK.writeDebugBase(ModuleName .. ": Loaded " .. MainVersion .. "." .. SubVersion .. "." .. Build .. ", released " .. Date)
 UTILloaded = true
 --~=
+
+
+
+
+
+
+--[=[prova testo html
+
+HOOK.writeDebugDetail(ModuleName .. ": test esportazione testo") 
+local testo = [[
+	<hgroup>
+   <h1>Dadaismo</h1>
+   <h2>L'essenza dell'anti-arte</h2>
+</hgroup>
+<p>Nel suo <em>Manifesto sull'amore debole e amore amaro</em>, pubblicato nel 1920, <b>Tristan Tzara</b> fornisce <strong>istruzioni per scrivere una poesia: </strong></p>
+<blockquote>
+   <pre> 
+   Prendete un giornale. Prendete delle forbici. 
+   Scegliete da questo giornale un articolo avente la lunghezza che desiderate dare alla vostra poesia. 
+   Ritagliate l’articolo. Ritagliate poi con cura ciascuna delle parole che formano l’articolo e mettetele in un sacchetto. 
+   Agitate dolcemente. 
+   Tirate fuori ciascun ritaglio uno dopo l’altro disponendoli nell’ordine in cui sono usciti dal sacchetto. 
+   Copiate scrupolosamente. La poesia vi rassomiglierà. 
+   Ed eccovi diventato uno scrittore infinitamente originale e di una sensibilità incantevole, benché incompreso dal volgo. </pre>
+</blockquote>
+<p> Su di esso si basarono le poesia di <b>Hans Harp</b> e di altri esponenti dadaisti. Ne potevano nascere componimenti volutamente assurdi come <i>Anna Blume</i> di Schiwitters tra i cui versi d'amore si legge: "<em>Blu è il colore dei tuoi capelli gialli, rossa è la coda del tuo verde uccello</em>". </p>
+]]
+
+
+
+local textFile  = io.open(lfs.writedir() .. "Missions/" .. "TestEsportazione.html", "w")
+if textFile then
+	textFile:write(testo)
+	textFile:close()
+end		
+HOOK.writeDebugDetail(ModuleName .. ": test esportazione testo done") 
+
+--]=]--

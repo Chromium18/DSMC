@@ -24,6 +24,7 @@ if not DSMC_baseUcounter then
 	DSMC_baseUcounter = 19000000
 end
 
+local limitTimeForFirstSave		= 300
 local messageunitId				= 1
 local tblSpawnedcounter			= 0
 local playerShutEngine			= false
@@ -33,6 +34,7 @@ local firstNeutralCountry		= 2
 local nearestAFBonLand			= 5000 -- this should be really improved, but atm no other solution than a fixed number.
 
 local ExclusionTag				= DSMC_ExclusionTag or "DSMC_NoUp"
+DSMC_firstSaveAllowed			= false
 
 strAirbases						= ""
 completeStringstrAirbases		= ""
@@ -55,6 +57,7 @@ tblMissingUnits					= {}
 tblDeadScenObj					= {}
 tblUnitsUpdate					= {}
 tblAirbases						= {}
+EMBD.tblResMap					= {}
 tblSpawned						= {}
 tblConquer						= {}
 tblWarehouseChangeCoa 			= {}
@@ -293,31 +296,6 @@ if DSMC_io and DSMC_lfs then
 		end
 	end
 
-	function dumpTable(fname, tabledata, varInt)
-		if DSMC_lfs and DSMC_io then
-			local fdir = DSMC_lfs.writedir() .. [[DSMC\Debug\]] .. fname
-			local f = DSMC_io.open(fdir, 'w')
-			local str = nil
-			if varInt then
-				if varInt == "basic" then
-					str = IntegratedbasicSerialize(fname, tabledata)
-				elseif varInt == "cycles" then
-					str = IntegratedserializeWithCycles(fname, tabledata)
-				elseif varInt == "int" then
-					str = Integratedserialize(fname, tabledata)
-				else
-					str = IntegratedserializeWithCycles(fname, tabledata)
-				end
-			else
-				str = IntegratedserializeWithCycles(fname, tabledata)
-			end
-	
-			f:write(str)
-			f:close()
-	
-		end
-	end
-
 	function EMBD.saveTable(fname, tabledata)		
 		if DSMC_lfs and DSMC_io then
 			local DSMCfiles = DSMC_lfs.writedir() .. "Missions/Temp/Files/"
@@ -333,10 +311,34 @@ if DSMC_io and DSMC_lfs then
 		end
 	end
 	
-	--dumpTable("_G_SSE.lua", _G)
-
 	env.info(("EMBD desanitized additional function loaded"))
 end
+
+function dumpTable(fname, tabledata, varInt)
+	if DSMC_lfs and DSMC_io then
+		local fdir = DSMC_lfs.writedir() .. [[DSMC\Debug\]] .. fname
+		local f = DSMC_io.open(fdir, 'w')
+		local str = nil
+		if varInt then
+			if varInt == "basic" then
+				str = IntegratedbasicSerialize(fname, tabledata)
+			elseif varInt == "cycles" then
+				str = IntegratedserializeWithCycles(fname, tabledata)
+			elseif varInt == "int" then
+				str = Integratedserialize(fname, tabledata)
+			else
+				str = IntegratedserializeWithCycles(fname, tabledata)
+			end
+		else
+			str = IntegratedserializeWithCycles(fname, tabledata)
+		end
+
+		f:write(str)
+		f:close()
+
+	end
+end
+--dumpTable("_G_SSE.lua", _G)
 
 -- ##CORE
 
@@ -367,12 +369,39 @@ function EMBD.getFreeCountry()
 end
 --]]--
 
+function EMBD.getAptInfo(builtResMap)
 
-function EMBD.getAptInfo()
 	tblAirbases = {}
 	local apt_Table = world.getAirbases()
 	--dumpTable("apt_Table.lua", apt_Table)
 	for Aid, Adata in pairs(apt_Table) do
+
+		if builtResMap == true then
+			if Aid == 1 then
+				local wh = Adata:getWarehouse()
+				EMBD.tblResMap	= {}
+				EMBD.tblResMap = wh:getResourceMap()
+
+				for rId, rData in pairs(EMBD.tblResMap) do
+					if rData[1] == 1 and rData[2] == 1 then
+						local description = Unit.getDescByName(rId)
+						if description then
+							EMBD.tblResMap[rId]["descObj"] = description
+							--rData.desc = description
+						end
+					elseif rData[1] == 1 and rData[2] == 2 then
+						local description = Unit.getDescByName(rId)
+						if description then
+							EMBD.tblResMap[rId]["descObj"] = description
+							--rData.desc = description
+						end
+					end
+				end
+			end
+			env.info(("EMBD EMBD.tblResMap updated"))
+			--dumpTable("EMBD.tblResMap.lua", EMBD.tblResMap, "int")
+		end
+
 		if Adata and Adata:isExist() == true then
 			local aptInfo = Adata:getDesc()
 			local aptName = Adata:getName()
@@ -380,6 +409,7 @@ function EMBD.getAptInfo()
 			local indexId = Aid
 			local aptPos = Adata:getPosition().p
 			local aptCoa = Adata:getCoalition()
+			local aptWh = Adata:getWarehouse()
 			--if env.mission.theatre == "Caucasus" then
 			--	indexId = indexId +11			
 			--	if DSMC_debugProcessDetail == true then
@@ -388,7 +418,7 @@ function EMBD.getAptInfo()
 			--end	
 			--for cat
 
-			tblAirbases[#tblAirbases+1] = {id = aptID, index = aptID, name = aptName, desc = aptInfo, pos = aptPos, coa = aptCoa}
+			tblAirbases[#tblAirbases+1] = {id = aptID, index = aptID, name = aptName, desc = aptInfo, pos = aptPos, coa = aptCoa, wh = aptWh}
 		end
 	end
 end
@@ -402,26 +432,8 @@ function EMBD.sendUnitsData(missionEnv)
 					for groupID,group in pairs(attr["group"]) do
 
 						if (group) then						
-
-							-- check excluded
-							--[[--
-							local exclude = false
-							local gName = nil
-							if group.name then
-								--DICTPROBLEM
-								--gName = env.getValueDictByKey(group.name)
-								gName = group.name
-								if gName and type(gName) == "string" then
-									if string.find(gName, ExclusionTag) then
-										exclude = true
-									end
-								end
-							end
-							--]]--
-
-							--if exclude == false then
 								for unitID, unit in pairs(group["units"]) do																			
-									local isAlive = true															
+									local isAlive = true
 									
 									if isAlive == true and group and unit then							
 										if attrID == "plane" then	--or attrID == "plane" 	
@@ -451,7 +463,7 @@ function EMBD.sendUnitsData(missionEnv)
 										elseif attrID == "static" then
 
 											local uName 		= unit.name
-
+											
 											-- check excluded
 											local exclude = false
 											if string.find(uName, ExclusionTag) then
@@ -487,20 +499,19 @@ function EMBD.sendUnitsData(missionEnv)
 															--env.info(("EMBD.sendUnitsData add a record in tblDeadUnits to remove cargo"))
 														end		
 														tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unit.unitId), unitInfantry = true}												
-													end										
-												end
+													end	
+												end									
 											else
 												if DSMC_debugProcessDetail == true then
 													env.info(("EMBD.sendUnitsData static object excluded"))
 												end	
-											end
-										
+											end		
+
 										else
 
 											local uName 		= unit.name
-
 											if uName then
-
+												
 												-- check excluded
 												local exclude = false
 												if string.find(uName, ExclusionTag) then
@@ -585,9 +596,6 @@ function EMBD.sendUnitsData(missionEnv)
 										end
 									end
 								end
-							--else
-							--	env.info(("EMBD.sendUnitsData excluded group from update: " .. tostring(gName)))
-							--end
 						end
 					end
 				end
@@ -613,24 +621,14 @@ function EMBD.changeWarehouseCoalition(missionEnv)
 							for unitID, unit in pairs(group["units"]) do
 								if group and unit then
 									if attrID == "static" then
-										--DICTPROBLEM
-										--local uName 		= env.getValueDictByKey(unit.name)
 										local uName 		= unit.name
-										local curUnit 		= StaticObject.getByName(uName)
-										if DSMC_debugProcessDetail == true then
-											env.info(("EMBD.changeWarehouseCoalition, uName: " .. tostring(uName) ))
-										end										
+										local curUnit 		= StaticObject.getByName(uName)									
 										if curUnit then -- obj still exist
 											if curUnit:getLife() > 1 then
 												local curUnitCat 		= Object.getCategory(curUnit)
 												if curUnitCat == 3 then
 													local curUnitPos 		= curUnit:getPosition().p
 													local curUnitCoa 		= curUnit:getCoalition()
-
-													if DSMC_debugProcessDetail == true then
-														env.info(("EMBD.changeWarehouseCoalition, curUnitCoa: " .. tostring(curUnitCoa) ))
-													end
-
 													local _volume = {
 														id = world.VolumeType.SPHERE,
 														params = {
@@ -644,28 +642,14 @@ function EMBD.changeWarehouseCoalition(missionEnv)
 													local _search = function(_obj)
 														pcall(function()
 															if _obj ~= nil then
-
 																local o_coa = _obj:getCoalition()
 																o_ctry = _obj:getCountry()
-																if DSMC_debugProcessDetail == true then
-																	--env.info(("EMBD.changeWarehouseCoalition, o_coa: " .. tostring(o_coa) ))
-																end
-
 																if o_coa == 0 then
 																	t_coa["neutral"] = true
-																	if DSMC_debugProcessDetail == true then
-																		--env.info(("EMBD.changeWarehouseCoalition, t_coa neutral"))
-																	end	
 																elseif o_coa == 1 then
-																	t_coa["red"] = true
-																	if DSMC_debugProcessDetail == true then
-																		--env.info(("EMBD.changeWarehouseCoalition, t_coa red"))
-																	end	
+																	t_coa["red"] = true	
 																elseif o_coa == 2 then
 																	t_coa["blue"] = true
-																	if DSMC_debugProcessDetail == true then
-																		--env.info(("EMBD.changeWarehouseCoalition, t_coa blue"))
-																	end	
 																end
 															end
 														end)
@@ -676,28 +660,22 @@ function EMBD.changeWarehouseCoalition(missionEnv)
 													if o_ctry then
 														if t_coa["neutral"] == true and t_coa["red"] == false and t_coa["blue"] == false and curUnitCoa ~= 0 then
 															if DSMC_debugProcessDetail == true then
-																env.info(("EMBD.changeWarehouseCoalition, single different than curUnitCoa. unit " .. tostring(curUnit:getID()) .. ", going neutral"))
+																env.info(("EMBD.changeWarehouseCoalition, single different than curUnitCoa. unit " .. tostring(uName) .. ", going neutral"))
 															end	
 															tblWarehouseChangeCoa[#tblWarehouseChangeCoa+1] = {id = curUnit:getID(), coa = 0, name = curUnit:getName(), country = o_ctry}
 														elseif t_coa["neutral"] == false and t_coa["red"] == true and t_coa["blue"] == false and curUnitCoa ~= 1 then
 															if DSMC_debugProcessDetail == true then
-																env.info(("EMBD.changeWarehouseCoalition, single different than curUnitCoa. unit " .. tostring(curUnit:getID()) .. ", going red"))
+																env.info(("EMBD.changeWarehouseCoalition, single different than curUnitCoa. unit " .. tostring(uName) .. ", going red"))
 															end	
 															tblWarehouseChangeCoa[#tblWarehouseChangeCoa+1] = {id = curUnit:getID(), coa = 1, name = curUnit:getName(), country = o_ctry}
 														elseif t_coa["neutral"] == false and t_coa["red"] == false and t_coa["blue"] == true and curUnitCoa ~= 2 then
 															if DSMC_debugProcessDetail == true then
-																env.info(("EMBD.changeWarehouseCoalition, single different than curUnitCoa. unit " .. tostring(curUnit:getID()) .. ", going blue"))
+																env.info(("EMBD.changeWarehouseCoalition, single different than curUnitCoa. unit " .. tostring(uName) .. ", going blue"))
 															end	
 															tblWarehouseChangeCoa[#tblWarehouseChangeCoa+1] = {id = curUnit:getID(), coa = 2, name = curUnit:getName(), country = o_ctry}
-														else
-															if DSMC_debugProcessDetail == true then
-																env.info(("EMBD.changeWarehouseCoalition, no change required for id:" .. tostring(curUnit:getID())))
-															end	
 														end
 													else
-														if DSMC_debugProcessDetail == true then
-															env.info(("EMBD.changeWarehouseCoalition, no country identified!"))
-														end	
+														env.error(("EMBD.changeWarehouseCoalition, no country identified for " .. tostring(uName)))
 													end
 
 												end
@@ -750,164 +728,157 @@ function EMBD.updateSpawnedPosition(tblSpawned, missionEnv)
 				env.info(("EMBD.updateSpawnedPosition checking group " ..tostring(idData.gName)))
 			end
 
-			--local exclude = false
-			--if string.find(idData.gName, ExclusionTag) then
-			--	exclude = true
-			--end
-
-			--if exclude == false then
-				-- verify existing
-				local proceed = true
-				for coalitionID,coalition in pairs(missionEnv["coalition"]) do
-					for countryID,country in pairs(coalition["country"]) do
-						for attrID,attr in pairs(country) do
-							if (type(attr)=="table") then
-								for groupID,group in pairs(attr["group"]) do
-									if (group) then
-										if group.name == idData.gName then
-											proceed = false
-											tblSpawned[id] = nil
-											if DSMC_debugProcessDetail == true then
-												env.info(("EMBD.updateSpawnedPosition group already existing, skipping"))
-											end	
-										end
+			-- verify existing
+			local proceed = true
+			for coalitionID,coalition in pairs(missionEnv["coalition"]) do
+				for countryID,country in pairs(coalition["country"]) do
+					for attrID,attr in pairs(country) do
+						if (type(attr)=="table") then
+							for groupID,group in pairs(attr["group"]) do
+								if (group) then
+									if group.name == idData.gName then
+										proceed = false
+										tblSpawned[id] = nil
+										if DSMC_debugProcessDetail == true then
+											env.info(("EMBD.updateSpawnedPosition group already existing, skipping"))
+										end	
 									end
 								end
 							end
 						end
 					end
 				end
+			end
 
-				if proceed == true then				
-					if idData.gUnits then			
-						if DSMC_debugProcessDetail == true then
-							env.info(("EMBD.updateSpawnedPosition idData.gUnits exist"))
-						end				
-						if tonumber(idData.gCat) == 1 then
-							for uId, uData in pairs(idData.gUnits) do
-								if DSMC_debugProcessDetail == true then
-									env.info(("EMBD.updateSpawnedPosition checking unit " .. tostring(uData.uName)))
-								end					
-								local unit	 	= Unit.getByName(uData.uName)					
-								if unit then
-									if unit:getLife() > 1 then
-										local unitPos  	= unit:getPosition().p	
-										uData.uPos = unitPos
-										if 	uData.uHdg then
-											local unitHdg	= EMBD.getHeading(unit, true)	
-											uData.uHdg = unitHdg
-										end
-										
-										if DSMC_debugProcessDetail == true then
-											env.info(("EMBD.updateSpawnedPosition udata updated"))
-										end
-									else
-										uData.uAlive = false
-										if DSMC_debugProcessDetail == true then
-											env.info(("EMBD.updateSpawnedPosition unit dead, removed"))
-										end
+			if proceed == true then				
+				if idData.gUnits then			
+					if DSMC_debugProcessDetail == true then
+						env.info(("EMBD.updateSpawnedPosition idData.gUnits exist"))
+					end				
+					if tonumber(idData.gCat) == 1 then
+						for uId, uData in pairs(idData.gUnits) do
+							if DSMC_debugProcessDetail == true then
+								env.info(("EMBD.updateSpawnedPosition checking unit " .. tostring(uData.uName)))
+							end					
+							local unit	 	= Unit.getByName(uData.uName)					
+							if unit then
+								if unit:getLife() > 1 then
+									local unitPos  	= unit:getPosition().p	
+									uData.uPos = unitPos
+									if 	uData.uHdg then
+										local unitHdg	= EMBD.getHeading(unit, true)	
+										uData.uHdg = unitHdg
+									end
+									
+									if DSMC_debugProcessDetail == true then
+										env.info(("EMBD.updateSpawnedPosition udata updated"))
 									end
 								else
 									uData.uAlive = false
 									if DSMC_debugProcessDetail == true then
-										env.info(("EMBD.updateSpawnedPosition unit missing, removed"))		
-									end			
+										env.info(("EMBD.updateSpawnedPosition unit dead, removed"))
+									end
 								end
+							else
+								uData.uAlive = false
 								if DSMC_debugProcessDetail == true then
-									env.info(("EMBD.updateSpawnedPosition unit check complete"))
-								end
+									env.info(("EMBD.updateSpawnedPosition unit missing, removed"))		
+								end			
 							end
-						elseif tonumber(idData.gCat) == 3 then --- static
-							for uId, uData in pairs(idData.gUnits) do
-								if DSMC_debugProcessDetail == true then
-									env.info(("EMBD.updateSpawnedPosition checking static " .. tostring(uData.uName)))
-								end					
-								local object	 	= StaticObject.getByName(uData.uName)					
-								if object then
-									if object:getLife() > 1 then
-										local unitPos  	= object:getPosition().p	
-										uData.uPos = unitPos
-										if 	uData.uHdg then
-											local unitHdg	= EMBD.getHeading(object, true)	
-											uData.uHdg = unitHdg
-										end
-										env.info(("EMBD.updateSpawnedPosition udata updated"))
-									else
-										tblSpawned[id] = nil
-										--idData.gStaticAlive = false
-										env.info(("EMBD.updateSpawnedPosition static dead, removed"))
-									end
-								else
-									tblSpawned[id] = nil
-									--idData.gStaticAlive = false
-									env.info(("EMBD.updateSpawnedPosition static missing, removed"))					
-								end
-								if DSMC_debugProcessDetail == true then
-									env.info(("EMBD.updateSpawnedPosition static check complete"))
-								end
+							if DSMC_debugProcessDetail == true then
+								env.info(("EMBD.updateSpawnedPosition unit check complete"))
 							end
-						elseif tonumber(idData.gCat) == 4 then --- airbase
-							for uId, uData in pairs(idData.gUnits) do
-								if DSMC_debugProcessDetail == true then
-									env.info(("EMBD.updateSpawnedPosition checking airbase " .. tostring(uData.uName)))
-								end					
-								local object	 	= Airbase.getByName(uData.uName)					
-								if object then
-									if object:getLife() > 1 then
-										local unitPos  	= object:getPosition().p					
-										uData.uPos = unitPos
-										env.info(("EMBD.updateSpawnedPosition udata updated"))
-									else
-										tblSpawned[id] = nil
-										--idData.gStaticAlive = false
-										env.info(("EMBD.updateSpawnedPosition airbase dead, removed"))
-									end
-								else
-									tblSpawned[id] = nil
-									--idData.gStaticAlive = false
-									env.info(("EMBD.updateSpawnedPosition airbase missing, removed"))					
-								end
-								if DSMC_debugProcessDetail == true then
-									env.info(("EMBD.updateSpawnedPosition airbase check complete"))
-								end
-							end				
-						elseif tonumber(idData.gCat) == 6 then --- cargo
-							for uId, uData in pairs(idData.gUnits) do
-								if DSMC_debugProcessDetail == true then
-									env.info(("EMBD.updateSpawnedPosition checking cargo " .. tostring(uData.uName)))
-								end					
-								local object	 	= StaticObject.getByName(uData.uName)				
-								if object then
-									if DSMC_debugProcessDetail == true then
-										env.info(("EMBD.updateSpawnedPosition cargo life " .. tostring(object:getLife())))
-									end							
-
-									if object:getLife() > 1 then
-										local unitPos  	= object:getPosition().p					
-										uData.uPos = unitPos
-										env.info(("EMBD.updateSpawnedPosition udata updated"))
-									else
-										tblSpawned[id] = nil
-										--idData.gStaticAlive = false
-										env.info(("EMBD.updateSpawnedPosition cargo dead, removed"))
-									end
-								else
-									if id then
-										tblSpawned[id] = nil
-										--table.remove(tblSpawned, id) -- modified from "tonumber(id)"
-										idData.gStaticAlive = false
-										env.info(("EMBD.updateSpawnedPosition cargo missing, removed"))	
-										--tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(uData.uID), coalitionID = idData.gCoalition, countryID = idData.gCountry, staticTable = nil, objCategory = idData.gCat, objTypeName = uData.uType}
-									end
-								end
-								if DSMC_debugProcessDetail == true then
-									env.info(("EMBD.updateSpawnedPosition cargo check complete"))
-								end
-							end					
 						end
+					elseif tonumber(idData.gCat) == 3 then --- static
+						for uId, uData in pairs(idData.gUnits) do
+							if DSMC_debugProcessDetail == true then
+								env.info(("EMBD.updateSpawnedPosition checking static " .. tostring(uData.uName)))
+							end					
+							local object	 	= StaticObject.getByName(uData.uName)					
+							if object then
+								if object:getLife() > 1 then
+									local unitPos  	= object:getPosition().p	
+									uData.uPos = unitPos
+									if 	uData.uHdg then
+										local unitHdg	= EMBD.getHeading(object, true)	
+										uData.uHdg = unitHdg
+									end
+									env.info(("EMBD.updateSpawnedPosition udata updated"))
+								else
+									tblSpawned[id] = nil
+									--idData.gStaticAlive = false
+									env.info(("EMBD.updateSpawnedPosition static dead, removed"))
+								end
+							else
+								tblSpawned[id] = nil
+								--idData.gStaticAlive = false
+								env.info(("EMBD.updateSpawnedPosition static missing, removed"))					
+							end
+							if DSMC_debugProcessDetail == true then
+								env.info(("EMBD.updateSpawnedPosition static check complete"))
+							end
+						end
+					elseif tonumber(idData.gCat) == 4 then --- airbase
+						for uId, uData in pairs(idData.gUnits) do
+							if DSMC_debugProcessDetail == true then
+								env.info(("EMBD.updateSpawnedPosition checking airbase " .. tostring(uData.uName)))
+							end					
+							local object	 	= Airbase.getByName(uData.uName)					
+							if object then
+								if object:getLife() > 1 then
+									local unitPos  	= object:getPosition().p					
+									uData.uPos = unitPos
+									env.info(("EMBD.updateSpawnedPosition udata updated"))
+								else
+									tblSpawned[id] = nil
+									--idData.gStaticAlive = false
+									env.info(("EMBD.updateSpawnedPosition airbase dead, removed"))
+								end
+							else
+								tblSpawned[id] = nil
+								--idData.gStaticAlive = false
+								env.info(("EMBD.updateSpawnedPosition airbase missing, removed"))					
+							end
+							if DSMC_debugProcessDetail == true then
+								env.info(("EMBD.updateSpawnedPosition airbase check complete"))
+							end
+						end				
+					elseif tonumber(idData.gCat) == 6 then --- cargo
+						for uId, uData in pairs(idData.gUnits) do
+							if DSMC_debugProcessDetail == true then
+								env.info(("EMBD.updateSpawnedPosition checking cargo " .. tostring(uData.uName)))
+							end					
+							local object	 	= StaticObject.getByName(uData.uName)				
+							if object then
+								if DSMC_debugProcessDetail == true then
+									env.info(("EMBD.updateSpawnedPosition cargo life " .. tostring(object:getLife())))
+								end							
+
+								if object:getLife() > 1 then
+									local unitPos  	= object:getPosition().p					
+									uData.uPos = unitPos
+									env.info(("EMBD.updateSpawnedPosition udata updated"))
+								else
+									tblSpawned[id] = nil
+									--idData.gStaticAlive = false
+									env.info(("EMBD.updateSpawnedPosition cargo dead, removed"))
+								end
+							else
+								if id then
+									tblSpawned[id] = nil
+									--table.remove(tblSpawned, id) -- modified from "tonumber(id)"
+									idData.gStaticAlive = false
+									env.info(("EMBD.updateSpawnedPosition cargo missing, removed"))	
+									--tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(uData.uID), coalitionID = idData.gCoalition, countryID = idData.gCountry, staticTable = nil, objCategory = idData.gCat, objTypeName = uData.uType}
+								end
+							end
+							if DSMC_debugProcessDetail == true then
+								env.info(("EMBD.updateSpawnedPosition cargo check complete"))
+							end
+						end					
 					end
 				end
-			--end
+			end
 		end
 	end
 	if DSMC_debugProcessDetail == true then
@@ -1114,7 +1085,7 @@ EMBD.oncallworkflow = function(sanivar, recall)
 		cur_Stack = cur_Stack + prt_stack	
 	
 		if recall == "recall" then
-			trigger.action.outText("DSMC is generating the new scenery file. It can take minutes, don't force DCS to stop", 30)
+			trigger.action.outText("DSMC info message: DSMC is generating the new scenery file. It can take minutes, don't force DCS to stop", 30)
 			timer.scheduleFunction(saveProcess, {}, timer.getTime() + cur_Stack)
 		end
 		
@@ -1267,16 +1238,21 @@ EMBD.executeSAVEFunction = function(recall)
 	end
 	--dumpTable("wh_after.lua", env.warehouses)
 end
-
-  -- new entry to make the callback detached and allow DSMC to process any mission changes.
+-- new entry to make the callback detached and allow DSMC to process any mission changes.
 EMBD.executeSAVE = function(recall)
 	env.info(("EMBD.executeSAVE launched. recall = " .. tostring(recall)))
-  
-	if EMBD.preSaveCallback ~= nil then
-	  EMBD.preSaveCallback()
+	local oksave = true
+
+	if oksave == true then  -- (timer.getAbsTime() - timer.getTime0()) < limitTimeForFirstSave
+		if EMBD.preSaveCallback ~= nil then
+			EMBD.preSaveCallback()
+		end
+		
+		timer.scheduleFunction(EMBD.executeSAVEFunction, recall, timer.getTime() + 0.1)
+		
+	else
+		trigger.action.outText("DSMC info message: too soon to create a save point cause initial planning is still working. Please retry after some minutes", 30)
 	end
-  
-	timer.scheduleFunction(EMBD.executeSAVEFunction, recall, timer.getTime() + 0.1)
 end
 
 EMBD.runDesanMessage = function()
@@ -1298,226 +1274,208 @@ function EMBD.deathRecorder:onEvent(event)
 			local SOcategory 	= Object.getCategory(event.initiator)
 			local SOpos 		= event.initiator:getPosition().p
 			local SOtypeName	= event.initiator:getTypeName()	
-			if DSMC_debugProcessDetail == true then
-				env.info(("EMBD.deathRecorder death event "))	
-			end		
-			
+			env.info(("EMBD.deathRecorder death event "))
 
 			if SOcategory and SOpos and SOtypeName then
-				local n = event.initiator:getName()
-				local exclude = false
-				if string.find(n, ExclusionTag) then
-					exclude = true
-					if DSMC_debugProcessDetail == true then
-						env.info(("EMBD.deathRecorder unit excluded"))	
-					end		
-				end
-
-				if exclude == false then
-					if type(SOcategory) == "number" and type(SOpos) == "table" and type(SOtypeName) == "string" then
+				if type(SOcategory) == "number" and type(SOpos) == "table" and type(SOtypeName) == "string" then
+				
+					if SOcategory == 5 then -- map object
 					
-						if SOcategory == 5 then -- map object
+						mapObj_deathcounter = mapObj_deathcounter + 1
+						if DSMC_debugProcessDetail == true then
+							env.info(("EMBD.deathRecorder death event category 5, map object"))		
+						end		
 						
-							mapObj_deathcounter = mapObj_deathcounter + 1
-							if DSMC_debugProcessDetail == true then
-								env.info(("EMBD.deathRecorder death event category 5, map object"))		
-							end		
-							
-							local exist = false
-							for _, deadData in pairs(tblDeadScenObj) do 
-								if tostring(deadData.objId) == tostring(event.initiator:getName()) then
-									env.info(("EMBD.deathRecorder death event category 5, skipped cause already there"))
-									exist = true
-								end
+						local exist = false
+						for _, deadData in pairs(tblDeadScenObj) do 
+							if tostring(deadData.objId) == tostring(event.initiator:getName()) then
+								env.info(("EMBD.deathRecorder death event category 5, skipped cause already there"))
+								exist = true
 							end
-							if exist == false then
-								local Objdesc = event.initiator:getDesc()
-								if Objdesc.life > 1 then
+						end
+						if exist == false then
+							local Objdesc = event.initiator:getDesc()
+							if Objdesc.life > 1 then
 
-									local y = env.mission.date.Year
-									local m = env.mission.date.Month
-									local d = env.mission.date.Day
+								local y = env.mission.date.Year
+								local m = env.mission.date.Month
+								local d = env.mission.date.Day
 
-									local dayValue = nil
+								local dayValue = nil
 
-									if y and m and d then
-										if type(y) == "number" and type(m) == "number" and type(d) == "number" then 
-											dayValue = y*365+m*30+d -- (can't use os.time and os.date cause I can't be sure to have os available!)	
-										end
+								if y and m and d then
+									if type(y) == "number" and type(m) == "number" and type(d) == "number" then 
+										dayValue = y*365+m*30+d -- (can't use os.time and os.date cause I can't be sure to have os available!)	
 									end
-
-									tblDeadScenObj[#tblDeadScenObj + 1] = {id = mapObj_deathcounter, x = SOpos.x, y = SOpos.z, objId = event.initiator:getName(), SOdesc = Objdesc, deathDay = dayValue} 
 								end
+
+								tblDeadScenObj[#tblDeadScenObj + 1] = {id = mapObj_deathcounter, x = SOpos.x, y = SOpos.z, objId = event.initiator:getName(), SOdesc = Objdesc, deathDay = dayValue} 
 							end
+						end
 
 
-						elseif SOcategory == 3 then 
-							local ObjdescCat = event.initiator:getDesc().category
-							if DSMC_debugProcessDetail == true then
-								env.info(("EMBD.deathRecorder death event category 3, static object"))	
-								env.info(("EMBD.deathRecorder Objdesc: " .. tostring(ObjdescCat)))
-								env.info(("EMBD.deathRecorder SOtypeName: " .. tostring(SOtypeName)))
+					elseif SOcategory == 3 then 
+						local ObjdescCat = event.initiator:getDesc().category
+						if DSMC_debugProcessDetail == true then
+							env.info(("EMBD.deathRecorder death event category 3, static object"))	
+							env.info(("EMBD.deathRecorder Objdesc: " .. tostring(ObjdescCat)))
+							env.info(("EMBD.deathRecorder SOtypeName: " .. tostring(SOtypeName)))
 
 
-							end							
-							
-							local y = env.mission.date.Year
-							local m = env.mission.date.Month
-							local d = env.mission.date.Day
-
-							local dayValue = nil
-
-							if y and m and d then
-								if type(y) == "number" and type(m) == "number" and type(d) == "number" then 
-									dayValue = y*365+m*30+d -- (can't use os.time and os.date cause I can't be sure to have os available!)	
-								end
-							end
-
-							tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(event.initiator:getID()), objCategory = 3, deathDay = dayValue}		
-
-						elseif SOcategory == 1 then -- unit. Cargos, Bases and Weapons are left out 
+						end							
 						
-							if DSMC_debugProcessDetail == true then
-								env.info(("EMBD.deathRecorder death event di category 1, unit"))	
-							end	
+						local y = env.mission.date.Year
+						local m = env.mission.date.Month
+						local d = env.mission.date.Day
 
-							local y = env.mission.date.Year
-							local m = env.mission.date.Month
-							local d = env.mission.date.Day
+						local dayValue = nil
 
-							local dayValue = nil
-
-							if y and m and d then
-								if type(y) == "number" and type(m) == "number" and type(d) == "number" then 
-									dayValue = y*365+m*30+d -- (can't use os.time and os.date cause I can't be sure to have os available!)
-								end
+						if y and m and d then
+							if type(y) == "number" and type(m) == "number" and type(d) == "number" then 
+								dayValue = y*365+m*30+d -- (can't use os.time and os.date cause I can't be sure to have os available!)	
 							end
-						
-							--dead
-							local unitName		 	= nil
-							local unitTable			= nil
-							local unitPos			= nil
-							local unitCategory		= nil
-							local unitCoalition		= nil
-							local unitCountry		= nil
-							local unitTypeName		= nil
-							local unitID			= nil
-							
-							local groupTable 	= {}
-							if event.initiator then
-								unitName 			= event.initiator:getName()
-								if DSMC_debugProcessDetail == true then
-									env.info(("EMBD.deathRecorder dead unit name: " .. tostring(unitName)))	
-								end					
-								unitTable 			= event.initiator -- Unit.getByName(unitName)
-								if unitTable then
-									unitPos 		= SOpos
-									unitCategory 	= unitTable:getDesc().category
-									unitCatEnum		= SOcategory
-									unitCoalition 	= unitTable:getCoalition()
-									unitCountry 	= unitTable:getCountry()
-									unitTypeName	= SOtypeName
-									unitID			= event.initiator:getID()
-									unitInfantry	= event.initiator:hasAttribute("Infantry")
-									unitShip		= event.initiator:hasAttribute("Ships")
-								end
-							end			
-							
-							if unitName and unitTable and unitCategory and unitCategory ~= 3 and unitInfantry == false and unitShip == false then
-							
-								local HiddenSet = true		
-								
-								local correctCategory = nil
-								if unitCategory == 0 then
-									correctCategory = "Planes"
-								elseif unitCategory == 1 then
-									correctCategory = "Helicopters"				
-								elseif unitCategory == 2 then
-									correctCategory = "Unarmed"
-								elseif unitCategory == 4 then
-									correctCategory = "Fortifications"				
-								end
-								
-								local surface = land.getSurfaceType({x = unitPos.x, y = unitPos.z})
+						end
 
-								local groupTable = nil
-								if surface == 1 or surface == 2 or surface == 3 then
-									DSMC_baseUcounter = DSMC_baseUcounter + 1
-									DSMC_baseGcounter = DSMC_baseGcounter + 1
-									groupTable = 	{
-														["heading"] = 0,
-														["route"] = 
-														{
-															["points"] = 
-															{
-																[1] = 
-																{
-																	["alt"] = unitPos.y,
-																	["type"] = "",
-																	["name"] = "",
-																	["y"] = unitPos.z,
-																	["speed"] = 0,
-																	["x"] = unitPos.x,
-																	["formation_template"] = "",
-																	["action"] = "",
-																}, -- end of [1]
-															}, -- end of ["points"]
-														}, -- end of ["route"]
-														["groupId"] = DSMC_baseGcounter,
-														["hidden"] = true,
-														["units"] = 
+						tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(event.initiator:getID()), objCategory = 3, deathDay = dayValue}		
+
+					elseif SOcategory == 1 then -- unit. Cargos, Bases and Weapons are left out 
+					
+						if DSMC_debugProcessDetail == true then
+							env.info(("EMBD.deathRecorder death event di category 1, unit"))	
+						end	
+
+						local y = env.mission.date.Year
+						local m = env.mission.date.Month
+						local d = env.mission.date.Day
+
+						local dayValue = nil
+
+						if y and m and d then
+							if type(y) == "number" and type(m) == "number" and type(d) == "number" then 
+								dayValue = y*365+m*30+d -- (can't use os.time and os.date cause I can't be sure to have os available!)
+							end
+						end
+					
+						--dead
+						local unitName		 	= nil
+						local unitTable			= nil
+						local unitPos			= nil
+						local unitCategory		= nil
+						local unitCoalition		= nil
+						local unitCountry		= nil
+						local unitTypeName		= nil
+						local unitID			= nil
+						
+						local groupTable 	= {}
+						if event.initiator then
+							unitName 			= event.initiator:getName()
+							if DSMC_debugProcessDetail == true then
+								env.info(("EMBD.deathRecorder dead unit name: " .. tostring(unitName)))	
+							end					
+							unitTable 			= event.initiator -- Unit.getByName(unitName)
+							if unitTable then
+								unitPos 		= SOpos
+								unitCategory 	= unitTable:getDesc().category
+								unitCatEnum		= SOcategory
+								unitCoalition 	= unitTable:getCoalition()
+								unitCountry 	= unitTable:getCountry()
+								unitTypeName	= SOtypeName
+								unitID			= event.initiator:getID()
+								unitInfantry	= event.initiator:hasAttribute("Infantry")
+								unitShip		= event.initiator:hasAttribute("Ships")
+							end
+						end			
+						
+						if unitName and unitTable and unitCategory and unitCategory ~= 3 and unitInfantry == false and unitShip == false then
+						
+							local HiddenSet = true		
+							
+							local correctCategory = nil
+							if unitCategory == 0 then
+								correctCategory = "Planes"
+							elseif unitCategory == 1 then
+								correctCategory = "Helicopters"				
+							elseif unitCategory == 2 then
+								correctCategory = "Unarmed"
+							elseif unitCategory == 4 then
+								correctCategory = "Fortifications"				
+							end
+							
+							local surface = land.getSurfaceType({x = unitPos.x, y = unitPos.z})
+
+							local groupTable = nil
+							if surface == 1 or surface == 2 or surface == 3 then
+								DSMC_baseUcounter = DSMC_baseUcounter + 1
+								DSMC_baseGcounter = DSMC_baseGcounter + 1
+								groupTable = 	{
+													["heading"] = 0,
+													["route"] = 
+													{
+														["points"] = 
 														{
 															[1] = 
 															{
-																["type"] = unitTypeName,
-																["unitId"] = DSMC_baseUcounter,
-																["livery_id"] = "autumn",
-																["rate"] = 20,
+																["alt"] = unitPos.y,
+																["type"] = "",
+																["name"] = "",
 																["y"] = unitPos.z,
+																["speed"] = 0,
 																["x"] = unitPos.x,
-																["name"] = "DSMC_CreatedStatic_unit_" .. tostring(DSMC_baseUcounter),
-																["category"] = correctCategory,
-																["canCargo"] = false,
-																["heading"] = 0,
+																["formation_template"] = "",
+																["action"] = "",
 															}, -- end of [1]
-														}, -- end of ["units"]
-														["y"] = unitPos.z,
-														["x"] = unitPos.x,
-														["name"] = unitName .. "_dsmc_dd_" .. tostring(dayValue),
-														["dead"] = true,
-													} -- end of [1]			
-								else
-									groupTable = "none"
-								end	
-							
-								tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unitID), coalitionID = unitCoalition, countryID = unitCountry, staticTable = groupTable, objCategory = unitCatEnum, objTypeName = unitTypeName, deathDay = dayValue}
-								if DSMC_debugProcessDetail == true then
-									env.info(("EMBD.deathRecorder added unit"))	
-								end	
-							elseif unitShip == true then
-								tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unitID), unitShip = true}
-								if DSMC_debugProcessDetail == true then
-									env.info(("EMBD.deathRecorder added ship"))	
-								end	
-							elseif unitInfantry == true then
-								tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unitID), unitInfantry = true}
-								if DSMC_debugProcessDetail == true then
-									env.info(("EMBD.deathRecorder added infantry"))	
-								end					
-							end
-						else
-							if DSMC_debugProcessDetail == true then
-								env.info(("EMBD.deathRecorder no object found, skip"))	
+														}, -- end of ["points"]
+													}, -- end of ["route"]
+													["groupId"] = DSMC_baseGcounter,
+													["hidden"] = true,
+													["units"] = 
+													{
+														[1] = 
+														{
+															["type"] = unitTypeName,
+															["unitId"] = DSMC_baseUcounter,
+															["livery_id"] = "autumn",
+															["rate"] = 20,
+															["y"] = unitPos.z,
+															["x"] = unitPos.x,
+															["name"] = "DSMC_CreatedStatic_unit_" .. tostring(DSMC_baseUcounter),
+															["category"] = correctCategory,
+															["canCargo"] = false,
+															["heading"] = 0,
+														}, -- end of [1]
+													}, -- end of ["units"]
+													["y"] = unitPos.z,
+													["x"] = unitPos.x,
+													["name"] = unitName .. "_dsmc_dd_" .. tostring(dayValue),
+													["dead"] = true,
+												} -- end of [1]			
+							else
+								groupTable = "none"
 							end	
+						
+							tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unitID), coalitionID = unitCoalition, countryID = unitCountry, staticTable = groupTable, objCategory = unitCatEnum, objTypeName = unitTypeName, deathDay = dayValue}
+							if DSMC_debugProcessDetail == true then
+								env.info(("EMBD.deathRecorder added unit"))	
+							end	
+						elseif unitShip == true then
+							tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unitID), unitShip = true}
+							if DSMC_debugProcessDetail == true then
+								env.info(("EMBD.deathRecorder added ship"))	
+							end	
+						elseif unitInfantry == true then
+							tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unitID), unitInfantry = true}
+							if DSMC_debugProcessDetail == true then
+								env.info(("EMBD.deathRecorder added infantry"))	
+							end					
 						end
 					else
 						if DSMC_debugProcessDetail == true then
-							env.info(("EMBD.deathRecorder skip: SO variable type is wrong!"))	
+							env.info(("EMBD.deathRecorder no object found, skip"))	
 						end	
 					end
 				else
 					if DSMC_debugProcessDetail == true then
-						env.info(("EMBD.deathRecorder excluded group"))	
+						env.info(("EMBD.deathRecorder skip: SO variable type is wrong!"))	
 					end	
 				end
 			else
@@ -1587,7 +1545,7 @@ EMBD.collectSpawned = {}
 function EMBD.collectSpawned:onEvent(event)
 	if event.id == world.event.S_EVENT_BIRTH and timer.getTime0() < timer.getAbsTime() then
 		env.info(("EMBD.collectSpawned started"))
-
+		
 		local uName = event.initiator:getName()
 
 		-- check excluded
@@ -1597,7 +1555,7 @@ function EMBD.collectSpawned:onEvent(event)
 		end
 
 		if exclude == false then
-
+		
 			if Object.getCategory(event.initiator) == 1 then -- unit
 				if event.initiator:hasAttribute("Air") == false then
 					if not Unit.getPlayerName(event.initiator) then					
@@ -1660,14 +1618,6 @@ function EMBD.collectSpawned:onEvent(event)
 				local _eiUnitData = event.initiator
 				local ei_gName = Airbase.getName(event.initiator)
 
-				--[[
-				if ei_gName and type(ei_gName) == "string" then
-					if string.find(ei_gName, ExclusionTag) then
-						env.info(("EMBD.collectSpawned unit is an excluded object, skipping: " .. tostring(ei_gName)))
-						return
-					end
-				end
-				--]]--
 
 				local ei = Airbase.getByName(ei_gName)
 				local ei_pos = ei:getPosition().p
@@ -1692,14 +1642,6 @@ function EMBD.collectSpawned:onEvent(event)
 				local _eiUnitData = event.initiator
 				local ei_gName = StaticObject.getName(event.initiator)
 
-				--[[
-				if ei_gName and type(ei_gName) == "string" then
-					if string.find(ei_gName, ExclusionTag) then
-						env.info(("EMBD.collectSpawned unit is an excluded object, skipping: " .. tostring(ei_gName)))
-						return
-					end
-				end
-				--]]--
 
 				local ei = StaticObject.getByName(ei_gName)
 				local ei_pos = ei:getPosition().p
@@ -1727,14 +1669,6 @@ function EMBD.collectSpawned:onEvent(event)
 				local _eiUnitData = event.initiator
 				local ei_gName = StaticObject.getName(event.initiator)
 
-				--[[
-				if ei_gName and type(ei_gName) == "string" then
-					if string.find(ei_gName, ExclusionTag) then
-						env.info(("EMBD.collectSpawned unit is an excluded object, skipping: " .. tostring(ei_gName)))
-						return
-					end
-				end
-				--]]--
 
 				local ei = StaticObject.getByName(ei_gName)
 				if ei then
@@ -1947,7 +1881,7 @@ end
 
 --do functions
 --EMBD.getFreeCountry()
-EMBD.getAptInfo()
+EMBD.getAptInfo(true)
 EMBD.createRadioMenu()
 if DSMC_autosavefrequency and DSMC_multy and DSMC_io and DSMC_lfs then
 	timer.scheduleFunction(EMBD.scheduleAutosave, {}, timer.getTime() + tonumber(DSMC_autosavefrequency))

@@ -69,9 +69,8 @@ function updateMapObject(missionEnv, tblDeadScenObj)
 					{
 						["flag"] = DSMC_reserved_flag,
 						["coalitionlist"] = "red",
-						["predicate"] = "c_flag_equals",
+						["predicate"] = "c_flag_is_true",
 						["zone"] = "",
-						["value"] = 1,
 					}, -- end of [1]
 				}, --   era {},
 				["eventlist"] = "",
@@ -83,7 +82,7 @@ function updateMapObject(missionEnv, tblDeadScenObj)
 		
 		-- trigrules + actions + conditions
 		missionEnv.trig.flag[currentTrigNum] = true
-		missionEnv.trig.conditions[currentTrigNum] = "return(c_flag_equals(12345, 1) )" --"return(true)"
+		missionEnv.trig.conditions[currentTrigNum] = "return(c_flag_is_true(12345) )" --"return(true)"
 
 		missionEnv.trig.actions[currentTrigNum] = actionStr  -- NEEDS TO BE CHANGED?!?!  was ""
 		

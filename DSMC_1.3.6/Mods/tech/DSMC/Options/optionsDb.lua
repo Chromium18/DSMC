@@ -41,7 +41,6 @@ return {
 	S247_time 					= DbOption.new():setValue(6):slider(Range(1, 24)),
 	RF10						= DbOption.new():setValue(false):checkbox():setEnforceable(), 
 	
-	
 	CTLD1						= DbOption.new():setValue(true):checkbox():setEnforceable(), 
 	CTLD2						= DbOption.new():setValue(true):checkbox():setEnforceable(), 
 

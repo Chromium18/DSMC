@@ -37,13 +37,12 @@ package.path =
 DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "3"
-DSMC_SubSubVersion 	= "5"
-DSMC_Build 			= "2619"
-DSMC_Date			= "23/12/2023"
+DSMC_SubSubVersion 	= "6"
+DSMC_Build 			= "2715"
+DSMC_Date			= "2024/02/22"
 
 -- ## DEBUG TO TEXT FUNCTION DO NOT TOUCH THIS
-local forceServerMode 	= false -- OCCHIOOOO
-local debugDGWS			= false
+local forceServerMode 	= false
 
 -- keep old DSMC.log file as "old"
 local cur_debuglogfile  = io.open(lfs.writedir() .. "Logs/" .. "DSMC.log", "r")
@@ -121,7 +120,6 @@ autosavefrequency			= nil -- minutes
 DCS_Multy					= nil
 DCS_Server					= nil
 DSMC_isRecovering			= false
-DSMC_isExportingCSVs		= false -- turning this true will have a VERY heavy impact on first simulation start and at each update.
 local alreadyStarted		= false
 writeDebugDetail(DSMC_ModuleName .. ": local variables loaded")
 
@@ -155,39 +153,14 @@ function loadDSMCHooks()
 	SAVE 						= require("SAVE")
 	writeDebugBase(DSMC_ModuleName .. ": loaded SAVE module")
 
-	if debugDGWS == true then
-		debugProcessDetail = true
-		if UTIL.fileExist(DSMCdir .. "DGWS" .. ".lua") == true then
-			DGWS 						= require("DGWS")
-		end
-	end
+	-- built wpn database if version is changed
+	UTIL.createWhWeaponsDb()
 
 	if UTIL and SAVE then
 		DSMCloader = true
 	else
 		writeDebugBase(DSMC_ModuleName .. ": SAVER or UTIL failed loading, stop process")
 		return
-	end
-
-	if DSMC_isExportingCSVs == true then
-		if UTIL.fileExist(DSMCdir .. "DSMC_wpnDB.lua") then
-			local tbl_fcn, tbl_err = dofile(DSMCdir .. "DSMC_wpnDB.lua")
-			if tbl_err then
-				writeDebugDetail(DSMC_ModuleName .. ": weapons database : tbl_err = " .. tostring(tbl_err))
-			end
-
-			if DSMC_wpnDB.version == _G._APP_VERSION then
-				writeDebugBase(DSMC_ModuleName .. ": weapons database is there and updated, skipping")
-			else
-				writeDebugBase(DSMC_ModuleName .. ": weapons database is there but outdated, rebuilding")
-				UTIL.exportWpnDb()			
-			end
-
-		else
-			writeDebugBase(DSMC_ModuleName .. ": weapons database is missing, building up")
-			UTIL.exportWpnDb()
-		end
-
 	end
 
 end
@@ -320,12 +293,8 @@ function startDSMCprocess()
 								opt_CTLD2_var		= pl_data.CTLD2
 								opt_EMDB_var		= pl_data.EXCL_var
 
-								opt_DEBUG_var		= pl_data.DEBUG
+								opt_DEBUG_var		= pl_data.DEBUG					
 
-								--opt_MOBJ_var 		= true -- pl_data.MOBJ
-								--opt_TMUP_var		= true -- pl_data.TMUP
-								--opt_SPWN_var		= true -- pl_data.SPWN
-								--opt_UPAP_var		= pl_data.UPAP		
 							end
 						end
 					end
@@ -395,7 +364,9 @@ function startDSMCprocess()
 		elseif opt_TMUP_max_var == 4 then
 			opt_TMUP_max_var = 23
 		end
-	
+		
+		--###################################################################################################
+
 		-- fixed on variables
 		MOBJ_var 							= true -- opt_MOBJ_var or DSMC_MapPersistence
 		TMUP_var							= true -- opt_TMUP_var or DSMC_UpdateStartTime	
@@ -414,7 +385,6 @@ function startDSMCprocess()
 		WRHS_rblt							= opt_WRHS_var or DSMC_WarehouseAutoSetup
 		WTHR_var							= opt_WTHR_var or DSMC_WeatherUpdate	
 		WTHR_fog							= opt_WTHRfog_var or DSMC_DisableFog
-
 		ATRL_var							= opt_ATRL_var or DSMC_AutosaveProcess 
 		ATRL_time_var						= opt_ATRL_time_var or DSMC_AutosaveProcess_min 
 		S247_var							= opt_S247_time_var or DSMC_24_7_serverStandardSetup
@@ -424,6 +394,7 @@ function startDSMCprocess()
 		STOP_var_safe						= DSMC_AutosaveExit_safe
 		RSTS_var							= DSMC_AutoRestart_active
 		UMLS_var							= DSMC_updateMissionList	
+		EMBD_var							= opt_EMDB_var or DSMC_Excl_Tag
 		
 		-- CTLD support variables
 		CTLD1_var							= DSMC_ctld_recognizeHelos or false
@@ -435,17 +406,15 @@ function startDSMCprocess()
 		STTS_rAM							= DSMC_STTS_RadioFreq_AM or 303	
 		STTS_rFM							= DSMC_STTS_RadioFreq_FM or 40	
 		STTS_type							= DSMC_STTS_method or "text"
-		
+
 		-- developer variables
 		SBEO_var							= false 
-		DGWS_var							= debugDGWS -- DGWS test script, check above cause part of the code is loaded at DCS start
-		RTAI_var							= true -- Real Time AI enhancement (Base) script. Require DGWS
-		DCMD_var							= false -- Real Time client C2 code with intel & commands
 
-		-- not used currently
-		EMBD_var							= opt_EMDB_var or DSMC_Excl_Tag
 		--UPAP_var							= DSMC_ExportDocuments or false -- opt_UPAP_var or    NOT USED NOW if true mission briefings will be updated from a mission to another
-	
+		
+		--###################################################################################################
+
+
 		-- debug call
 		debugProcessDetail = DEBUG_var
 
@@ -551,7 +520,6 @@ function startDSMCprocess()
 		writeDebugBase(DSMC_ModuleName .. ": STTS_rAM = " ..tostring(STTS_rAM))
 		writeDebugBase(DSMC_ModuleName .. ": STTS_rFM = " ..tostring(STTS_rFM))
 		writeDebugBase(DSMC_ModuleName .. ": STTS_type = " ..tostring(STTS_type))
-		
 
 		-- ## DSMC ADDITIONAL MODULES
 		if UTIL.fileExist(DSMCdir .. "MOBJ" .. ".lua") == true and MOBJ_var == true then
@@ -588,11 +556,6 @@ function startDSMCprocess()
 				writeDebugBase(DSMC_ModuleName .. ": loaded in SLOT module")
 			end
 		end
-
-		if UTIL.fileExist(DSMCdir .. "DGWS" .. ".lua") == true and DGWS_var == true and debugDGWS == false then
-			DGWS 						= require("DGWS")
-		end
-
 		if UTIL.fileExist(DSMCdir .. "ADTR" .. ".lua") == true then
 			ADTR 						= require("ADTR")
 			writeDebugBase(DSMC_ModuleName .. ": loaded in ADTR module")
@@ -790,16 +753,16 @@ function startDSMCprocess()
 						end
 
 						-- from old wrhs module
-						UTIL.inJectTable("dbWeapon", WRHS.dbWeapon)
 						UTIL.inJectCode("WRHS_active", "WRHS_module_active = true")
 						UTIL.inJectTable("dbWarehouse", SAVE.tempEnv.warehouses)
+						UTIL.inJectTable("dbPlanesPayload", db_planes)
 
 						-- code from WRHS module
 						local wsTypesTbl = {}
 						local found = false
 						for wCat, wTbl in pairs(SAVE.tempEnv.warehouses) do
 							if found == false then
-								writeDebugDetail(DSMC_ModuleName .. ": found not found yet")
+								--writeDebugDetail(DSMC_ModuleName .. ": found not found yet")
 								for wSec, wData in pairs(wTbl) do
 									if wData.unlimitedMunitions == false and wData.unlimitedAircrafts == false then
 										
@@ -833,7 +796,7 @@ function startDSMCprocess()
 										end
 	
 										found = true
-										writeDebugDetail(DSMC_ModuleName .. ": collect done")
+										--writeDebugDetail(DSMC_ModuleName .. ": collect done")
 	
 									end
 								end
@@ -896,29 +859,6 @@ function startDSMCprocess()
 						else
 							writeDebugDetail(DSMC_ModuleName .. ": can't inject tblThreats in EMBD")
 						end
-
-						if DGWS_var then
-							if DGWS then
-								writeDebugDetail(DSMC_ModuleName .. ": activating dynamic ground war system")
-								DGWS.initProcess()
-								writeDebugDetail(DSMC_ModuleName .. ": dynamic ground war system activated")
-							else
-								writeDebugBase(DSMC_ModuleName .. ": DGWS not available")									
-							end	
-						else
-							writeDebugBase(DSMC_ModuleName .. ": DGWS not required")								
-						end
-
-						-- code from PLAN module
-						--[[
-						if PLAN_var then
-							writeDebugDetail(DSMC_ModuleName .. ": activating tactical AI planning (PLAN)")
-							PLAN.initProcess()
-							writeDebugDetail(DSMC_ModuleName .. ": tactical AI planning activated")
-						else
-							writeDebugBase(DSMC_ModuleName .. ": PLAN not required")	
-						end	
-						--]]--
 
 						writeDebugDetail(DSMC_ModuleName .. ": loaded all variables")
 						
@@ -1214,7 +1154,7 @@ end
 
 function DSMC.onTriggerMessage(message)	
 	local isServer 	= DCS.isServer()
-	writeDebugDetail(DSMC_ModuleName .. ": onTriggerMessage: isServer = " .. tostring(isServer))
+	--writeDebugDetail(DSMC_ModuleName .. ": onTriggerMessage: isServer = " .. tostring(isServer))
 	if isServer == true then
 		local lmz = DCS.getMissionName()
 		if lmz then
@@ -1311,17 +1251,33 @@ function DSMC.onTriggerMessage(message)
 
 					end
 
+				elseif message == "DSMC debug exit" then
+					DCSshouldCloseNow = true
+					DSMC.onSimulationStop()
 				end
 			end
 		end
 	end
 end
 
+function DSMC.onPlayerConnect()
+	if alreadyStarted == true then
+		local lmz = DCS.getMissionName()
+		if lmz then
+			if string.sub(lmz,1,4) == StartFilterCode then
+				writeDebugDetail(DSMC_ModuleName .. ": client starting, DSMC_resetSceneryDestruction is resetting")
+				UTIL.inJectCode("DSMC_resetSceneryDestruction", "EMBD.sceneryDestroyRefreshRemote()")
+			end
+		end
+	else
+		writeDebugDetail(DSMC_ModuleName .. ": client connecting before simulation start, DSMC_resetSceneryDestruction is skipped")
+	end
+end
+
 function DSMC.onPlayerStart()
 	if alreadyStarted == true then
 		local lmz = DCS.getMissionName()
-		local isServer 	= DCS.isServer()
-		if lmz and isServer == true then
+		if lmz then
 			if string.sub(lmz,1,4) == StartFilterCode then
 				writeDebugDetail(DSMC_ModuleName .. ": client starting, DSMC_resetSceneryDestruction is resetting")
 				UTIL.inJectCode("DSMC_resetSceneryDestruction", "EMBD.sceneryDestroyRefreshRemote()")
@@ -1349,11 +1305,17 @@ function DSMC.onSimulationStop()
 			end
 			
 			-- do an educated clean
+			--[[
 			if UTIL.fileExist(DSMCfiles .. "tempFile.miz") then
 				os.remove(DSMCfiles .. "tempFile.miz")
 			end
 			lfs.rmdir(DSMCfiles)
 			lfs.rmdir(DSMCtemp)	
+			--]]--
+
+			-- do a violent clean
+			cleanTemp()
+
 			DCS_Multy = nil
 			DCS_Server = nil
 			

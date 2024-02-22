@@ -16,7 +16,6 @@ local minizip 		= require('minizip')
 local ME_DB   		= require('me_db_api')
 local Terrain		= require('terrain')
 HOOK.writeDebugDetail(ModuleName .. ": local required loaded")
---UTIL.dumpTable("ME_DB.lua", ME_DB)
 
 --## VARS
 tblToBeKilled 		= {}
@@ -25,12 +24,51 @@ local wreckagePersistence_units = 2 -- days after destruction
 local wreckagePersistence_mapObj = 30 -- days after destruction (not implemented yet)
 local wreckagePersistence_statics = 30 -- days after destruction (not implemented yet)
 
+--find nearest airdrome
+function getNearestAirdrome(atbl, cx, cy)
+    local result = nil
+	local dMin = 100000000
+    local sx, sy, ID, roadnet
+
+    for airdromeID, airdrome in pairs(atbl) do
+        if airdrome.abandoned ~= true then
+            --local d = DB.getDist(x, y, airdrome.reference_point.x, airdrome.reference_point.y)
+            local p1 	= {x = cx, y = 0, z = cy}
+			local p2 	= {x = airdrome.reference_point.x, y = 0, z = airdrome.reference_point.y} 
+			local d 	= UTIL.get2Ddistance(p1, p2)
+            local air_item =
+            {
+                dist    = d,
+                sx 		= airdrome.reference_point.x,
+                sy 		= airdrome.reference_point.y,
+                ID 		= airdromeID,
+                roadnet = airdrome.roadnet,
+            }
+            
+            if 	result == nil or
+                d < dMin then
+                result = air_item
+                dMin = d
+            end		
+        end
+    end
+	return result
+end
+
 --## FUNCTIONS
 
 function updateAirbaseTable(missionEnv)
+
+	local terrainAirdromes = {}
+	for airdromeNumber, airdromeInfo in pairs(Terrain.GetTerrainConfig('Airdromes')) do
+		if (airdromeInfo.reference_point) and (airdromeInfo.abandoned ~= true) then
+			terrainAirdromes[airdromeNumber] = airdromeInfo
+		end
+	end
+
 	for admId, admData in pairs(tblAirbases) do
 		HOOK.writeDebugDetail(ModuleName .. ": updating id " .. tostring(admData.id) .. ", name " .. tostring(admData.name))
-		
+
 		local paramsInsertFARP = {
 			["SHELTER"] = 0,
 			["FOR_HELICOPTERS"] = 1,
@@ -49,11 +87,11 @@ function updateAirbaseTable(missionEnv)
 			["WIDTH"] = 40,
 		}
 		
-		HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: checking type: " .. tostring(admData.desc.typeName))
+		--HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: checking type: " .. tostring(admData.desc.typeName))
 
 		if admData.desc.category == 0 then
-			HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: category 0")
-			local nearestAFB = ME_DB.getNearestAirdrome(admData.pos.x, admData.pos.z)
+			--HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: category 0")
+			local nearestAFB = getNearestAirdrome(terrainAirdromes, admData.pos.x, admData.pos.z)
 			local parkList = getStandList(nearestAFB.roadnet)		-- ME_parking.
 			if parkList then
 				admData["parkings"] = parkList
@@ -84,9 +122,9 @@ function updateAirbaseTable(missionEnv)
 				admData["fw_parkNum"] = fwPk
 				admData["rw_parkNum"] = rwPk
 
-				HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: added parkings")
+				--HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: added parkings")
 			else
-				HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: unable to identify parking table")
+				--HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: unable to identify parking table")
 			end
 
 		elseif admData.desc.category == 1 then
@@ -94,18 +132,18 @@ function updateAirbaseTable(missionEnv)
 			for i=1, 4 do
 				table.insert(admData["parkings"], {name = tostring(i), numParking = i, params = paramsInsertFARP, flag = 64, crossroad_index = 0, x = admData.pos.x, y = admData.pos.z})
 			end
-			HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: added parkings")
+			--HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: added parkings")
 			
 		elseif admData.desc.category == 2 then
-			HOOK.writeDebugDetail(ModuleName .. " updateAirbaseTable: category 2")
+			--HOOK.writeDebugDetail(ModuleName .. " updateAirbaseTable: category 2")
 			local unitDef = ME_DB.unit_by_type[admData.desc.typeName]
 			local dataFound = false
 
 			if admData.desc.attributes.Buildings == true then -- this include also single helipad and invisible farps!
-				HOOK.writeDebugDetail(ModuleName .. " updateAirbaseTable: building, 1 parking available for next mission")					
+				--HOOK.writeDebugDetail(ModuleName .. " updateAirbaseTable: building, 1 parking available for next mission")					
 				admData["parkings"] = {}
 				table.insert(admData["parkings"], {name = tostring(1), numParking = 1, params = paramsInsertFARP, flag = 64, crossroad_index = 0, x = admData.pos.x, y = admData.pos.z})
-				HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: added parkings")
+				--HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: added parkings")
 				dataFound = true
 			end
 
@@ -116,7 +154,7 @@ function updateAirbaseTable(missionEnv)
 						for spId, spData in pairs(admData["parkings"]) do
 							spData["params"] = paramsInsertCarrier
 						end
-						HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: added parkings")
+						--HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: added parkings")
 						
 					elseif unitDef.numParking then
 						admData["parkings"] = {}
@@ -127,13 +165,13 @@ function updateAirbaseTable(missionEnv)
 								table.insert(admData["parkings"], {name = tostring(i), numParking = i, params = paramsInsertFARP, flag = 64, crossroad_index = 0, x = admData.pos.x, y = admData.pos.z})
 							end
 						end
-						HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: added parkings")
+						--HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: added parkings")
 					end
 				else
-					HOOK.writeDebugDetail(ModuleName .. " updateAirbaseTable: type not available: ERROR")
+					--HOOK.writeDebugDetail(ModuleName .. " updateAirbaseTable: type not available: ERROR")
 				end
 			else
-				HOOK.writeDebugDetail(ModuleName .. " updateAirbaseTable: already defined as building")
+				--HOOK.writeDebugDetail(ModuleName .. " updateAirbaseTable: already defined as building")
 			end
 		end
 
@@ -489,7 +527,7 @@ function updateUnits(missionEnv)
 										if tonumber(updatedData.unitId) == tonumber(unit.unitId) then
 											if updatedData.carrier == true then
 												isCarrierGroup = true
-												HOOK.writeDebugDetail(ModuleName .. ": updateUnits, unit " .. tonumber(unit.unitId) .. " is a carrier")
+												--HOOK.writeDebugDetail(ModuleName .. ": updateUnits, unit " .. tonumber(unit.unitId) .. " is a carrier")
 											end
 										end
 									end
@@ -497,28 +535,28 @@ function updateUnits(missionEnv)
 								
 								if isCarrierGroup == false then
 									for unitID,unit in pairs(group["units"]) do
-										HOOK.writeDebugDetail(ModuleName .. ": updateUnits looking for unit number " .. tostring(unitID) .. ", unitId: " .. tostring(unit.unitId))
+										--HOOK.writeDebugDetail(ModuleName .. ": updateUnits looking for unit number " .. tostring(unitID) .. ", unitId: " .. tostring(unit.unitId))
 										local isAlive = true
 										for id, deadData in pairs (tblDeadUnits) do -- check if this unit is dead
 											if tonumber(deadData.unitId) == tonumber(unit.unitId) then
 												isAlive = false
 											end
 										end
-										HOOK.writeDebugDetail(ModuleName .. ": updateUnits isAlive: " .. tostring(isAlive))
+										--HOOK.writeDebugDetail(ModuleName .. ": updateUnits isAlive: " .. tostring(isAlive))
 										if isAlive == false then
 											tblToBeKilled[#tblToBeKilled+1] = {uId = unit.unitId, gId = group.groupId}
-											HOOK.writeDebugDetail(ModuleName .. ": updateUnits isAlive: " .. tostring(isAlive) .. ", unit added to tblToBeKilled")
+											--HOOK.writeDebugDetail(ModuleName .. ": updateUnits isAlive: " .. tostring(isAlive) .. ", unit added to tblToBeKilled")
 										else
 											--update the unit
 											if group and unit then
-												HOOK.writeDebugDetail(ModuleName .. ": updateUnits updating unit")
+												--HOOK.writeDebugDetail(ModuleName .. ": updateUnits updating unit")
 												for id, updatedData in pairs (tblUnitsUpdate) do
 													if tonumber(updatedData.unitId) == tonumber(unit.unitId) then
 														
 														local posChanged = false
 														if math.floor(unit["x"]) ~= math.floor(updatedData.x) and math.floor(unit["y"]) ~= math.floor(updatedData.z) then
-															HOOK.writeDebugDetail(ModuleName .. ": updateUnits position is changed: x = " .. tostring(unit["x"]) .. ", new x = " .. tostring(updatedData.x))
-															HOOK.writeDebugDetail(ModuleName .. ": updateUnits position is changed: y = " .. tostring(unit["y"]) .. ", new y = " .. tostring(updatedData.z))
+															--HOOK.writeDebugDetail(ModuleName .. ": updateUnits position is changed: x = " .. tostring(unit["x"]) .. ", new x = " .. tostring(updatedData.x))
+															--HOOK.writeDebugDetail(ModuleName .. ": updateUnits position is changed: y = " .. tostring(unit["y"]) .. ", new y = " .. tostring(updatedData.z))
 															posChanged = true
 														end
 														if posChanged == true then
@@ -577,14 +615,14 @@ function updateUnits(missionEnv)
 									end
 								else
 									for unitID,unit in pairs(group["units"]) do
-										HOOK.writeDebugDetail(ModuleName .. ": updateUnits looking for carrier group unit number " .. tostring(unitID) .. ", unitId: " .. tostring(unit.unitId))
+										--HOOK.writeDebugDetail(ModuleName .. ": updateUnits looking for carrier group unit number " .. tostring(unitID) .. ", unitId: " .. tostring(unit.unitId))
 										local isAlive = true
 										for id, deadData in pairs (tblDeadUnits) do -- check if this unit is dead
 											if tonumber(deadData.unitId) == tonumber(unit.unitId) then
 												isAlive = false
 											end
 										end
-										HOOK.writeDebugDetail(ModuleName .. ": updateUnits isAlive: " .. tostring(isAlive))
+										--HOOK.writeDebugDetail(ModuleName .. ": updateUnits isAlive: " .. tostring(isAlive))
 										if isAlive == false then
 											tblToBeKilled[#tblToBeKilled+1] = {uId = unit.unitId, gId = group.groupId}
 											HOOK.writeDebugDetail(ModuleName .. ": updateUnits  carrier group unit isAlive: " .. tostring(isAlive) .. ", unit added to tblToBeKilled")
@@ -597,17 +635,17 @@ function updateUnits(missionEnv)
 						for groupID,group in pairs(attr["group"]) do
 							if (group) then						
 								for unitID,unit in pairs(group["units"]) do
-									HOOK.writeDebugDetail(ModuleName .. ": updateUnits looking for unit number " .. tostring(unitID) .. ", unitId: " .. tostring(unit.unitId))
+									--HOOK.writeDebugDetail(ModuleName .. ": updateUnits looking for unit number " .. tostring(unitID) .. ", unitId: " .. tostring(unit.unitId))
 									local isAlive = true
 									for id, deadData in pairs (tblDeadUnits) do -- check if this unit is dead
 										if tonumber(deadData.unitId) == tonumber(unit.unitId) then
 											isAlive = false
 										end
 									end
-									HOOK.writeDebugDetail(ModuleName .. ": updateUnits isAlive: " .. tostring(isAlive))
+									--HOOK.writeDebugDetail(ModuleName .. ": updateUnits isAlive: " .. tostring(isAlive))
 									if isAlive == false then
 										tblToBeKilled[#tblToBeKilled+1] = {uId = unit.unitId, gId = group.groupId}
-										HOOK.writeDebugDetail(ModuleName .. ": updateUnits isAlive: " .. tostring(isAlive) .. ", unit added to tblToBeKilled")
+										--HOOK.writeDebugDetail(ModuleName .. ": updateUnits isAlive: " .. tostring(isAlive) .. ", unit added to tblToBeKilled")
 									else
 										--update the unit
 										if group and unit then
@@ -1055,6 +1093,19 @@ function save()
 
 		if HOOK.WRHS_var == true then
 
+			-- reset warehouse if mission is 000
+			local lenght 		= string.len(HOOK.loadedMizFileName)
+			local initLenght 	= lenght - 2
+			local endLenght 	= lenght
+			local strSub		= string.sub(HOOK.loadedMizFileName, initLenght, endLenght)
+			
+			if strSub == "000" then
+				HOOK.writeDebugDetail(ModuleName .. ": mission is 000, resetting warehouse content")
+				UTIL.whAutoReset(wrhs_env.warehouses)
+			else
+				updateWarehouse(tblWarehousesContent, wrhs_env.warehouses)
+			end
+
 			-- fix wh if necessary
 			local wh = UTIL.fixWarehouse(wrhs_env.warehouses) 
 			if wh then
@@ -1063,47 +1114,12 @@ function save()
 				HOOK.writeDebugDetail(ModuleName .. ": warehouse fix ended")
 			end
 
-			local sortieIndex = env.mission.sortie
-			local sortieValue = nil
-			local sortieId = nil
-			for sId, sValue in pairs(dict_env.dictionary) do 
-				if sId == sortieIndex then
-					sortieValue = sValue
-					sortieId = sId
-				end
-			end
-			
-			if sortieValue == "DSMC set warehouses" and sortieId then
-				HOOK.writeDebugDetail(ModuleName .. ": warehouse asking a pure restart")
-				UTIL.getZeroedAirbase(wrhs_env.warehouses)
-				UTIL.whRestart(wrhs_env.warehouses, tblAirbases, env.mission)
-				dict_env.dictionary[sortieId] = ""
-				if HOOK.WRHS_rblt == true then
-					UTIL.reBuildSupplyNet(wrhs_env.warehouses, env.mission)
-				end
-			else
-				if HOOK.WRHS_rblt == true then
-					UTIL.reBuildSupplyNet(wrhs_env.warehouses, env.mission)
-				end
-				updateWarehouse(tblWarehousesContent, wrhs_env.warehouses)
-			end
 		end		
 
 		if HOOK.SLOT_var == true or HOOK.SLOT_add_ab == true then
 			createSlots(env.mission, wrhs_env.warehouses) 
 		end		
 		
-		-- plan module for DSMC 2.0
-		if UTIL.fileExist(HOOK.DSMCdirectory .. "DGWS" .. ".lua") == true and HOOK.DGWS_var == true then
-			HOOK.writeDebugDetail(ModuleName .. " starting DGWS...")
-			local m = UTIL.deepCopy(env.mission)
-			env.mission = DGWS.executePlanning(m)
-			HOOK.writeDebugDetail(ModuleName .. " DGWS done")
-
-			-- executePlanning(terrain, intel, orbat)
-
-		end	
-
 		if ADTR.tblAddResources then
 			HOOK.writeDebugDetail(ModuleName .. " adding external files")
 			updateResources(env.mission, mRes_env.mapResource, ADTR.tblAddResources)

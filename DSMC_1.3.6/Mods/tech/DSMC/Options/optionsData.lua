@@ -31,7 +31,7 @@ cdata =
 	CTLD_Title							= _("CTLD scripts enhanced automation features"),
 	CTLD1_txt							= _("Helicopter client pilot recognition on spawn"),
 	CTLD2_txt							= _("Trucks (troops, crates), IFV, APC (troops) vehicles recognition"),
-	CTLD_Footnote						= _("Beware: if you use DSMC's CTLD version, these option are forced on"),	
+	--CTLD_Footnote						= _("Beware: if you use DSMC's CTLD version, these option are forced on"),	
 	
 	DEBUG_txt							= _("Enable detail debug mode. WARNING: activate only for reproduce a bug"),
 	DEBUG_help							= _("When DEBUG mode is active, the reload options works with minutes instead of hours! so choosing '3' mean reload every 3 minutes"),
