@@ -48,25 +48,6 @@ DSMC_updateMissionList          = true     -- true / false. If true, once the se
 DSMC_restartCampaign            = true     -- true / false. If true, DSMC will check DCS "mission goals" and when reached, instead of restarting the saved mission, will specifically look for the "_000" miz file and load that one, to restart the campaign
 
 -- ##################################################################
--- DYNAMIC WAR AI ENHANCEMENT AND PLANNING  #########################
--- ##################################################################
-
--- dynamic campaign general setup
-DSMC_campaign_intensity         = 5         -- number, from 1 to 30 (above or below will be filtered to the min or max). Define the number of planned ground actions for each coailtion. The more, the faster/complex will be the campaign.
-DSMC_create_intel_miz           = true      -- true / false. If true, DSMC will create 2 additional miz files, one for each coalition, that summarize intel available data
-DSMC_Show_F10_drawings          = true      -- true / false. If true, DSMC will set the tasking drawing on each coalition visible for that coalition in F10 map, as long as boundary line
-
--- dynamic ground planning
-DSMC_campaign_AI_blue           = true      -- true / false. If true, DSMC AI will plan actions for the blue coalition for the saved mission
-DSMC_campaign_AI_red            = true      -- true / false. If true, DSMC AI will plan actions for the red coalition for the saved mission
-
--- real time AI enhancement    -- ## BOTH THESE REQUIRE AT LEAST ONE OF DSMC_campaign_AI_blue OR DSMC_campaign_AI_red TO BE TRUE!
---DSMC_WarehouseConvoyResupply    = true      -- true / false. If true, DSMC will create resupply convoys to do the actual airbase/FARP warehouse resupplies. Require also "warehouse" static object class in mission.
-DSMC_enhancedAIbehaviour        = true      -- true / false. If true, DSMC will add AI dynamic reactions to threat, infantry dismount in battle, and artillery shooting when targets are available in real time. (might have performance hit in very complex scenario)
-DSMC_assetsCommand              = true      -- true / false. If true, DSMC will add some feature by F10 menù and map marks that will allow to request support by Drones, Fat Cows temporary FARPs, mechanized troops movement and artillery fire support. 
-
-
--- ##################################################################
 -- EXTERNAL SCRIPT SUPPORT   ##  CTLD PERSISTENCY OPTIONS  ##########
 -- ##################################################################
 
