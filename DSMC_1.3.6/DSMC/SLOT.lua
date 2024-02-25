@@ -2068,7 +2068,7 @@ function createPlaneGroups(mission)
 	HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups, MaxDict: " .. tostring(MaxDict))
 
 	if #tblSlots > 0 and maxG and maxU then
-		--UTIL.dumpTable("tblSlots.lua", tblSlots)
+		UTIL.dumpTable("tblSlots.lua", tblSlots)
 		
 		HOOK.writeDebugDetail(ModuleName .. ": createPlaneGroups, tblSlots entries: " .. tostring(#tblSlots))
 		for sId, sData in pairs(tblSlots) do
@@ -2156,7 +2156,9 @@ function createPlaneGroups(mission)
 													end
 
 													local groupGeneralFreq = 124
-													if string.find(sData.acfType, "M-2000C") or string.find(sData.acfType, "F-5E-3") then
+													HOOK.writeDebugBase(ModuleName .. ": createPlaneGroups, type: " .. tostring(sData.acfType))
+													if string.find(sData.acfType, "M-2000C") or string.find(sData.acfType, "F%-5E%-3") then
+														HOOK.writeDebugBase(ModuleName .. ": createPlaneGroups, changed default freq")
 														groupGeneralFreq = 251
 													end
 													
