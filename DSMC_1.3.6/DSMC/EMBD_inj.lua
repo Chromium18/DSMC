@@ -1528,12 +1528,25 @@ function EMBD.baseCapture:onEvent(event)
 				baseTYPE = "warehouses"
 			end	
 			
-			if DSMC_debugProcessDetail == true then
-				--trigger.action.outText("EMBD.baseCapture ha registrato un cambio di fazione della base: " .. tostring(baseID), 10)
-				env.info(("EMBD.baseCapture base name: " .. tostring(baseName) .. " has been captured by: " .. tostring(conquerCoa)))
-			end	
-			tblConquer[#tblConquer+1] = {id = baseID, name = baseName, coa = conquerCoa, country = conquerCountry, baseType = baseTYPE}
-			--env.info(("EMBD.baseCapture tblConquer populated"))
+			local proceed = true
+			if baseTYPE == "warehouses" then
+				if string.find(baseName, ExclusionTag) then
+					proceed = false
+				end
+			end
+
+			if proceed == true then
+				if DSMC_debugProcessDetail == true then
+					--trigger.action.outText("EMBD.baseCapture ha registrato un cambio di fazione della base: " .. tostring(baseID), 10)
+					env.info(("EMBD.baseCapture base name: " .. tostring(baseName) .. " has been captured by: " .. tostring(conquerCoa)))
+				end	
+				tblConquer[#tblConquer+1] = {id = baseID, name = baseName, coa = conquerCoa, country = conquerCountry, baseType = baseTYPE}
+				--env.info(("EMBD.baseCapture tblConquer populated"))
+			else
+				env.info(("EMBD.baseCapture skip cause ExclusionTag has been found"))
+			end
+
+
 		else
 			env.info(("EMBD.baseCapture FAILED to return conquer & base"))
 		end

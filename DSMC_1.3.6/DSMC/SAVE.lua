@@ -1098,14 +1098,9 @@ function save()
 			local initLenght 	= lenght - 2
 			local endLenght 	= lenght
 			local strSub		= string.sub(HOOK.loadedMizFileName, initLenght, endLenght)
+		
+			updateWarehouse(tblWarehousesContent, wrhs_env.warehouses)
 			
-			if strSub == "000" then
-				HOOK.writeDebugDetail(ModuleName .. ": mission is 000, resetting warehouse content")
-				UTIL.whAutoReset(wrhs_env.warehouses)
-			else
-				updateWarehouse(tblWarehousesContent, wrhs_env.warehouses)
-			end
-
 			-- fix wh if necessary
 			local wh = UTIL.fixWarehouse(wrhs_env.warehouses) 
 			if wh then
