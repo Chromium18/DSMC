@@ -523,31 +523,41 @@ function createWhWeaponsDb()
 		local db_CLSID = {} 
 		HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb db_CLSID start")
 		for dName, dData in pairs(db_loadout) do
+			HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb checking " .. tostring(dName))
 			local ws = dData.string
 			for wId, wData in pairs(wbc) do
-				for lId, lData in pairs(wData.Launchers) do
-					local parameter = lData.wsTypeOfWeapon or lData.attribute
-					if type(parameter) == "string" then
-						--HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb, parameter " .. tostring(parameter) .. ", dName " .. tostring(dName))
-						if dName == parameter then
-							--HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb, parameter found")
-							db_CLSID[lData.CLSID] = {w = ws, n = dData.name, c = lData.CLSID, u = dName, t = dData.cat, m = dData.mass}
-						end
+				local found = false
+				--while found == false do
+					for lId, lData in pairs(wData.Launchers) do
+						local parameter = lData.wsTypeOfWeapon or lData.attribute
+						if type(parameter) == "string" then
+							--HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb, parameter " .. tostring(parameter) .. ", dName " .. tostring(dName))
+							if dName == parameter then
+								--HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb, item added with parameter")
+								db_CLSID[lData.CLSID] = {w = ws, n = dData.name, c = lData.CLSID, u = dName, t = dData.cat, m = dData.mass}
+								found = true
+							end
 
-					else
-						local wbc_ws = wsTypeToString(parameter)
+						else
+							local wbc_ws = wsTypeToString(parameter)
 
-						if ws == wbc_ws then
-							--HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb db_CLSID 4")
-							db_CLSID[lData.CLSID] = {w = ws, n = dData.name, c = lData.CLSID, u = dName, t = dData.cat, m = dData.mass}
-							--db_loadout[wName] = {w = ws, c = lData.CLSID}
+							if ws == wbc_ws then
+								--HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb, item added with wbc")
+								db_CLSID[lData.CLSID] = {w = ws, n = dData.name, c = lData.CLSID, u = dName, t = dData.cat, m = dData.mass}
+								found = true
+							end
 						end
 					end
+				--end
+
+				if found == true then
+					HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb, item added")
+					break
 				end
 			end
 		end
 		HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb db_CLSID done")
-		dumpTable("db_CLSID.lua", db_CLSID, "int")
+		--dumpTable("db_CLSID.lua", db_CLSID, "int")
 		db_loadout = nil
 
 		HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb, building db_planes")

@@ -624,60 +624,68 @@ function EMBD.changeWarehouseCoalition(missionEnv)
 										local uName 		= unit.name
 										local curUnit 		= StaticObject.getByName(uName)									
 										if curUnit then -- obj still exist
-											if curUnit:getLife() > 1 then
-												local curUnitCat 		= Object.getCategory(curUnit)
-												if curUnitCat == 3 then
-													local curUnitPos 		= curUnit:getPosition().p
-													local curUnitCoa 		= curUnit:getCoalition()
-													local _volume = {
-														id = world.VolumeType.SPHERE,
-														params = {
-															point = curUnitPos,
-															radius = 1000,
-														},
-													}
 
-													local t_coa = {red = false, blue = false, neutral = false}
-													local o_ctry = nil
-													local _search = function(_obj)
-														pcall(function()
-															if _obj ~= nil then
-																local o_coa = _obj:getCoalition()
-																o_ctry = _obj:getCountry()
-																if o_coa == 0 then
-																	t_coa["neutral"] = true
-																elseif o_coa == 1 then
-																	t_coa["red"] = true	
-																elseif o_coa == 2 then
-																	t_coa["blue"] = true
+											local proceed = true
+											if string.find(uName, ExclusionTag) then
+												proceed = false
+											end
+
+											if proceed == true then
+												if curUnit:getLife() > 1 then
+													local curUnitCat 		= Object.getCategory(curUnit)
+													if curUnitCat == 3 then
+														local curUnitPos 		= curUnit:getPosition().p
+														local curUnitCoa 		= curUnit:getCoalition()
+														local _volume = {
+															id = world.VolumeType.SPHERE,
+															params = {
+																point = curUnitPos,
+																radius = 1000,
+															},
+														}
+
+														local t_coa = {red = false, blue = false, neutral = false}
+														local o_ctry = nil
+														local _search = function(_obj)
+															pcall(function()
+																if _obj ~= nil then
+																	local o_coa = _obj:getCoalition()
+																	o_ctry = _obj:getCountry()
+																	if o_coa == 0 then
+																		t_coa["neutral"] = true
+																	elseif o_coa == 1 then
+																		t_coa["red"] = true	
+																	elseif o_coa == 2 then
+																		t_coa["blue"] = true
+																	end
 																end
-															end
-														end)
-													end
-												
-													world.searchObjects(Object.Category.UNIT, _volume, _search)	
-													
-													if o_ctry then
-														if t_coa["neutral"] == true and t_coa["red"] == false and t_coa["blue"] == false and curUnitCoa ~= 0 then
-															if DSMC_debugProcessDetail == true then
-																env.info(("EMBD.changeWarehouseCoalition, single different than curUnitCoa. unit " .. tostring(uName) .. ", going neutral"))
-															end	
-															tblWarehouseChangeCoa[#tblWarehouseChangeCoa+1] = {id = curUnit:getID(), coa = 0, name = curUnit:getName(), country = o_ctry}
-														elseif t_coa["neutral"] == false and t_coa["red"] == true and t_coa["blue"] == false and curUnitCoa ~= 1 then
-															if DSMC_debugProcessDetail == true then
-																env.info(("EMBD.changeWarehouseCoalition, single different than curUnitCoa. unit " .. tostring(uName) .. ", going red"))
-															end	
-															tblWarehouseChangeCoa[#tblWarehouseChangeCoa+1] = {id = curUnit:getID(), coa = 1, name = curUnit:getName(), country = o_ctry}
-														elseif t_coa["neutral"] == false and t_coa["red"] == false and t_coa["blue"] == true and curUnitCoa ~= 2 then
-															if DSMC_debugProcessDetail == true then
-																env.info(("EMBD.changeWarehouseCoalition, single different than curUnitCoa. unit " .. tostring(uName) .. ", going blue"))
-															end	
-															tblWarehouseChangeCoa[#tblWarehouseChangeCoa+1] = {id = curUnit:getID(), coa = 2, name = curUnit:getName(), country = o_ctry}
+															end)
 														end
-													else
-														env.error(("EMBD.changeWarehouseCoalition, no country identified for " .. tostring(uName)))
-													end
+													
+														world.searchObjects(Object.Category.UNIT, _volume, _search)	
+														
+														if o_ctry then
+															if t_coa["neutral"] == true and t_coa["red"] == false and t_coa["blue"] == false and curUnitCoa ~= 0 then
+																if DSMC_debugProcessDetail == true then
+																	env.info(("EMBD.changeWarehouseCoalition, single different than curUnitCoa. unit " .. tostring(uName) .. ", going neutral"))
+																end	
+																tblWarehouseChangeCoa[#tblWarehouseChangeCoa+1] = {id = curUnit:getID(), coa = 0, name = curUnit:getName(), country = o_ctry}
+															elseif t_coa["neutral"] == false and t_coa["red"] == true and t_coa["blue"] == false and curUnitCoa ~= 1 then
+																if DSMC_debugProcessDetail == true then
+																	env.info(("EMBD.changeWarehouseCoalition, single different than curUnitCoa. unit " .. tostring(uName) .. ", going red"))
+																end	
+																tblWarehouseChangeCoa[#tblWarehouseChangeCoa+1] = {id = curUnit:getID(), coa = 1, name = curUnit:getName(), country = o_ctry}
+															elseif t_coa["neutral"] == false and t_coa["red"] == false and t_coa["blue"] == true and curUnitCoa ~= 2 then
+																if DSMC_debugProcessDetail == true then
+																	env.info(("EMBD.changeWarehouseCoalition, single different than curUnitCoa. unit " .. tostring(uName) .. ", going blue"))
+																end	
+																tblWarehouseChangeCoa[#tblWarehouseChangeCoa+1] = {id = curUnit:getID(), coa = 2, name = curUnit:getName(), country = o_ctry}
+															end
+														else
+															env.error(("EMBD.changeWarehouseCoalition, no country identified for " .. tostring(uName)))
+														end
 
+													end
 												end
 											end
 										end
