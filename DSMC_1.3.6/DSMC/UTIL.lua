@@ -518,7 +518,8 @@ function createWhWeaponsDb()
 		end
 
 		HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb done db_loadout")
-		dumpTable("db_loadout.lua", db_loadout, "int")
+		--dumpTable("db_loadout.lua", db_loadout, "int")
+		--dumpTable("wbc.lua", wbc, "int")
 
 		local db_CLSID = {} 
 		HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb db_CLSID start")
@@ -539,7 +540,17 @@ function createWhWeaponsDb()
 							end
 
 						else
+							--HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb, parameter: " .. tostring(parameter))
+							--for wbId, wbData in pairs(parameter) do
+							--	HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb, wbId: " .. tostring(wbId) .. ", val: " .. tostring(wbData))
+							--end
+							if type(parameter[4]) == "string" then
+								HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb, reverted to attribute")
+								parameter = lData.attribute
+							end
+
 							local wbc_ws = wsTypeToString(parameter)
+							--HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb, passed")
 
 							if ws == wbc_ws then
 								--HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb, item added with wbc")
