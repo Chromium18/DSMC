@@ -545,7 +545,7 @@ function createWhWeaponsDb()
 							--	HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb, wbId: " .. tostring(wbId) .. ", val: " .. tostring(wbData))
 							--end
 							if type(parameter[4]) == "string" then
-								HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb, reverted to attribute")
+								--HOOK.writeDebugBase(ModuleName .. ": createWhWeaponsDb, reverted to attribute")
 								parameter = lData.attribute
 							end
 
