@@ -871,6 +871,21 @@ local standardPlaneTypes = {
 		}, -- end of ["AddPropAircraft"]		
 	},
 
+	["F-4E-45MC"] = {
+		["type"] = "F-4E-45MC",
+		["payload"] = 
+		{
+			["pylons"] = 
+			{
+			}, -- end of ["pylons"]
+			["fuel"] = "0", -- "0"
+			["flare"] = 30,
+			["ammo_type"] = 1,
+			["chaff"] = 120,
+			["gun"] = 100,
+		}, -- end of ["payload"]
+	},	
+
 }
 
 local standardHeloTypes = {
@@ -1435,6 +1450,30 @@ local standardHeloTypes = {
 		}, -- end of ["Radio"]
 	}, -- end of [1]
 
+	["OH58D"] = 
+	{
+		["ropeLength"] = 15,
+		["AddPropAircraft"] = 
+		{
+			["Attach doors"] = false,
+			["MMS removal"] = false,
+			["ALQ144"] = false,
+			["PDU"] = false,
+			["Rapid Deployment Gear"] = false,
+		}, -- end of ["AddPropAircraft"]
+		["type"] = "OH58D",
+		["payload"] = 
+		{
+			["pylons"] = 
+			{
+			}, -- end of ["pylons"]
+			["fuel"] = 0,
+			["flare"] = 30,
+			["chaff"] = 0,
+			["gun"] = 0,
+		}, -- end of ["payload"]
+	}, -- end of [1]
+
 }
 
 local permitAll = false
@@ -1459,7 +1498,7 @@ function getParkingForAircraftType(pk_list, uType, uCat)
 	local keepList = {}
 	local a_listP = UTIL.deepCopy(pk_list)
 
-	HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType starting, a_listP pre:" .. tostring(#a_listP))
+	--HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType starting, a_listP pre:" .. tostring(#a_listP))
     local unitDesc = ME_DB.unit_by_type[uType]
 
 	if unitDesc then
@@ -1482,7 +1521,7 @@ function getParkingForAircraftType(pk_list, uType, uCat)
 			a_listP[tonumber(v)] = nil
 		end
 
-		HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType, a_listP post type filter:" .. tostring(#a_listP))
+		--HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType, a_listP post type filter:" .. tostring(#a_listP))
 
 		if #a_listP > 0 then
 			-- get latest park position
@@ -1504,7 +1543,7 @@ function getParkingForAircraftType(pk_list, uType, uCat)
 				end
 			end
 			
-			HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType, max_pId: " .. tostring(max_pId) .. ", usedPname: " .. tostring(usedPname) .. ", usedPMEname: " .. tostring(usedPMEname) .. ", usedPx: " .. tostring(usedPx) .. ", usedPy: " .. tostring(usedPy))
+			--HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType, max_pId: " .. tostring(max_pId) .. ", usedPname: " .. tostring(usedPname) .. ", usedPMEname: " .. tostring(usedPMEname) .. ", usedPx: " .. tostring(usedPx) .. ", usedPy: " .. tostring(usedPy))
 			if usedPname and usedPx and usedPy then
 				for pkId, pkData in pairs(a_listP) do		
 					if pkData.name == usedPname then
@@ -1521,7 +1560,7 @@ function getParkingForAircraftType(pk_list, uType, uCat)
 				end
 
 				--HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType added used parking spot to " ..tostring(airportID) .. ", park num = " ..tostring(usedPname))
-				HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType, a_listP post:" .. tostring(#revList))
+				--HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType, a_listP post:" .. tostring(#revList))
 				return usedPname, usedPx, usedPy, revList, usedPMEname
 			else
 				--HOOK.writeDebugDetail(ModuleName .. ": getParkingForAircraftType no parking available")	
@@ -1531,7 +1570,7 @@ function getParkingForAircraftType(pk_list, uType, uCat)
 			return false
 		end
 	else
-		HOOK.writeDebugBase(ModuleName .. ": getParkingForAircraftType, uType does not exist in DB:" .. tostring(uType))
+		--HOOK.writeDebugBase(ModuleName .. ": getParkingForAircraftType, uType does not exist in DB:" .. tostring(uType))
 		return false
 	end
 end
@@ -2156,10 +2195,10 @@ function createPlaneGroups(mission)
 													end
 
 													local groupGeneralFreq = 124
-													if string.find(sData.acfType, "M-2000C") then
+													if string.find(sData.acfType, "M%-2000C") or string.find(sData.acfType, "F%-5E%-3") or string.find(sData.acfType, "F%-4E%-45MC") then
 														groupGeneralFreq = 251
-													end		
-
+													end
+													
 													local groupTable = {
 
 														["y"] = sData.y,
@@ -2321,14 +2360,12 @@ function setMaxId(mixfile)
 							if group.groupId then
 								if curvalG < group.groupId then
 									curvalG = group.groupId
-									HOOK.writeDebugDetail(ModuleName .. ": setMaxId setting curvalG " .. tostring(curvalG))
 								end
 							end
 
 							for unitID,unit in pairs(group["units"]) do
 								if unit.unitId then
 									if curvalU < unit.unitId then
-										HOOK.writeDebugDetail(ModuleName .. ": setMaxId setting curvalU " .. tostring(curvalU))
 										curvalU = unit.unitId
 									end
 								end
@@ -2339,6 +2376,9 @@ function setMaxId(mixfile)
 			end
 		end
 	end
+
+	HOOK.writeDebugDetail(ModuleName .. ": setMaxId setting curvalG " .. tostring(curvalG))
+	HOOK.writeDebugDetail(ModuleName .. ": setMaxId setting curvalU " .. tostring(curvalU))
 
 	if curvalG > 1 and curvalU > 1 then
 		HOOK.writeDebugBase(ModuleName .. ": setMaxId curvalG and curvalU found")
@@ -2488,7 +2528,7 @@ function checkParkings(missionEnv, airbaseTbl)
 								for pId, pData in pairs(group.route.points) do
 									if pId == 1 then
 										if pData.airdromeId then
-											HOOK.writeDebugDetail(ModuleName .. ": checkParkings found group on airport. Airport: " .. tostring(pData.airdromeId) .. ", group: " .. tostring(group.name))
+											--HOOK.writeDebugDetail(ModuleName .. ": checkParkings found group on airport. Airport: " .. tostring(pData.airdromeId) .. ", group: " .. tostring(group.name))
 											afbId = pData.airdromeId
 										end
 
@@ -2498,7 +2538,7 @@ function checkParkings(missionEnv, airbaseTbl)
 								if afbId then
 									for _, unit in pairs(group["units"]) do
 										if unit.parking and unit.parking_id then
-											HOOK.writeDebugDetail(ModuleName .. ": checkParkings removing park. Airport: " .. tostring(afbId) .. ", park: " .. tostring(unit.parking_id))
+											--HOOK.writeDebugDetail(ModuleName .. ": checkParkings removing park. Airport: " .. tostring(afbId) .. ", park: " .. tostring(unit.parking_id))
 											tblPrksRemove[#tblPrksRemove+1] = {abId = afbId, prId = tostring(unit.parking_id), parDef = tostring(unit.parking), uType = unit.type}
 										end
 									end
@@ -2514,13 +2554,13 @@ function checkParkings(missionEnv, airbaseTbl)
 	-- remove parkings
 	if #tblPrksRemove > 0 then
 		--UTIL.dumpTable("tblPrksRemove.lua", tblPrksRemove)
-		HOOK.writeDebugDetail(ModuleName .. ": checkParkings tblPrksRemove has entries, n: " .. tostring(#tblPrksRemove))
+		--HOOK.writeDebugDetail(ModuleName .. ": checkParkings tblPrksRemove has entries, n: " .. tostring(#tblPrksRemove))
 		for pId, pData in pairs(tblPrksRemove) do
 			for afId, afData in pairs(airbaseTbl) do
 				if tonumber(pData.abId) == tonumber(afData.index) then
 					for pkId, pkData in pairs(afData.parkings) do 
 						if tostring(pData.prId) == tostring(pkData.name) then
-							HOOK.writeDebugDetail(ModuleName .. ": checkParkings removing using park: " .. tostring(#pkData.name) .. ", in " .. tostring(afData.name))
+							--HOOK.writeDebugDetail(ModuleName .. ": checkParkings removing using park: " .. tostring(#pkData.name) .. ", in " .. tostring(afData.name))
 							if pkData.params.FOR_HELICOPTERS == 1 then
 								afData.rw_parkNum = afData.rw_parkNum - 1
 							end
@@ -2559,7 +2599,7 @@ function buildHelipadSlot(missionEnv, warehouseEnv, tblSlots)
 				HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, checking heliport: " .. tostring(afbId))
 
 				if afbData.unlimitedAircrafts == false then
-					HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, heliport is limited, adding slots")
+					HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, heliport is limited, checking slots availability")
 
 					--local alt_val = 0
 					local heading_val = nil
@@ -2606,7 +2646,7 @@ function buildHelipadSlot(missionEnv, warehouseEnv, tblSlots)
 																	local posTbl = {}
 																	if grNum >= 1 then
 																		for _, uData in pairs(group["units"]) do
-																			posTbl[#posTbl+1] = {x = uData.x, y = uData.x, l = uData.unitId, t = link_type_val}
+																			posTbl[#posTbl+1] = {x = uData.x, y = uData.y, l = uData.unitId, t = link_type_val}
 																		end
 																	end
 
@@ -2616,29 +2656,35 @@ function buildHelipadSlot(missionEnv, warehouseEnv, tblSlots)
 																			if catId == "helicopters" then
 																				for acfId, acfData in pairs(catData) do
 																					for aId, aData in pairs(standardHeloTypes) do
-																						--HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, acfId: " .. tostring(acfId) .. ", aId:" .. tostring(aId))
-																						if acfId == aId then
-																																														
+																						
+																						if acfId == aId then																								
 																							-- all single ship version
 																							local nGroups = math.floor(acfData.initialAmount)																							
 																							local nUnits = 1 -- fixed as single ship system
+																							HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, acfId: " .. tostring(acfId) .. ", nGroups: " .. tostring(nGroups))
 																							
 																							--revert to maxSlots
 																							if nGroups > maxSlots then
 																								nGroups = maxSlots
 																							end
+																							HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, nGroups filtered: " .. tostring(nGroups))
 
 																							if #posTbl > 1 and nGroups > 0 then
 																								HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, heliport is multi unit, adding all helo types on different helipad")
 																								local currId = 1
 																								
-																								for i=1, nGroups do
+																								local maxAm = nGroups
+																								for i=1, nGroups do								
 																									for yId, yData in pairs(posTbl) do
-																										if yId == currId then
-																											tblSlots[#tblSlots+1] = {h= heading_val, x= yData.x, y = yData.y, link = yData.l, linkType = yData.t, cntyID = country.id, coaID = coa, acfType = acfId, numUnits = nUnits}
-																											currId = currId + 1
-																											if currId > #posTbl then
-																												currId = 1
+																										if maxAm > 0 then
+																											if yId == currId then
+																												tblSlots[#tblSlots+1] = {h= heading_val, x= yData.x, y = yData.y, link = yData.l, linkType = yData.t, cntyID = country.id, coaID = coa, acfType = acfId, numUnits = nUnits}
+																												currId = currId + 1
+																												maxAm = maxAm - 1
+																												HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, adding slot, maxAm : " .. tostring(maxAm) .. ", x : " .. tostring(yData.x) .. ", y : " .. tostring(yData.y) .. ", acfId : " .. tostring(acfId) .. ", nUnits : " .. tostring(nUnits))
+																												if currId > #posTbl then
+																													currId = 1
+																												end
 																											end
 																										end
 																									end	
@@ -2671,14 +2717,18 @@ function buildHelipadSlot(missionEnv, warehouseEnv, tblSlots)
 																							if #posTbl > 1 and nGroups > 0 then
 																								HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, heliport is multi unit, adding all helo types on different helipad")
 																								local currId = 1
-																								
+																								local maxAm = nGroups
 																								for i=1, nGroups do
 																									for yId, yData in pairs(posTbl) do
-																										if yId == currId then
-																											tblSlots[#tblSlots+1] = {h= heading_val, x= yData.x, y = yData.y, link = yData.l, linkType = yData.t, cntyID = country.id, coaID = coa, acfType = acfId, numUnits = nUnits}
-																											currId = currId + 1
-																											if currId > #posTbl then
-																												currId = 1
+																										if maxAm > 0 then
+																											if yId == currId then
+																												tblSlots[#tblSlots+1] = {h= heading_val, x= yData.x, y = yData.y, link = yData.l, linkType = yData.t, cntyID = country.id, coaID = coa, acfType = acfId, numUnits = nUnits}
+																												currId = currId + 1
+																												maxAm = maxAm - 1
+																												HOOK.writeDebugDetail(ModuleName .. ": buildHelipadSlot, adding slot, maxAm : " .. tostring(maxAm))
+																												if currId > #posTbl then
+																													currId = 1
+																												end
 																											end
 																										end
 																									end	
@@ -2994,7 +3044,6 @@ function fixGroupList(m)
 	return m
 end
 
-
 function addSlot(m, w) --, dictEnv
 
 	-- clean all helos slot!
@@ -3017,6 +3066,7 @@ function addSlot(m, w) --, dictEnv
 		--UTIL.dumpTable("tblSlots_heliport.lua", tblSlots)
 	end
 
+	UTIL.dumpTable("tblSlots.lua", tblSlots, "int")
 	if tblSlots then
 		if table.getn(tblSlots) > 0 then
 			--UTIL.dumpTable("tblSlots.lua", tblSlots, "int")

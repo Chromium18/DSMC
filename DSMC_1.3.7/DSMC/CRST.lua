@@ -30,7 +30,7 @@ function doStatics(missionEnv, tblDeaths)
 	local addedDeathsDone = 0
 	local addedDeathsPreview = 0 
 	for id, deadData in pairs (tblDeaths) do
-		if deadData.objCategory ~= 3 and deadData.objCategory ~= 6 and deadData.unitShip ~= true and deadData.unitInfantry ~= true and deadData.staticTable then -- not cargos
+		if deadData.objCategory ~= 3 and deadData.objCategory ~= 6 and deadData.unitShip ~= true and deadData.unitInfantry ~= true and deadData.staticTable and deadData.staticTable ~= "none" then -- not cargos
 			if deadData.objTypeName 	~= "Soldier M4" -- not infantry
 			and deadData.objTypeName 	~= "Soldier M249"
 			and deadData.objTypeName 	~= "Stinger manpad GRG"
@@ -43,42 +43,61 @@ function doStatics(missionEnv, tblDeaths)
 			and deadData.objTypeName 	~= "SA-18 Igla-S comm"
 			and deadData.staticTable	~= "none"
 			then
-			
-				addedDeathsPreview = addedDeathsPreview + 1
+				local correctCoalition = nil
+				local correctCountry = nil
 				
+				HOOK.writeDebugDetail(ModuleName .. ": doStatics ok")
+
+				addedDeathsPreview = addedDeathsPreview + 1
+			
 				if tonumber(deadData.coalitionID) == 0 then
 					correctCoalition = "neutral"
 				elseif tonumber(deadData.coalitionID) == 1 then
 					correctCoalition = "red"				
 				elseif tonumber(deadData.coalitionID) == 2 then
 					correctCoalition = "blue"				
-				end			
+				end	
+				
+				if correctCoalition then
 
-				for ctryID, ctryData in pairs (missionEnv.coalition[correctCoalition]["country"]) do
-					if tonumber(deadData.countryID) == tonumber(ctryData.id) then
-						correctCountry = ctryID
+					for ctryID, ctryData in pairs (missionEnv.coalition[correctCoalition]["country"]) do
+						if tonumber(deadData.countryID) == tonumber(ctryData.id) then
+							correctCountry = ctryID
+						end
 					end
-				end			
-				
-				-- check static existence
-				if not missionEnv.coalition[correctCoalition]["country"][correctCountry]["static"] then
-					missionEnv.coalition[correctCoalition]["country"][correctCountry]["static"] = {}				
-				end						
 
-				-- check group existence in static
-				if not missionEnv.coalition[correctCoalition]["country"][correctCountry]["static"]["group"] then
-					missionEnv.coalition[correctCoalition]["country"][correctCountry]["static"]["group"] = {}						
-				end				
-				
-				local groupTable = missionEnv.coalition[correctCoalition]["country"][correctCountry]["static"]["group"]
-				
-				if	groupTable and correctCoalition and correctCountry then
-					groupTable[#groupTable + 1] = deadData.staticTable
-					addedDeathsDone = addedDeathsDone +1
+					if correctCountry then
+
+						-- check static existence
+						if not missionEnv.coalition[correctCoalition]["country"][correctCountry]["static"] then
+							missionEnv.coalition[correctCoalition]["country"][correctCountry]["static"] = {}				
+						end						
+
+						-- check group existence in static
+						if not missionEnv.coalition[correctCoalition]["country"][correctCountry]["static"]["group"] then
+							missionEnv.coalition[correctCoalition]["country"][correctCountry]["static"]["group"] = {}						
+						end				
+						
+						local groupTable = missionEnv.coalition[correctCoalition]["country"][correctCountry]["static"]["group"]
+						
+						if	groupTable and correctCoalition and correctCountry then
+							groupTable[#groupTable + 1] = deadData.staticTable
+							addedDeathsDone = addedDeathsDone +1
+						else
+							return false
+						end
+					else
+						HOOK.writeDebugDetail(ModuleName .. ": doStatics failed to get correctCountry. objTypeName: " .. tostring(deadData.objTypeName) .. ", unitId: " .. tostring(deadData.unitId))
+						return false
+					end
 				else
+					HOOK.writeDebugDetail(ModuleName .. ": doStatics failed to get correctCoalition. objTypeName: " .. tostring(deadData.objTypeName) .. ", unitId: " .. tostring(deadData.unitId))
 					return false
 				end
 			end
+		else
+			HOOK.writeDebugDetail(ModuleName .. ": doStatics filtered object: " .. tostring(deadData.objTypeName) .. ", unitId: " .. tostring(deadData.unitId))
+			return false
 		end
 	end
 	if table.getn(tblDeaths) > 0 and addedDeathsDone == addedDeathsPreview then

@@ -423,7 +423,7 @@ dialog = {
 						["state"] = false,
 						["tabOrder"] = 0,
 						["text"] = "$SLOT_txt",
-						["tooltip"] = "if checked DSMC will automatically create 2-ships helicopter group in each FARP of the proper coalition, choosing any flyable helicopter type avaiable in the warehouse",
+						["tooltip"] = "if checked DSMC will automatically create 1-ships helicopter group in each FARP of the proper coalition, choosing any flyable helicopter type avaiable in the warehouse",
 						["visible"] = true,
 						["zindex"] = 0,
 					},
@@ -442,7 +442,7 @@ dialog = {
 						["state"] = false,
 						["tabOrder"] = 0,
 						["text"] = "$SLOT_ab_txt",
-						["tooltip"] = "if checked DSMC will automatically create 2-ships groups of helicopters and airplanes in each airbase of the proper coalition, choosing any flyable type avaiable in the warehouse and consistent to available parkings",
+						["tooltip"] = "if checked DSMC will automatically create 1-ships groups of helicopters and airplanes in each airbase of the proper coalition, choosing any flyable type avaiable in the warehouse and consistent to available parkings",
 						["visible"] = true,
 						["zindex"] = 0,
 					},
@@ -453,7 +453,7 @@ dialog = {
 					["params"] = {
 						["bounds"] = {
 							["h"] = verticalBound,
-							["w"] = 850,
+							["w"] = width,
 							["x"] = leftMargin1,
 							["y"] = verticalStack*8.5,
 						},
@@ -905,6 +905,7 @@ dialog = {
 					["skin"] = CheckBoxSkin,
 					["type"] = "CheckBox",
 				},	
+				--[[--
 				["CTLD_Footnote_label"] = { -- DSMC_Help_AIE_1
 					["params"] = {
 						["bounds"] = {
@@ -922,8 +923,7 @@ dialog = {
 					["skin"] = HelpSkin,
 					["type"] = "Static",
 				},
-
-
+				--]]--
 			},
 			["params"] = {
 				["bounds"] = {

@@ -1873,20 +1873,20 @@ local t = io.open(cPath, "r")
 local enableNewCloud = false
 if t then
 	local cString = nil
-	HOOK.writeDebugDetail(ModuleName .. ": c1")
+	--HOOK.writeDebugDetail(ModuleName .. ": c1")
 	cString = t:read("*all")
 	t:close()
 	if cString then
-		HOOK.writeDebugDetail(ModuleName .. ": c2")
+		--HOOK.writeDebugDetail(ModuleName .. ": c2")
 		local cFun, cErr = loadstring(cString);
-		HOOK.writeDebugDetail(ModuleName .. ": c2b, cErr = " .. tostring(cErr))
+		--HOOK.writeDebugDetail(ModuleName .. ": c2b, cErr = " .. tostring(cErr))
 		if cFun then
-			HOOK.writeDebugDetail(ModuleName .. ": c3")
+			--HOOK.writeDebugDetail(ModuleName .. ": c3")
 			--wthrEnv = {}
 			--setfenv(cFun, wthrEnv)
-			HOOK.writeDebugDetail(ModuleName .. ": c4")
+			--HOOK.writeDebugDetail(ModuleName .. ": c4")
 			cFun()
-			HOOK.writeDebugDetail(ModuleName .. ": c5")
+			--HOOK.writeDebugDetail(ModuleName .. ": c5")
 			enableNewCloud = true
 		end
 	end
@@ -2244,7 +2244,7 @@ function getCloudPreset(isRaining, coverageVal)
 					if coverageVal >= pData.oktasMin and coverageVal <= pData.oktasMax then			 
 						foundOne = true
 						availPreset[#availPreset+1] = pData.id
-						HOOK.writeDebugDetail(ModuleName .. ": getCloudPreset, found on first round, adding " .. tostring(pData.id))
+						--HOOK.writeDebugDetail(ModuleName .. ": getCloudPreset, found on first round, adding " .. tostring(pData.id))
 					end
 				end
 			end
@@ -2255,7 +2255,7 @@ function getCloudPreset(isRaining, coverageVal)
 						if (coverageVal+2) >= pData.oktasMin and (coverageVal-2) <= pData.oktasMax then			 
 							foundOne = true
 							availPreset[#availPreset+1] = pData.id
-							HOOK.writeDebugDetail(ModuleName .. ": getCloudPreset, found on second round, adding " .. tostring(pData.id))
+							--HOOK.writeDebugDetail(ModuleName .. ": getCloudPreset, found on second round, adding " .. tostring(pData.id))
 						end
 					end
 				end
@@ -2265,7 +2265,7 @@ function getCloudPreset(isRaining, coverageVal)
 				for _, pData in pairs(newWeatherPresets) do
 					if pData.rain == precipitation  then
 						availPreset[#availPreset+1] = pData.id
-						HOOK.writeDebugDetail(ModuleName .. ": getCloudPreset, found on third round, adding " .. tostring(pData.id))		
+						--HOOK.writeDebugDetail(ModuleName .. ": getCloudPreset, found on third round, adding " .. tostring(pData.id))		
 					end
 				end
 			end

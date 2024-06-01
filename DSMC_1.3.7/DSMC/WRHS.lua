@@ -13,41 +13,12 @@ local require 		= base.require
 local io 			= require('io')
 local lfs 			= require('lfs')
 local os 			= require('os')
-local ME_DB   		= require('me_db_api')
 
 HOOK.writeDebugDetail(ModuleName .. ": local required loaded")
 
 -- ## LOCAL VARIABLES
 WRHSloaded						= false
 tblWarehouses					= nil
-
-function createdbWeapon()	
-	local wpnAddnum = 0
-	dbWeapon = {}
-	HOOK.writeDebugDetail(ModuleName .. ": createdbWeapon, launched")
-	--UTIL.dumpTable("nightlyGb.lua", _G)
-	--HOOK.writeDebugDetail(ModuleName .. ": createdbWeapon, G exported")
-	for uniID, uniData in pairs(resource_by_unique_name) do
-		--HOOK.writeDebugDetail(ModuleName .. ": createdbWeapon, checking " .. tostring(uniID))
-		local wsTable = uniData.wsTypeOfWeapon or uniData.ws_type
-		if wsTable then
-			if type(wsTable) == "table" then
-				if #wsTable == 4 then
-					--HOOK.writeDebugDetail(ModuleName .. ": createdbWeapon, wsTable found for " .. tostring(uniID))
-					local wsString = wsTypeToString(wsTable)	
-					--HOOK.writeDebugDetail(ModuleName .. ": createdbWeapon, wsString for  " .. tostring(uniID).. " is " .. tostring(wsString))
-					dbWeapon[#dbWeapon+1] = {unique = uniID, name = uniData.name, wsData = wsString}
-					wpnAddnum = wpnAddnum + 1
-				end
-			end
-		end
-	end
-	HOOK.writeDebugDetail(ModuleName .. ": createdbWeapon, added " .. tostring(wpnAddnum) .. " weapons")
-	
-	if HOOK.debugProcessDetail then
-		UTIL.dumpTable("dbWeapon.lua", dbWeapon)
-	end
-end
 
 function updateWarehouses(tblContent, tempWarehouses)
 
@@ -71,8 +42,15 @@ function updateWarehouses(tblContent, tempWarehouses)
 
 		for whCat, whTbl in pairs(tempWarehouses) do -- cycle in warehouse table
 			if whCat == "airports" then
-				--HOOK.writeDebugDetail(ModuleName .. ": updateWarehouses checking airports")
+				HOOK.writeDebugDetail(ModuleName .. ": updateWarehouses checking airports")
 				for whId, whData in pairs(whTbl) do -- cycle in warehouse table
+
+					if HOOK.WRHS_real then
+						HOOK.writeDebugDetail(ModuleName .. ": physical convoys mode active, resetting wh to zero: " .. tostring(whId))
+						whData.OperatingLevel_Eqp 	= 0
+						whData.OperatingLevel_Air 	= 0
+						whData.OperatingLevel_Fuel 	= 0
+					end
 
 					-- do fuel
 					if whData.unlimitedFuel == false then
@@ -81,7 +59,7 @@ function updateWarehouses(tblContent, tempWarehouses)
 							if tonumber(aData.id) == tonumber(whId) then
 								for aCat, aCont in pairs(aData.wh) do
 									if aCat == "liquids" then
-										--HOOK.writeDebugDetail(ModuleName .. ": updateWarehouses whId " .. tostring(whId) .. " fuel data found and set")
+										HOOK.writeDebugDetail(ModuleName .. ": updateWarehouses whId " .. tostring(whId) .. " fuel data found and set")
 										whData.jet_fuel.InitFuel 			= aCont[0]/1000
 										whData.gasoline.InitFuel 			= aCont[1]/1000
 										whData.methanol_mixture.InitFuel 	= aCont[2]/1000
@@ -154,6 +132,13 @@ function updateWarehouses(tblContent, tempWarehouses)
 
 				--HOOK.writeDebugDetail(ModuleName .. ": updateWarehouses checking warehouses")
 				for whId, whData in pairs(whTbl) do -- cycle in warehouse table
+
+					if HOOK.WRHS_real then
+						--HOOK.writeDebugDetail(ModuleName .. ": physical convoys mode active, resetting wh to zero")
+						whData.OperatingLevel_Eqp 	= 0
+						whData.OperatingLevel_Air 	= 0
+						whData.OperatingLevel_Fuel 	= 0
+					end
 
 					-- do fuel
 					if whData.unlimitedFuel == false then
