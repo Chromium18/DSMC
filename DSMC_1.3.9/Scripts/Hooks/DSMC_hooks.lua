@@ -35,11 +35,11 @@ package.path =
 
 
 DSMC_ModuleName  	= "HOOKS"
-DSMC_MainVersion 	= "2"
-DSMC_SubVersion 	= "0"
-DSMC_SubSubVersion 	= "0"
-DSMC_Build 			= "2780"
-DSMC_Date			= "2024/06/26"
+DSMC_MainVersion 	= "1"
+DSMC_SubVersion 	= "3"
+DSMC_SubSubVersion 	= "9"
+DSMC_Build 			= "2806"
+DSMC_Date			= "2024/08/10"
 
 -- ## DEBUG TO TEXT FUNCTION DO NOT TOUCH THIS
 local forceServerMode 	= false
@@ -113,7 +113,6 @@ strUnitsUpdate				= nil
 strAirbases					= nil
 strWeather					= nil
 strSpawned					= nil
-hits_max_count				= 10000  -- more that this number and the aircraft is considerered grounded!. Set 10000 to "disable" that function
 tempWeatherTable			= nil
 trackspawnedinfantry		= true
 autosavefrequency			= nil -- minutes
@@ -143,8 +142,82 @@ NewWrhsPath 				= missionfilesdirectory .. "Temp/" .. NewMizTempDir .."warehouse
 ImagesPath 					= lfs.writedir() .. "DSMC/Images/"
 logpath 					= lfs.writedir() .. "Logs/mixpath.txt"
 tempPath 					= missionfilesdirectory .. "DSMC_tempFile.miz"
-missionscriptingluaPath		= lfs.currentdir() .. "Scripts/" .. "MissionScripting.lua"
+missionscriptingluaPath		= lfs.currentdir() .. "Scripts/MissionScripting.lua"
 writeDebugDetail(DSMC_ModuleName .. ": paths variable loaded")
+
+local function missionscripting_modifier()
+	local function escapePattern(pattern)
+		local specials = "().%+-*?[^$"
+		return pattern:gsub("[" .. specials .. "]", "%%%1")
+	end
+
+	local function replaceText(oldText, findText, replaceText)
+		local escapedFindText = escapePattern(findText)
+		return oldText:gsub(escapedFindText, replaceText)
+	end
+
+	local function contains(haystack, needle)
+		-- Effettua l'escape dei caratteri speciali nella stringa 'needle'
+		local function escape_special_characters(str)
+			local replacements = {
+				['%'] = '%%',
+				['^'] = '%^',
+				['$'] = '%$',
+				['('] = '%(',
+				[')'] = '%)',
+				['%['] = '%[%]',
+				['{'] = '%{',
+				['}'] = '%}',
+				['.'] = '%.',
+				['*'] = '%*',
+				['+'] = '%+',
+				['-'] = '%-',
+				['?'] = '%?',
+				['\0'] = '%z'
+			}
+			
+			return (str:gsub(".", replacements))
+		end
+	
+		-- Escape della stringa 'needle'
+		local escaped_needle = escape_special_characters(needle)
+		
+		-- Controlla se 'needle' è contenuta in 'haystack'
+		return haystack:find(escaped_needle) ~= nil
+	end
+
+	-- Add missionscripting.lua line abrest
+	local f=io.open(missionscriptingluaPath,"r")
+	if f~=nil then 
+		local oldText = f:read("*all")
+		io.close(f)
+		local alreadyModified = false		
+		if contains(oldText, [[pcall(dofile, lfs.writedir() .. "DSMC/EMBD_inj.lua")]]) then
+			alreadyModified = true
+		end
+
+		
+		
+		if alreadyModified == false then
+			local check = contains(oldText, [[dofile('Scripts/ScriptingSystem.lua')]])
+			local newText = replaceText(oldText, [[dofile('Scripts/ScriptingSystem.lua')]], [[dofile('Scripts/ScriptingSystem.lua')]] .. "\n" .. [[pcall(dofile, lfs.writedir() .. "DSMC/EMBD_inj.lua") -- DSMC added code]])
+			local o = io.open(missionscriptingluaPath, "w")
+			o:write(newText)
+			o:close()
+			writeDebugBase(DSMC_ModuleName .. ": added missionscripting.lua code")
+			return true
+		
+		else
+			writeDebugBase(DSMC_ModuleName .. ": missionscripting.lua already modified for EMBD module")
+			return true
+		end
+	else 
+		io.close(f) 
+	end
+
+
+
+end
 
 function loadDSMCHooks()
 
@@ -154,6 +227,8 @@ function loadDSMCHooks()
 	SAVE 						= require("SAVE")
 	writeDebugBase(DSMC_ModuleName .. ": loaded SAVE module")
 
+			
+	missionscripting_modifier()
 	
 	-- built wpn database if version is changed
 	UTIL.createWhWeaponsDb()
@@ -186,11 +261,6 @@ function loadDSMCHooks()
 					end
 				end
 			end	
-		end
-
-		if autosaveVal == true then
-			writeDebugBase(DSMC_ModuleName .. ": desanitizing on DCS start")
-			desanitizer()
 		end
 
 	else
@@ -283,11 +353,13 @@ function startDSMCprocess()
 		--local optCode = DCS.getMissionOptions()
 		--UTIL.dumpTable("DCSoptions.lua", optCode) -- not working correctly in dedicated server with DSMC
 
+		local usingInternalOptions = true
 		if DCS_HasGraphics == false or forceServerMode == true then -- DCS_Multy
 
 			writeDebugBase(DSMC_ModuleName .. ": Server mode active")
 			writeDebugBase(DSMC_ModuleName .. ": forceServerMode: " .. tostring(forceServerMode))
 			local dso_fcn, dso_err = dofile(DSOdir .. "DSMC_Dedicated_Server_options.lua")
+			usingInternalOptions = false
 			if dso_err then
 				writeDebugBase(DSMC_ModuleName .. ": dso_fcn error = " .. tostring(dso_fcn))
 				writeDebugBase(DSMC_ModuleName .. ": dso_err error = " .. tostring(dso_err))
@@ -327,9 +399,6 @@ function startDSMCprocess()
 
 								opt_DEBUG_var		= pl_data.DEBUG
 
-								--opt_MOBJ_var 		= true -- pl_data.MOBJ
-								--opt_TMUP_var		= true -- pl_data.TMUP
-								--opt_SPWN_var		= true -- pl_data.SPWN		
 							end
 						end
 					end
@@ -388,6 +457,9 @@ function startDSMCprocess()
 			opt_TMUP_max_var = 23
 		end
 		
+		writeDebugBase(DSMC_ModuleName .. ": opt_AIEN_var = " ..tostring(opt_AIEN_var))	
+		writeDebugBase(DSMC_ModuleName .. ": DSMC_enhancedAIbehaviour = " ..tostring(DSMC_enhancedAIbehaviour))	
+		
 		--###################################################################################################
 
 		-- fixed on variables
@@ -396,26 +468,46 @@ function startDSMCprocess()
 		WRHS_var							= true -- opt_WRHS_var or DSMC_TrackWarehouses
 		SPWN_var							= true -- opt_SPWN_var or DSMC_TrackSpawnedUnits
 		
-		-- optional variables
-		DEBUG_var							= opt_DEBUG_var or DSMC_DebugMode
-		CRST_var 							= opt_CRST_var or DSMC_StaticDeadUnits		
-		TMUP_cont_var						= opt_TMUP_cont_var or DSMC_UpdateStartTime_mode
-		TMUP_min_var						= opt_TMUP_min_var or DSMC_StarTimeHourMin
-		TMUP_max_var						= opt_TMUP_max_var or DSMC_StarTimeHourMax
-		WRHS_rblt							= opt_WRHS_var or DSMC_WarehouseAutoSetup
-		WTHR_var							= opt_WTHR_var or DSMC_WeatherUpdate	
-		WTHR_fog							= opt_WTHRfog_var or DSMC_DisableFog
-		ATRL_var							= opt_ATRL_var or DSMC_AutosaveProcess 
-		ATRL_time_var						= opt_ATRL_time_var or DSMC_AutosaveProcess_min 
-		S247_var							= opt_S247_time_var or DSMC_24_7_serverStandardSetup
-		RF10_var							= opt_RF10_var or DSMC_DisableF10save
+		-- mixed variables
+		if usingInternalOptions == true then
+			DEBUG_var							= opt_DEBUG_var
+			CRST_var 							= opt_CRST_var	
+			TMUP_cont_var						= opt_TMUP_cont_var
+			TMUP_min_var						= opt_TMUP_min_var
+			TMUP_max_var						= opt_TMUP_max_var
+			WRHS_rblt							= opt_WRHS_var
+			WTHR_var							= opt_WTHR_var
+			WTHR_fog							= opt_WTHRfog_var
+			ATRL_var							= opt_ATRL_var
+			ATRL_time_var						= opt_ATRL_time_var
+			S247_var							= opt_S247_time_var
+			RF10_var							= opt_RF10_var 
+			EMBD_var							= opt_EMDB_var 
+
+		else
+			DEBUG_var							= DSMC_DebugMode
+			CRST_var 							= DSMC_StaticDeadUnits		
+			TMUP_cont_var						= DSMC_UpdateStartTime_mode
+			TMUP_min_var						= DSMC_StarTimeHourMin
+			TMUP_max_var						= DSMC_StarTimeHourMax
+			WRHS_rblt							= DSMC_WarehouseAutoSetup
+			WTHR_var							= DSMC_WeatherUpdate	
+			WTHR_fog							= DSMC_DisableFog
+			ATRL_var							= DSMC_AutosaveProcess 
+			ATRL_time_var						= DSMC_AutosaveProcess_min 
+			S247_var							= DSMC_24_7_serverStandardSetup
+			RF10_var							= DSMC_DisableF10save
+			EMBD_var							= DSMC_Excl_Tag
+
+		end
+
+		-- server only variables
 		STOP_var							= DSMC_AutosaveExit_hours
 		STOP_var_time						= DSMC_AutosaveExit_time
 		STOP_var_safe						= DSMC_AutosaveExit_safe
 		RSTS_var							= DSMC_AutoRestart_active
 		UMLS_var							= DSMC_updateMissionList	
-		EMBD_var							= opt_EMDB_var or DSMC_Excl_Tag
-		
+
 		-- CTLD support variables
 		CTLD1_var							= DSMC_ctld_recognizeHelos or false
 		CTLD2_var							= DSMC_ctld_recognizeVehicles or false		
@@ -427,8 +519,9 @@ function startDSMCprocess()
 		STTS_rFM							= DSMC_STTS_RadioFreq_FM or 40	
 		STTS_type							= DSMC_STTS_method or "text"
 
-		-- developer variables
-		SBEO_var							= false 
+		--------------------------------------------------------------------------------
+		--WRHS_real							= opt_WRHS_real or DSMC_WarehouseConvoyResupply
+
 
 		--###################################################################################################
 
@@ -524,15 +617,9 @@ function startDSMCprocess()
 		writeDebugBase(DSMC_ModuleName .. ": STOP_var_safe = " ..tostring(STOP_var_safe))
 		writeDebugBase(DSMC_ModuleName .. ": RSTS_var = " ..tostring(RSTS_var))
 		writeDebugBase(DSMC_ModuleName .. ": UMLS_var = " ..tostring(UMLS_var))
-		writeDebugBase(DSMC_ModuleName .. ": SBEO_var = " ..tostring(SBEO_var))
 		writeDebugBase(DSMC_ModuleName .. ": CTLD1_var = " ..tostring(CTLD1_var))
 		writeDebugBase(DSMC_ModuleName .. ": CTLD2_var = " ..tostring(CTLD2_var))
 		writeDebugBase(DSMC_ModuleName .. ": EMBD_var = " ..tostring(EMBD_var))
-		writeDebugBase(DSMC_ModuleName .. ": STTS_var = " ..tostring(STTS_var))
-		writeDebugBase(DSMC_ModuleName .. ": STTS_path = " ..tostring(STTS_path))
-		writeDebugBase(DSMC_ModuleName .. ": STTS_rAM = " ..tostring(STTS_rAM))
-		writeDebugBase(DSMC_ModuleName .. ": STTS_rFM = " ..tostring(STTS_rFM))
-		writeDebugBase(DSMC_ModuleName .. ": STTS_type = " ..tostring(STTS_type))
 
 		-- ## DSMC ADDITIONAL MODULES
 		if UTIL.fileExist(DSMCdir .. "MOBJ" .. ".lua") == true and MOBJ_var == true then
@@ -559,16 +646,11 @@ function startDSMCprocess()
 			SPWN 						= require("SPWN")
 			writeDebugBase(DSMC_ModuleName .. ": loaded in SPWN module")
 		end
-
 		if UTIL.fileExist(DSMCdir .. "ADTR" .. ".lua") == true then
 			ADTR 						= require("ADTR")
 			writeDebugBase(DSMC_ModuleName .. ": loaded in ADTR module")
 		end
 
-		-- check desanitization
-		if ATRL_var == true then
-			desanitizer()
-		end
 	
 		-- debug call check (doesn't print if debugProcessDetail is false!)
 		writeDebugDetail(DSMC_ModuleName .. ": debugProcessDetail = " .. tostring(debugProcessDetail))
@@ -844,6 +926,7 @@ function startDSMCprocess()
 							writeDebugDetail(DSMC_ModuleName .. ": STTSDSMC injected")							
 						end
 
+						--[[
 						local e = io.open(DSMCdir .. "EMBD_inj.lua", "r")
 						local Embeddedcode = nil
 						if e then
@@ -854,6 +937,7 @@ function startDSMCprocess()
 						end			
 						UTIL.inJectCode("Embeddedcode", Embeddedcode)
 						writeDebugDetail(DSMC_ModuleName .. ": EMBD injected")
+						--]]--
 
 						local tblThreats = UTIL.getUnitData()
 						if tblThreats then
@@ -863,6 +947,7 @@ function startDSMCprocess()
 						else
 							writeDebugDetail(DSMC_ModuleName .. ": can't inject tblThreats in EMBD")
 						end
+
 						writeDebugDetail(DSMC_ModuleName .. ": loaded all variables")
 						
 						UTIL.copyFile(loadedMissionPath, DSMCfiles .. "tempFile.miz")		
@@ -888,58 +973,6 @@ function startDSMCprocess()
 	else
 		writeDebugBase(DSMC_ModuleName .. ": ERROR: SAVE or UTIL module not available")
 	end
-end
-
-function desanitizer()
-	writeDebugBase(DSMC_ModuleName .. ": desanitizer, starting... ")
-	local f=io.open(missionscriptingluaPath,"r")
-	if f~=nil then 
-	
-		local newText = ""
-		for line in f:lines() do				
-			if string.find(line, "sanitizeModule%('os'%)") and not string.find(line, "%-%-sanitizeModule%('os'%)") then
-				writeDebugBase(DSMC_ModuleName .. ": desanitizer, desanitize os")
-				local newline = string.gsub(line, "sanitizeModule%('os'%)", "%-%-sanitizeModule%('os'%), commented by DSMC: if you won't desanitized environment, please disable the autosave option!")	
-				newText = newText .. tostring(newline) .. "\n"
-				
-			elseif string.find(line, "sanitizeModule%('io'%)") and not string.find(line, "%-%-sanitizeModule%('io'%)")  then
-				writeDebugBase(DSMC_ModuleName .. ": desanitizer, desanitize io")
-				local newline = string.gsub(line, "sanitizeModule%('io'%)", "%-%-sanitizeModule%('io'%), commented by DSMC: if you won't desanitized environment, please disable the autosave option!")	
-				newText = newText .. tostring(newline) .. "\n"				
-			elseif string.find(line, "sanitizeModule%('lfs'%)") and not string.find(line, "%-%-sanitizeModule%('lfs'%)")  then
-				writeDebugBase(DSMC_ModuleName .. ": desanitizer, desanitize lfs")
-				local newline = string.gsub(line, "sanitizeModule%('lfs'%)", "%-%-sanitizeModule%('lfs'%), commented by DSMC: if you won't desanitized environment, please disable the autosave option!")	
-				newText = newText .. tostring(newline) .. "\n"				
-			elseif string.find(line, "%_G%['require'%] = nil") and not string.find(line, "%-%-%_G%['require'%] = nil")  then
-				writeDebugBase(DSMC_ModuleName .. ": desanitizer, desanitize require")
-				local newline = string.gsub(line, "%_G%['require'%] = nil", "%-%-%_G%['require'%] = nil, commented by DSMC: if you won't desanitized environment, please disable the autosave option!")	
-				newText = newText .. tostring(newline) .. "\n"
-			elseif string.find(line, "%_G%['loadlib'%] = nil") and not string.find(line, "%-%-%_G%['loadlib'%] = nil")  then
-				writeDebugBase(DSMC_ModuleName .. ": desanitizer, desanitize loadlib")
-				local newline = string.gsub(line, "%_G%['loadlib'%] = nil", "%-%-%_G%['loadlib'%] = nil, commented by DSMC: if you won't desanitized environment, please disable the autosave option!")	
-				newText = newText .. tostring(newline) .. "\n"	
-			elseif string.find(line, "%_G%['package'%] = nil") and not string.find(line, "%-%-%_G%['package'%] = nil")  then
-				writeDebugBase(DSMC_ModuleName .. ": desanitizer, desanitize package")
-				local newline = string.gsub(line, "%_G%['package'%] = nil", "%-%-%_G%['package'%] = nil, commented by DSMC: if you won't desanitized environment, please disable the autosave option!")	
-				newText = newText .. tostring(newline) .. "\n"				
-			else
-				newText = newText .. line .. "\n"
-			end
-		end
-		
-		io.close(f)
-		
-		--
-		local o = io.open(missionscriptingluaPath, "w")
-		o:write(newText)
-		o:close()
-		writeDebugBase(DSMC_ModuleName .. ": desanitizer, desanitize done")
-		return true
-		
-	else 
-		io.close(f) 
-		return false 
-	end		
 end
 
 function loadtables()

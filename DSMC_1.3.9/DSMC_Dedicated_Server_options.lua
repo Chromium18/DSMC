@@ -51,13 +51,3 @@ DSMC_restartCampaign            = true     -- true / false. If true, DSMC will c
 -- these parameters will work with any ctld versions, with exception for the DSMC's customized CTLD script (non included)
 DSMC_ctld_recognizeHelos        = true     -- true / false. If true, any helicopter that spawns in the scenery will be added to ctld.transportPilotNames
 DSMC_ctld_recognizeVehicles     = true     -- true / false. If true, any Truck, IFV or APC vehicle from mission editor objects will be added to ctld.transportPilotNames (spawned won't be available)
-
--- these parameteres will setup a slightly modified version of Ciribob's Simple Text To Speech (STTS) mod that will allow you to have voice communication feedback along or instead the texted ones
--- !BEWARE! you still need to have a working and correctly configured SRS server and the environment desanitization MUST be on. Else, it won't work and it also could create errors!
--- If you need to "hack" a little bit more on TTS, like using google credentials or changing SRS port, you want to check this file: \DSMC\STTS_inj.lua. Please consider that any additional changes to that file can't be supported by me while debugging. 
--- Currently DSMC main code does not use this features: this addition is provided for future code integration and for your simplified usage.
-DSMC_STTS                       = false     -- true / false. If true, DSMC will load STTS at mission start.
-DSMC_STTS_method                = "both"   -- text, can be "both", "audio", "text". With "audio", only audio messages will be sent (no text!), with "text", the opposite as it usually be. With "both", audio will be played and text will be prompted
-DSMC_STTS_SRSpath               = "H:\\SRSinstallDir\\DCS-SimpleRadio-Standalone"     -- path of the SRS installation, and of DCS-SR-ExternalAudio.exe file. !BEWARE!: errors happens when this is not properly configured
-DSMC_STTS_RadioFreq_AM          = 303      -- number, must be between 128 and 370. It's the frequency used for broadcasting audio communications in AM.
-DSMC_STTS_RadioFreq_FM          = 40     -- number, must be between 30 and 70. It's the frequency used for broadcasting audio communications in FM.

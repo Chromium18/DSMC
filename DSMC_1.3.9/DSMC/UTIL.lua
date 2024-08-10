@@ -1569,6 +1569,8 @@ function populateStandardPlaneTypes(db)
 
 		standardPlaneTypes[aId] = p
 	end
+
+
 end
 
 -- #### CAMPAIGN BUILD UTILITIES, MANUAL CONTROLLED ####
@@ -1747,6 +1749,8 @@ function addFARPwhBase(unitId, coa, wh, voidIt)
 			["InitFuel"] = 10,
 		}, -- end of ["gasoline"]
 		["unlimitedMunitions"] = true,
+		["dynamicSpawn"] = true,
+		["allowHotStart"] = false,
 		["methanol_mixture"] = 
 		{
 			["InitFuel"] = 10,
@@ -3512,9 +3516,9 @@ if ME_DB.db.CountriesByName then
 end
 --dumpTable("ctryList_pre.lua", ctryList)
 
-tblBriefingImages = createImagesTbl()
-getPayloadOfEachAcf()
-populateStandardPlaneTypes(ME_DB)
+--tblBriefingImages = createImagesTbl()
+--getPayloadOfEachAcf()
+--populateStandardPlaneTypes(ME_DB)
 
 HOOK.writeDebugBase(ModuleName .. ": Loaded " .. MainVersion .. "." .. SubVersion .. "." .. Build .. ", released " .. Date)
 UTILloaded = true

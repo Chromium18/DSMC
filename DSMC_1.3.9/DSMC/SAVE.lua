@@ -1066,7 +1066,7 @@ HOOK.writeDebugDetail(ModuleName .. ": updateResources loaded")
 function save() 
 	HOOK.writeDebugDetail(ModuleName .. ": save starting... ")
 	local processDone = false
-	
+
 	if not current_miz_file then
 		HOOK.writeDebugDetail(ModuleName .. ": save, errore: current_miz_file non disponibile")
 		return false
@@ -1112,6 +1112,8 @@ function save()
 		updateStaticCoa(env.mission)
 		killUnits(env.mission)		
 		killStatics(env.mission)
+
+
 		
 		if HOOK.SPWN_var == true then
 			IncludeSpawned(env.mission, tblSpawned, wrhs_env.warehouses) -- , dict_env.dictionary
@@ -1576,7 +1578,7 @@ function buildNewMizFile(loadedMissionPath, loadedMizFileName, cpm_path)
 	HOOK.writeDebugDetail(ModuleName .. ": buildNewMizFile - NewMizPath path: " .. tostring(NewMizPath))
 	
 	if tblAirbases and tblUnitsUpdate and NewMizPath then
-		
+
 		lfs.mkdir(HOOK.missionfilesdirectory .. "Temp/" .. HOOK.NewMizTempDir)	
 		
 		local zipFile, err = minizip.unzOpen(loadedMissionPath, 'rb')
@@ -1752,6 +1754,37 @@ function buildNewMizFile(loadedMissionPath, loadedMizFileName, cpm_path)
 		HOOK.writeDebugDetail(ModuleName .. ": buildNewMizFile - warehouses file moved")
 		UTIL.moveFile(HOOK.OldMResPath, HOOK.NewMResPath)
 		HOOK.writeDebugDetail(ModuleName .. ": buildNewMizFile - mapResource file moved")
+
+		--[=[
+		net.dostring_in("server", "log.info(\" f it\")")
+
+		local provatesto = [[
+			local testo = "provatestodila"
+			return testo
+		  ]]
+	  
+		  local result = net.dostring_in("server", provatesto)
+		  HOOK.writeDebugDetail(ModuleName .. ": PROVATESTO: " .. tostring(result))
+	  
+		  local provatesto2 = [[
+			local newText = uString
+			return newText
+		  ]]
+	  
+		  local dsmcUtbl, derr2 = net.dostring_in("server", provatesto2)
+		  HOOK.writeDebugDetail(ModuleName .. ": PROVATESTO2: " .. tostring(dsmcUtbl))
+		  HOOK.writeDebugDetail(ModuleName .. ": PROVATESTO2err: " .. tostring(derr2))
+
+		  local provatesto3 = [[
+            log.info("test")
+            local newText = pString
+            return newText
+          ]]
+	  
+		  local dsmcUtbl3, derr3 = net.dostring_in("server", provatesto3)
+		  HOOK.writeDebugDetail(ModuleName .. ": PROVATESTO3: " .. tostring(dsmcUtbl3))
+		  HOOK.writeDebugDetail(ModuleName .. ": PROVATESTO3err: " .. tostring(derr3))
+		  --]=]--
 
 		--("DSMC_NewSaveresourceFiles.lua", DSMC_NewSaveresourceFiles)
 

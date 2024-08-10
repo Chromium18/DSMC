@@ -1,15 +1,10 @@
 -- Dynamic Sequential Mission Campaign -- DSMC core injected functions module
 
 local ModuleName  	= "EMBD"
-local MainVersion 	= DSMC_MainVersion
-local SubVersion 	= DSMC_SubVersion
-local Build 		= DSMC_Build
-local Date			= DSMC_Date
 
 env.setErrorMessageBoxEnabled(false)
-local base 						= _G
-local DSMC_io 					= base.io  	-- check if io is available in mission environment
-local DSMC_lfs 					= base.lfs		-- check if lfs is available in mission environment
+local DSMC_io 						= _G.io  	-- check if io is available in mission environment
+local DSMC_lfs 						= _G.lfs		-- check if lfs is available in mission environment
 local DSMC_allowStop			= true
 
 local texttimer					= 1
@@ -34,6 +29,7 @@ local firstNeutralCountry		= 2
 local nearestAFBonLand			= 5000 -- this should be really improved, but atm no other solution than a fixed number.
 
 local ExclusionTag				= DSMC_ExclusionTag or "DSMC_NoUp"
+env.info(("EMBD ExclusionTag " .. tostring(ExclusionTag)))
 DSMC_firstSaveAllowed			= false
 
 strAirbases						= ""
@@ -93,7 +89,7 @@ if DSMC_debugProcessDetail == true then
 	env.info(("EMBD set ExclusionTag : " .. tostring(ExclusionTag)))
 	env.info(("EMBD set WRHS_module_active : " .. tostring(WRHS_module_active)))
 	
-end		
+end
 
 if wsTypesTbl and DSMC_debugProcessDetail == true then
 	env.info(("DSMC wsTypesTbl exist"))
@@ -316,7 +312,7 @@ if DSMC_io and DSMC_lfs then
 	env.info(("EMBD desanitized additional function loaded"))
 end
 
-function dumpTable(fname, tabledata, varInt)
+function EMBD.dumpTable(fname, tabledata, varInt)
 	if DSMC_lfs and DSMC_io then
 		local fdir = DSMC_lfs.writedir() .. [[DSMC\Debug\]] .. fname
 		local f = DSMC_io.open(fdir, 'w')
@@ -340,7 +336,21 @@ function dumpTable(fname, tabledata, varInt)
 
 	end
 end
---dumpTable("_G_SSE.lua", _G)
+
+--[=[local fullPath = DSMC_lfs.currentdir() .. "Scripts/JSON.lua"
+DSMC_JSON = dofile(fullPath)
+
+if DSMC_JSON then
+	env.info(("EMBD DSMC_JSON available"))
+else
+	env.info(("EMBD DSMC_JSON not available"))
+end
+
+uString = nil
+--]=]--
+
+
+--EMBD.dumpTable("_G_SSE.lua", _G)
 
 -- ##CORE
 
@@ -349,7 +359,7 @@ function EMBD.getFreeCountry()
 	for i=1,100 do		
 		local found = true
 		for cId, cData in pairs(env.mission.coalitions) do
-		--dumpTable("env.mission.coalitions.lua", env.mission.coalitions)
+		--EMBD.dumpTable("env.mission.coalitions.lua", env.mission.coalitions)
 			--env.info(("EMBD firstNeutralCountry check 1"))
 			if cId == "blue" or cId == "red" then
 				if cData then
@@ -375,7 +385,7 @@ function EMBD.getAptInfo(builtResMap)
 
 	tblAirbases = {}
 	local apt_Table = world.getAirbases()
-	--dumpTable("apt_Table.lua", apt_Table)
+	--EMBD.dumpTable("apt_Table.lua", apt_Table)
 	for Aid, Adata in pairs(apt_Table) do
 
 		if builtResMap == true then
@@ -401,7 +411,7 @@ function EMBD.getAptInfo(builtResMap)
 				end
 			end
 			env.info(("EMBD EMBD.tblResMap updated"))
-			--dumpTable("EMBD.tblResMap.lua", EMBD.tblResMap, "int")
+			--EMBD.dumpTable("EMBD.tblResMap.lua", EMBD.tblResMap, "int")
 		end
 
 		if Adata and Adata:isExist() == true then
@@ -890,7 +900,7 @@ function EMBD.getWarehouses()
 	tblWarehousesContent = {}
 	tblWarehousesWsTable = {}
 	local wh_Table = world.getAirbases()
-	--dumpTable("wh_Table.lua", wh_Table)
+	--EMBD.dumpTable("wh_Table.lua", wh_Table)
 
 	-- from wh table
 	EMBD.aliveAcfWhAdder()
@@ -957,6 +967,7 @@ end
 EMBD.oncallworkflow = function(sanivar, recall)
 	env.info(("EMBD.oncallworkflow sanivar: " .. tostring(sanivar) .. ", recall: " .. tostring(recall)))
 	DSMC_allowStop = false
+
 	if sanivar == "desanitized" then
 		env.info(("EMBD.oncallworkflow (desan) saveProcess start"))
 		--not used now
@@ -974,52 +985,42 @@ EMBD.oncallworkflow = function(sanivar, recall)
 		
 		local function funcAirbases()
 			EMBD.saveTable("tblAirbases", tblAirbases)
-			--env.info(("EMBD.oncallworkflow (desan) saved tblAirbases"))
 		end
 
 		local function funcDeadUnits()
 			EMBD.saveTable("tblDeadUnits", tblDeadUnits)
-			--env.info(("EMBD.oncallworkflow (desan) saved tblDeadUnits"))
 		end
 
 		local function funcDeadScenObj()
 			EMBD.saveTable("tblDeadScenObj", tblDeadScenObj)
-			--env.info(("EMBD.oncallworkflow (desan) saved tblDeadScenObj"))
 		end
 
 		local function funcUnitsUpdate()
 			EMBD.saveTable("tblUnitsUpdate", tblUnitsUpdate)
-			--env.info(("EMBD.oncallworkflow (desan) saved tblUnitsUpdate"))
 		end	
 
 		local function funcSpawned()
 			EMBD.saveTable("tblSpawned", tblSpawned)
-			--env.info(("EMBD.oncallworkflow (desan) saved tblSpawned"))
 		end
 
 		local function funcConquer()
 			EMBD.saveTable("tblConquer", tblConquer)
-			--env.info(("EMBD.oncallworkflow (desan) saved tblConquer"))
 		end			
 		
 		local function funcStaticChange()
 			EMBD.saveTable("tblWarehouseChangeCoa", tblWarehouseChangeCoa)
-			--env.info(("EMBD.oncallworkflow (desan) saved tblWarehouseChangeCoa"))
 		end		
 
 		local function funcWarehouseTrack()
 			EMBD.saveTable("tblWarehousesContent", tblWarehousesContent)
-			--env.info(("EMBD.oncallworkflow (desan) saved tblWarehouseChangeCoa"))
 		end	
 
 		local function funcCoaChangeTrack()
 			EMBD.saveTable("tblCoaChanges", tblCoaChanges)
-			--env.info(("EMBD.oncallworkflow (desan) saved tblCoaChanges"))
 		end				
 
 		local function saveProcess()
 			trigger.action.outText("DSMC save...", 10)
-			--env.info(("EMBD.oncallworkflow called saveProcess function"))
 		end					
 		
 		timer.scheduleFunction(funcAirbases, {}, timer.getTime() + cur_Stack)
@@ -1051,135 +1052,6 @@ EMBD.oncallworkflow = function(sanivar, recall)
 		end	
 
 		cur_Stack = 0.5	
-	else
-		env.info(("EMBD.oncallworkflow saveProcess standard start"))
-		local msg_duration = 0.05
-		local msg_Stack = 0.5
-		cur_Stack = 0.5 -- start point
-
-		EMBD.getAptInfo()
-		--EMBD.collectLogCrates()
-		EMBD.sendUnitsData(env.mission)
-		EMBD.changeWarehouseCoalition(env.mission)
-		EMBD.updateSpawnedPosition(tblSpawned, env.mission)
-		EMBD.getWarehouses()
-		
-		strAirbases						= ""
-		completeStringstrAirbases		= ""
-		strDeadUnits					= ""
-		completeStringstrDeadUnits		= ""
-		strDeadScenObj					= ""
-		completeStringstrUnitsUpdate	= ""
-		strSpawned						= ""
-		completeStringstrSpawned		= ""
-		strConquer						= ""
-		completeStringstrConquer		= ""		
-		strLandPosition					= ""
-		completeStringstrLandPosition	= ""
-		strChngStatic					= ""
-		completeStringstrChngStatic		= ""
-		strWrhsTracking					= ""
-		completeStringWrhsTracking		= ""
-		strCoaChTracking				= ""
-		completeStringCoaChTracking		= ""		
-		
-		strAirbases = IntegratedserializeWithCycles("tblAirbases", tblAirbases)
-		completeStringstrAirbases = tostring(strAirbases)
-		local function funcAirbases()
-			trigger.action.outText(completeStringstrAirbases, msg_duration)
-			env.info(("EMBD.oncallworkflow standard saved tblAirbases"))
-		end
-		
-		strDeadUnits = IntegratedserializeWithCycles("tblDeadUnits", tblDeadUnits)
-		completeStringstrDeadUnits = tostring(strDeadUnits)
-		local function funcDeadUnits()
-			trigger.action.outText(completeStringstrDeadUnits, msg_duration)
-			--env.info(("EMBD.oncallworkflow standard saved tblDeadUnits"))
-		end
-		
-		strDeadScenObj = IntegratedserializeWithCycles("tblDeadScenObj", tblDeadScenObj)
-		completeStringstrDeadScenObj = tostring(strDeadScenObj)
-		local function funcDeadScenObj()
-			trigger.action.outText(completeStringstrDeadScenObj, msg_duration)
-			--env.info(("EMBD.oncallworkflow standard saved tblDeadScenObj"))
-		end
-		
-		strUnitsUpdate = IntegratedserializeWithCycles("tblUnitsUpdate", tblUnitsUpdate)
-		completeStringstrUnitsUpdate = tostring(strUnitsUpdate)
-		local function funcUnitsUpdate()
-			trigger.action.outText(completeStringstrUnitsUpdate, msg_duration)
-			--env.info(("EMBD.oncallworkflow standard saved tblUnitsUpdate"))
-		end	
-
-		strSpawned = IntegratedserializeWithCycles("tblSpawned", tblSpawned)
-		completeStringstrSpawned = tostring(strSpawned)
-		local function funcSpawned()
-			trigger.action.outText(completeStringstrSpawned, msg_duration)
-			--env.info(("EMBD.oncallworkflow standard saved tblSpawned"))
-		end
-		
-		strConquer = IntegratedserializeWithCycles("tblConquer", tblConquer)
-		completeStringstrChngStatic = tostring(strConquer)
-		local function funcConquer()
-			trigger.action.outText(completeStringstrChngStatic, msg_duration)
-			--env.info(("EMBD.oncallworkflow standard saved tblConquer"))
-		end	
-		
-		strChngStatic = IntegratedserializeWithCycles("tblWarehouseChangeCoa", tblWarehouseChangeCoa)
-		completeStringstrConquer = tostring(strChngStatic)
-		local function funcStaticChange()
-			trigger.action.outText(completeStringstrConquer, msg_duration)
-			--env.info(("EMBD.oncallworkflow standard saved tblWarehouseChangeCoa"))
-		end	
-
-		strWrhsTracking = IntegratedserializeWithCycles("tblWarehousesContent", tblWarehousesContent)
-		completeStringWrhsTracking = tostring(strWrhsTracking)
-		local function funcWrhsTracking()
-			trigger.action.outText(completeStringWrhsTracking, msg_duration)
-			--env.info(("EMBD.oncallworkflow standard saved tblWarehousesContent"))
-		end	
-		
-		strCoaChTracking = IntegratedserializeWithCycles("tblCoaChanges", tblCoaChanges)
-		completeStringCoaChTracking = tostring(strCoaChTracking)
-		local function funcCoaChTracking()
-			trigger.action.outText(completeStringCoaChTracking, msg_duration)
-			--env.info(("EMBD.oncallworkflow standard saved tblWarehousesContent"))
-		end	
-
-		local function saveProcess()			
-			trigger.action.outText("DSMC save...", msg_duration)
-			--env.info(("EMBD.oncallworkflow called saveProcess function"))
-		end	
-
-		timer.scheduleFunction(funcAirbases, {}, timer.getTime() + cur_Stack)
-		cur_Stack = cur_Stack + msg_Stack
-		timer.scheduleFunction(funcDeadUnits, {}, timer.getTime() + cur_Stack)
-		cur_Stack = cur_Stack + msg_Stack
-		timer.scheduleFunction(funcDeadScenObj, {}, timer.getTime() + cur_Stack)
-		cur_Stack = cur_Stack + msg_Stack
-		timer.scheduleFunction(funcUnitsUpdate, {}, timer.getTime() + cur_Stack)
-		cur_Stack = cur_Stack + msg_Stack
-		timer.scheduleFunction(funcSpawned, {}, timer.getTime() + cur_Stack)
-		cur_Stack = cur_Stack + msg_Stack
-		timer.scheduleFunction(funcConquer, {}, timer.getTime() + cur_Stack)
-		cur_Stack = cur_Stack + msg_Stack		
-		timer.scheduleFunction(funcStaticChange, {}, timer.getTime() + cur_Stack)
-		cur_Stack = cur_Stack + msg_Stack	
-		timer.scheduleFunction(funcWrhsTracking, {}, timer.getTime() + cur_Stack)
-		cur_Stack = cur_Stack + msg_Stack	
-		timer.scheduleFunction(funcCoaChTracking, {}, timer.getTime() + cur_Stack)
-		cur_Stack = cur_Stack + msg_Stack			
-
-		if recall == "recall" then
-			trigger.action.outText("DSMC is generating the new scenery file. It can take minutes, don't force DCS to stop", 30)
-			timer.scheduleFunction(saveProcess, {}, timer.getTime() + cur_Stack)
-		end
-		
-		if DSMC_debugProcessDetail == true then
-			env.info(("EMBD.oncallworkflow scheduled strings printing"))
-		end	
-
-		cur_Stack = 0.5
 	end
 	env.info(("EMBD.oncallworkflow saveProcess finished"))
 end
@@ -1200,16 +1072,16 @@ EMBD.executeSAVEFunction = function(recall)
 	  env.info(("EMBD.executeSAVE is in standard mode"))
 	  if DSMC_lfs and DSMC_io then
 		EMBD.oncallworkflow("desanitized", recall)
-	  else
-		EMBD.oncallworkflow("sanitized", recall)
 	  end  
 	end
-	--dumpTable("wh_after.lua", env.warehouses)
+	--EMBD.dumpTable("wh_after.lua", env.warehouses)
 end
+
 -- new entry to make the callback detached and allow DSMC to process any mission changes.
 EMBD.executeSAVE = function(recall)
 	env.info(("EMBD.executeSAVE launched. recall = " .. tostring(recall)))
 	local oksave = true
+		
 	if oksave == true then  -- (timer.getAbsTime() - timer.getTime0()) < limitTimeForFirstSave
 		if EMBD.preSaveCallback ~= nil then
 			EMBD.preSaveCallback()
@@ -1782,11 +1654,10 @@ EMBD.airbaseFuelIndex = {}
 EMBD.fuelTest = {}
 function EMBD.fuelTest:onEvent(event)
 	if event.id == world.event.S_EVENT_BIRTH then 
-		env.info(("EMBD.fuelTest event birth found"))
 		if event.initiator then
 			if Object.getCategory(event.initiator) == 1 then -- unit. if it's a unit, can have fuel
 				local fuel = event.initiator:getFuel()
-				env.info(("EMBD.fuelTest event birth found, fuel: " .. tostring(fuel)))
+				env.info(("EMBD.fuelTest event birth found, name: " .. tostring(event.initiator:getName()) .. ", fuel: " .. tostring(fuel)))
 				if fuel then
 					local isClient = event.initiator:getPlayerName()
 					if fuel == 0 and isClient == false then
@@ -2233,22 +2104,17 @@ EMBD.scheduleCTLDsupport = function()
 end
 EMBD.scheduleCTLDsupport()
 
+EMBD.oncallworkflow("desanitized")
 
-
-if DSMC_lfs and DSMC_io then
-	EMBD.oncallworkflow("desanitized")
-else
-	EMBD.oncallworkflow("sanitized")
-end	
 
 if DSMC_debugProcessDetail == true then
 	local function dumpThreats()
 		if DSMC_io and DSMC_lfs then
-			dumpTable("EMBD.tblThreatsRange.lua", EMBD.tblThreatsRange, "int")
+			EMBD.dumpTable("EMBD.tblThreatsRange.lua", EMBD.tblThreatsRange, "int")
 		end
 	end
 	timer.scheduleFunction(dumpThreats, {}, timer.getTime() + 2)
 end
 
-env.info((ModuleName .. ": Loaded " .. MainVersion .. "." .. SubVersion .. "." .. Build .. ", released " .. Date))
+env.info((ModuleName .. ": Loaded EMBD in the new way"))
 --~=

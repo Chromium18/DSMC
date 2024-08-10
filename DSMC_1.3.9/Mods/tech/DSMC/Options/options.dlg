@@ -811,25 +811,6 @@ dialog = {
 					["skin"] = CheckBoxSkin,
 					["type"] = "CheckBox",
 				},	
-				--[[--
-				["CTLD_Footnote_label"] = { -- DSMC_Help_AIE_1
-					["params"] = {
-						["bounds"] = {
-							["h"] = verticalBound,
-							["w"] = width, 
-							["x"] = leftMargin2,
-							["y"] = verticalStack*5.50,
-						},
-						["enabled"] = true,
-						["text"] = "$CTLD_Footnote",
-						["tooltip"] = "",
-						["visible"] = true,
-						["zindex"] = 0,
-					},
-					["skin"] = HelpSkin,
-					["type"] = "Static",
-				},
-				--]]--
 
 			},
 			["params"] = {
