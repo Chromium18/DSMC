@@ -28,8 +28,8 @@ local playerShutEngine			= false
 local firstNeutralCountry		= 2	
 local nearestAFBonLand			= 5000 -- this should be really improved, but atm no other solution than a fixed number.
 
-local ExclusionTag				= DSMC_ExclusionTag or "DSMC_NoUp"
-env.info(("EMBD ExclusionTag " .. tostring(ExclusionTag)))
+local ExclusionTag				= "notdefinedyet"
+
 DSMC_firstSaveAllowed			= false
 
 strAirbases						= ""
@@ -74,26 +74,11 @@ end
 timer.scheduleFunction(checkLOGIandCTLD, {}, timer.getTime() + 20)
 
 
-trigger.action.outText("DSMC is active in this mission", 10)
-if not DSMC_DisableF10save then
-	trigger.action.outText("to save scenery progress, you can use the communication F10 menù and choose DSMC - save mission", 5)
-end
 
-if not DSMC_multy then
-	trigger.action.outText("DSMC is in single player mode: you must remember to save the mission on your own!", 5)
-end
 
-if DSMC_debugProcessDetail == true then
-	env.info(("EMBD set setErrorMessageBoxEnabled : true"))
-	env.info(("EMBD DSMC_ExclusionTag : " .. tostring(DSMC_ExclusionTag)))
-	env.info(("EMBD set ExclusionTag : " .. tostring(ExclusionTag)))
-	env.info(("EMBD set WRHS_module_active : " .. tostring(WRHS_module_active)))
-	
-end
 
-if wsTypesTbl and DSMC_debugProcessDetail == true then
-	env.info(("DSMC wsTypesTbl exist"))
-end
+
+
 
 --### UTILS	
 
@@ -422,13 +407,6 @@ function EMBD.getAptInfo(builtResMap)
 			local aptPos = Adata:getPosition().p
 			local aptCoa = Adata:getCoalition()
 			local aptWh = Adata:getWarehouse()
-			--if env.mission.theatre == "Caucasus" then
-			--	indexId = indexId +11			
-			--	if DSMC_debugProcessDetail == true then
-			--		env.info(("EMBD.getAptInfo added 11 to airport index due to Caucasus scenery, from: " .. tostring(Aid) .. " to: " .. tostring(indexId)))
-			--	end				
-			--end	
-			--for cat
 
 			tblAirbases[#tblAirbases+1] = {id = aptID, index = aptID, name = aptName, desc = aptInfo, pos = aptPos, coa = aptCoa, wh = aptWh}
 		end
@@ -1746,8 +1724,8 @@ end
 EMBD.createRadioMenu = function()
 	--local _basePath = missionCommands.addSubMenuForGroup(_groupId, "DSMC-CTLD")
 	DSMC_Rmenu = missionCommands.addSubMenu("DSMC")
-
 	if not DSMC_DisableF10save then
+		trigger.action.outText("to save scenery progress, you can use the communication F10 menù and choose DSMC - save mission", 5)
 		missionCommands.addCommand("Save scenery", DSMC_Rmenu, EMBD.executeSAVE, "recall")
 		--missionCommands.addCommandForCoalition(coalition.side.RED, "Save scenery", DSMC_RmenuRed, EMBD.executeSAVE, "recall")
 		
@@ -1764,7 +1742,7 @@ end
 
 EMBD.scheduleAutosave = function()
 	env.info(("EMBD.scheduleAutosave launched"))
-	if DSMC_autosavefrequency then -- and DSMC_server and DSMC_multy 
+	if DSMC_autosavefrequency then
 		env.info(("EMBD.scheduleAutosave DSMC_autosavefrequency = " .. tostring(DSMC_autosavefrequency)))		
 		EMBD.executeSAVE()
 		env.info(("EMBD.scheduleAutosave automessage message printed!"))
@@ -1789,18 +1767,54 @@ EMBD.setDestroyedObjectAtStart()
 --### SET FUNCTIONS
 
 --check vars for debug
-if DSMC_debugProcessDetail then
-	env.info(("EMBD: DSMC variable settings: DSMC_multy = " ..tostring(DSMC_multy)))
-	env.info(("EMBD: DSMC variable settings: DSMC_server = " ..tostring(DSMC_server)))
-	env.info(("EMBD: DSMC variable settings: DSMC_debugProcessDetail = " ..tostring(DSMC_debugProcessDetail)))
-	env.info(("EMBD: DSMC variable settings: DSMC_autosavefrequency = " ..tostring(DSMC_autosavefrequency)))
-	env.info(("EMBD: DSMC variable settings: DSMC_AutosaveExit_timer = " ..tostring(DSMC_AutosaveExit_timer)))
-end
+
 
 --do functions
 --EMBD.getFreeCountry()
 EMBD.getAptInfo(true)
-EMBD.createRadioMenu()
+local checkOptions = function()
+
+	-- mex
+	trigger.action.outText("DSMC is active in this mission", 10)
+	if not DSMC_multy then
+		trigger.action.outText("DSMC is in single player mode: you must remember to save the mission on your own!", 5)
+	end
+
+	-- sets
+	ExclusionTag				= DSMC_ExclusionTag or "DSMC_NoUp"
+
+	-- functions
+	timer.scheduleFunction(EMBD.createRadioMenu, nil, timer.getTime() + 1)
+	if DSMC_debugProcessDetail == true then
+		local function dumpThreats()
+			if DSMC_io and DSMC_lfs then
+				EMBD.dumpTable("EMBD.tblThreatsRange.lua", EMBD.tblThreatsRange, "int")
+			end
+		end
+		timer.scheduleFunction(dumpThreats, {}, timer.getTime() + 2)
+	end
+
+	-- debug
+	if DSMC_debugProcessDetail then
+		env.info(("EMBD: DSMC variable settings: DSMC_debugProcessDetail = " ..tostring(DSMC_debugProcessDetail)))
+		env.info(("EMBD: DSMC variable settings: DSMC_autosavefrequency = " ..tostring(DSMC_autosavefrequency)))
+		env.info(("EMBD: DSMC variable settings: DSMC_AutosaveExit_timer = " ..tostring(DSMC_AutosaveExit_timer)))
+	end
+
+	if DSMC_debugProcessDetail == true then
+		env.info(("EMBD set setErrorMessageBoxEnabled : true"))
+		env.info(("EMBD DSMC_ExclusionTag : " .. tostring(DSMC_ExclusionTag)))
+		env.info(("EMBD set ExclusionTag : " .. tostring(ExclusionTag)))
+		env.info(("EMBD set WRHS_module_active : " .. tostring(WRHS_module_active)))
+	end
+	
+	if wsTypesTbl and DSMC_debugProcessDetail == true then
+		env.info(("DSMC wsTypesTbl exist"))
+	end
+
+end
+timer.scheduleFunction(checkOptions, {}, timer.getTime() + 1)
+
 if DSMC_autosavefrequency and DSMC_multy and DSMC_io and DSMC_lfs then
 	timer.scheduleFunction(EMBD.scheduleAutosave, {}, timer.getTime() + tonumber(DSMC_autosavefrequency))
 end
@@ -2107,14 +2121,8 @@ EMBD.scheduleCTLDsupport()
 EMBD.oncallworkflow("desanitized")
 
 
-if DSMC_debugProcessDetail == true then
-	local function dumpThreats()
-		if DSMC_io and DSMC_lfs then
-			EMBD.dumpTable("EMBD.tblThreatsRange.lua", EMBD.tblThreatsRange, "int")
-		end
-	end
-	timer.scheduleFunction(dumpThreats, {}, timer.getTime() + 2)
-end
+
+
 
 env.info((ModuleName .. ": Loaded EMBD in the new way"))
 --~=
