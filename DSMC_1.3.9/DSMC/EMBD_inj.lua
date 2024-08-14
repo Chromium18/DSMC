@@ -3,8 +3,8 @@
 local ModuleName  	= "EMBD"
 
 env.setErrorMessageBoxEnabled(false)
-local DSMC_io 						= _G.io  	-- check if io is available in mission environment
-local DSMC_lfs 						= _G.lfs		-- check if lfs is available in mission environment
+local DSMC_io 					= _G.io  	-- check if io is available in mission environment
+local DSMC_lfs 					= _G.lfs		-- check if lfs is available in mission environment
 local DSMC_allowStop			= true
 
 local texttimer					= 1
@@ -72,13 +72,6 @@ local checkLOGIandCTLD = function()
 	end
 end
 timer.scheduleFunction(checkLOGIandCTLD, {}, timer.getTime() + 20)
-
-
-
-
-
-
-
 
 --### UTILS	
 
@@ -1054,11 +1047,15 @@ EMBD.executeSAVEFunction = function(recall)
 	end
 	--EMBD.dumpTable("wh_after.lua", env.warehouses)
 end
-
 -- new entry to make the callback detached and allow DSMC to process any mission changes.
 EMBD.executeSAVE = function(recall)
 	env.info(("EMBD.executeSAVE launched. recall = " .. tostring(recall)))
 	local oksave = true
+	if DGWS then
+		oksave = DSMC_firstSaveAllowed
+	else
+		oksave = true
+	end
 		
 	if oksave == true then  -- (timer.getAbsTime() - timer.getTime0()) < limitTimeForFirstSave
 		if EMBD.preSaveCallback ~= nil then
@@ -1766,9 +1763,6 @@ EMBD.setDestroyedObjectAtStart()
 
 --### SET FUNCTIONS
 
---check vars for debug
-
-
 --do functions
 --EMBD.getFreeCountry()
 EMBD.getAptInfo(true)
@@ -1793,6 +1787,24 @@ local checkOptions = function()
 		end
 		timer.scheduleFunction(dumpThreats, {}, timer.getTime() + 2)
 	end
+	
+	if DSMC_autosavefrequency and DSMC_multy and DSMC_io and DSMC_lfs then
+		timer.scheduleFunction(EMBD.scheduleAutosave, {}, timer.getTime() + tonumber(DSMC_autosavefrequency))
+	end
+
+	if DSMC_AutosaveExit_timer then
+		if DSMC_AutosaveExit_timer > 0 then
+			local function autostop()
+				if DSMC_allowStop == false then
+					trigger.action.outText("DSMC is trying to restart the server! land or disconnect as soon as you can: DSMC will try again in 10 minutes", 10)		
+					timer.scheduleFunction(autostop, {}, timer.getTime() + 600)
+				else
+					timer.scheduleFunction(autostop, {}, timer.getTime() + 10)
+				end
+			end
+			timer.scheduleFunction(autostop, {}, timer.getTime() + tonumber(DSMC_AutosaveExit_timer))
+		end
+	end
 
 	-- debug
 	if DSMC_debugProcessDetail then
@@ -1815,23 +1827,7 @@ local checkOptions = function()
 end
 timer.scheduleFunction(checkOptions, {}, timer.getTime() + 1)
 
-if DSMC_autosavefrequency and DSMC_multy and DSMC_io and DSMC_lfs then
-	timer.scheduleFunction(EMBD.scheduleAutosave, {}, timer.getTime() + tonumber(DSMC_autosavefrequency))
-end
 
-if DSMC_AutosaveExit_timer then
-	if DSMC_AutosaveExit_timer > 0 then
-		local function autostop()
-			if DSMC_allowStop == false then
-				trigger.action.outText("DSMC is trying to restart the server! land or disconnect as soon as you can: DSMC will try again in 10 minutes", 10)		
-				timer.scheduleFunction(autostop, {}, timer.getTime() + 600)
-			else
-				timer.scheduleFunction(autostop, {}, timer.getTime() + 10)
-			end
-		end
-		timer.scheduleFunction(autostop, {}, timer.getTime() + tonumber(DSMC_AutosaveExit_timer))
-	end
-end
 
 EMBD.updateTimedCall = function()
 	if updateTimedCall then
@@ -2119,9 +2115,6 @@ end
 EMBD.scheduleCTLDsupport()
 
 EMBD.oncallworkflow("desanitized")
-
-
-
 
 
 env.info((ModuleName .. ": Loaded EMBD in the new way"))
