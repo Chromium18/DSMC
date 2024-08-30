@@ -73,7 +73,6 @@ local checkLOGIandCTLD = function()
 end
 timer.scheduleFunction(checkLOGIandCTLD, {}, timer.getTime() + 20)
 
-
 --### UTILS	
 
 function IntegratedbasicSerialize(s)
@@ -1080,11 +1079,13 @@ end
 EMBD.deathRecorder = {}
 function EMBD.deathRecorder:onEvent(event)
 
-	if event.id == world.event.S_EVENT_DEAD or event.id ==  world.event.S_EVENT_CRASH then --world.event.S_EVENT_DEAD
+	if event.id == world.event.S_EVENT_UNIT_LOST or event.id ==  world.event.S_EVENT_CRASH then --world.event.S_EVENT_DEAD
 		if event.initiator then
-			local SOcategory 	= Object.getCategory(event.initiator)
-			local SOpos 		= event.initiator:getPosition().p
-			local SOtypeName	= event.initiator:getTypeName()	
+			local o = deepCopy(event.initiator)
+
+			local SOcategory 	= Object.getCategory(o)
+			local SOpos 		= o:getPosition().p
+			local SOtypeName	= o:getTypeName()	
 			env.info(("EMBD.deathRecorder death event "))
 
 			if SOcategory and SOpos and SOtypeName then
@@ -1099,13 +1100,13 @@ function EMBD.deathRecorder:onEvent(event)
 						
 						local exist = false
 						for _, deadData in pairs(tblDeadScenObj) do 
-							if tostring(deadData.objId) == tostring(event.initiator:getName()) then
+							if tostring(deadData.objId) == tostring(o:getName()) then
 								env.info(("EMBD.deathRecorder death event category 5, skipped cause already there"))
 								exist = true
 							end
 						end
 						if exist == false then
-							local Objdesc = event.initiator:getDesc()
+							local Objdesc = o:getDesc()
 							if Objdesc.life > 1 then
 
 								local y = env.mission.date.Year
@@ -1120,13 +1121,13 @@ function EMBD.deathRecorder:onEvent(event)
 									end
 								end
 
-								tblDeadScenObj[#tblDeadScenObj + 1] = {id = mapObj_deathcounter, x = SOpos.x, y = SOpos.z, objId = event.initiator:getName(), SOdesc = Objdesc, deathDay = dayValue} 
+								tblDeadScenObj[#tblDeadScenObj + 1] = {id = mapObj_deathcounter, x = SOpos.x, y = SOpos.z, objId = o:getName(), SOdesc = Objdesc, deathDay = dayValue} 
 							end
 						end
 
 
 					elseif SOcategory == 3 then 
-						local ObjdescCat = event.initiator:getDesc().category
+						local ObjdescCat = o:getDesc().category
 						local objCoalition		= nil
 						local objCountry		= nil
 						if DSMC_debugProcessDetail == true then
@@ -1149,7 +1150,7 @@ function EMBD.deathRecorder:onEvent(event)
 							end
 						end
 
-						tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(event.initiator:getID()), objCategory = 3, deathDay = dayValue, coalitionID = objCoalition, countryID = objCountry}		
+						tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(o:getID()), objCategory = 3, deathDay = dayValue, coalitionID = objCoalition, countryID = objCountry}		
 
 					elseif SOcategory == 1 then -- unit. Cargos, Bases and Weapons are left out 
 					
@@ -1183,12 +1184,12 @@ function EMBD.deathRecorder:onEvent(event)
 						local unitShip			= nil
 						
 						local groupTable 	= {}
-						if event.initiator then
-							unitName 			= event.initiator:getName()
+						if o then
+							unitName 			= o:getName()
 							if DSMC_debugProcessDetail == true then
 								env.info(("EMBD.deathRecorder dead unit name: " .. tostring(unitName)))	
 							end					
-							unitTable 			= event.initiator -- Unit.getByName(unitName)
+							unitTable 			= o -- Unit.getByName(unitName)
 							if unitTable then
 								unitPos 		= SOpos
 								unitCategory 	= unitTable:getDesc().category
@@ -1196,9 +1197,9 @@ function EMBD.deathRecorder:onEvent(event)
 								unitCoalition 	= unitTable:getCoalition()
 								unitCountry 	= unitTable:getCountry()
 								unitTypeName	= SOtypeName
-								unitID			= event.initiator:getID()
-								unitInfantry	= event.initiator:hasAttribute("Infantry")
-								unitShip		= event.initiator:hasAttribute("Ships")
+								unitID			= o:getID()
+								unitInfantry	= o:hasAttribute("Infantry")
+								unitShip		= o:hasAttribute("Ships")
 							end
 						end			
 						
@@ -1268,7 +1269,7 @@ function EMBD.deathRecorder:onEvent(event)
 							else
 								groupTable = "none"
 							end	
-						
+							
 							tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(unitID), coalitionID = unitCoalition, countryID = unitCountry, staticTable = groupTable, objCategory = unitCatEnum, objTypeName = unitTypeName, deathDay = dayValue}
 							if DSMC_debugProcessDetail == true then
 								env.info(("EMBD.deathRecorder added unit"))	
@@ -1302,7 +1303,7 @@ function EMBD.deathRecorder:onEvent(event)
 
 			-- death in air fixers
 			for fId, fData in pairs(tblAircraftInFlightFix) do
-				if fData.u == event.initiator then
+				if fData.u == o then
 					tblAircraftInFlightFix[fId] = nil
 				end
 			end
@@ -1760,9 +1761,6 @@ EMBD.setDestroyedObjectAtStart()
 
 --### SET FUNCTIONS
 
---check vars for debug
-
-
 --do functions
 --EMBD.getFreeCountry()
 EMBD.getAptInfo(true)
@@ -1788,6 +1786,24 @@ local checkOptions = function()
 		timer.scheduleFunction(dumpThreats, {}, timer.getTime() + 2)
 	end
 
+	if DSMC_autosavefrequency and DSMC_multy and DSMC_io and DSMC_lfs then
+		timer.scheduleFunction(EMBD.scheduleAutosave, {}, timer.getTime() + tonumber(DSMC_autosavefrequency))
+	end
+	
+	if DSMC_AutosaveExit_timer then
+		if DSMC_AutosaveExit_timer > 0 then
+			local function autostop()
+				if DSMC_allowStop == false then
+					trigger.action.outText("DSMC is trying to restart the server! land or disconnect as soon as you can: DSMC will try again in 10 minutes", 10)		
+					timer.scheduleFunction(autostop, {}, timer.getTime() + 600)
+				else
+					timer.scheduleFunction(autostop, {}, timer.getTime() + 10)
+				end
+			end
+			timer.scheduleFunction(autostop, {}, timer.getTime() + tonumber(DSMC_AutosaveExit_timer))
+		end
+	end
+
 	-- debug
 	if DSMC_debugProcessDetail then
 		env.info(("EMBD: DSMC variable settings: DSMC_debugProcessDetail = " ..tostring(DSMC_debugProcessDetail)))
@@ -1808,24 +1824,6 @@ local checkOptions = function()
 
 end
 timer.scheduleFunction(checkOptions, {}, timer.getTime() + 1)
-
-if DSMC_autosavefrequency and DSMC_multy and DSMC_io and DSMC_lfs then
-	timer.scheduleFunction(EMBD.scheduleAutosave, {}, timer.getTime() + tonumber(DSMC_autosavefrequency))
-end
-
-if DSMC_AutosaveExit_timer then
-	if DSMC_AutosaveExit_timer > 0 then
-		local function autostop()
-			if DSMC_allowStop == false then
-				trigger.action.outText("DSMC is trying to restart the server! land or disconnect as soon as you can: DSMC will try again in 10 minutes", 10)		
-				timer.scheduleFunction(autostop, {}, timer.getTime() + 600)
-			else
-				timer.scheduleFunction(autostop, {}, timer.getTime() + 10)
-			end
-		end
-		timer.scheduleFunction(autostop, {}, timer.getTime() + tonumber(DSMC_AutosaveExit_timer))
-	end
-end
 
 EMBD.updateTimedCall = function()
 	if updateTimedCall then
@@ -2009,102 +2007,118 @@ EMBD.scheduleCTLDsupport = function()
 	env.info((ModuleName .. ": checking CTLD needed support code in " .. tostring(timesec) .. " seconds"))
 	local launchCTLDsupport = function()
 		if ctld then
-			if not ctld_c then
 				
-				local a = DSMC_ctld_var1 or false
-				local b = DSMC_ctld_var2 or false
-				env.info(ModuleName .. " AddHeloOnBirth DSMC_ctld_var1 " .. tostring(a))
-				env.info(ModuleName .. " AddHeloOnBirth DSMC_ctld_var2 " .. tostring(b))
+			local a = DSMC_ctld_var1 or false
+			local b = DSMC_ctld_var2 or false
+			env.info(ModuleName .. " AddHeloOnBirth DSMC_ctld_var1 " .. tostring(a))
+			env.info(ModuleName .. " AddHeloOnBirth DSMC_ctld_var2 " .. tostring(b))
 
-				EMBD.update_ctld_Tables(a, b)
+			EMBD.update_ctld_Tables(a, b)
 
-				EMBD.AddHeloOnBirth = {}
-				function EMBD.AddHeloOnBirth:onEvent(event)	
-					if event.id == world.event.S_EVENT_BIRTH and event.initiator then
-						if Object.getCategory(event.initiator) == 1 then
-							local unit 			= event.initiator
-							if unit then
-								local unitID = unit:getID()	
-								local unitName = unit:getName()									
-								if a == true and unit:hasAttribute("Helicopters") then
-									table.insert(ctld.transportPilotNames, unitName)
+			if a or b then
+				function ctld.getGroupId(_unit)
+					return _unit:getGroup():getID()
+				end
+			end
 
-									env.info(ModuleName .. " AddHeloOnBirth unit " .. tostring(unitName) .. " is an helo, ctld.transportPilotNames updated")
-
-								elseif unit:hasAttribute("APC") or unit:hasAttribute("IFV") or unit:hasAttribute("Trucks") then
-									if b == true then
-										table.insert(ctld.transportPilotNames, unitName)
-
-										env.info(ModuleName .. " AddHeloOnBirth unit " .. tostring(unitName) .. " is an APC or IFV, ctld.transportPilotNames updated")
-
-									end
-								end	
-							end
+			EMBD.AddHeloOnBirth = {}
+			function EMBD.AddHeloOnBirth:onEvent(event)	
+				if event.id == world.event.S_EVENT_BIRTH and event.initiator then
+					if Object.getCategory(event.initiator) == 1 then
+						local unit 			= event.initiator
+						if unit then
+							local unitID = unit:getID()	
+							local unitName = unit:getName()									
+							if a == true and unit:hasAttribute("Helicopters") then
+								table.insert(ctld.transportPilotNames, tostring(unitName))
+								env.info(ModuleName .. " AddHeloOnBirth unitName " .. tostring(unitName) .. " is an helo, ctld.transportPilotNames updated")
+							end	
 						end
 					end
 				end
-				world.addEventHandler(EMBD.AddHeloOnBirth)	
+			end
+			world.addEventHandler(EMBD.AddHeloOnBirth)	
 
-				EMBD.AddInfantriesOnBirth = {}
-				function EMBD.AddInfantriesOnBirth:onEvent(event)	
-					if	b == true then
-						if event.id == world.event.S_EVENT_BIRTH and event.initiator then
-							if Object.getCategory(event.initiator) == 1 then	
-								local unit = event.initiator
-								if unit then
-									--local unitID = unit:getID()					
-									if unit:hasAttribute("Infantry") then
+			EMBD.AddVehicleOnBirth = {}
+			function EMBD.AddVehicleOnBirth:onEvent(event)	
+				if event.id == world.event.S_EVENT_BIRTH and event.initiator then
+					if Object.getCategory(event.initiator) == 1 then
+						local unit 			= event.initiator
+						if unit then
+							local unitID = unit:getID()	
+							local unitName = unit:getName()									
+							if a == true and unit:hasAttribute("APC") or unit:hasAttribute("IFV") or unit:hasAttribute("Trucks") then
+								if b == true then
+									table.insert(ctld.transportPilotNames, unitName)
 
-										env.info(ModuleName .. " AddInfantriesOnBirth unit " .. tostring(unit:getName()) .. " is an infantry, evaluating group composition")
+									env.info(ModuleName .. " AddVehicleOnBirth unit " .. tostring(unitName) .. " is an APC or IFV, ctld.transportPilotNames updated")
 
-										
-										local group = unit:getGroup()
-										if group then
-											local countTot = 0
-											local countInf = 0
-											local unitsCoa = nil
-											for units_id, units_data in pairs(group:getUnits()) do
-												countTot = countTot + 1
-												if units_data:hasAttribute("Infantry") then
-													countInf = countInf +1
-													unitsCoa = units_data:getCoalition()
-												end
-											end
-											
-											if countInf == countTot and unitsCoa then
-
-												env.info(ModuleName .. " AddInfantriesOnBirth all units in the group are infantry")
-												local groupID = group:getID()
-												local groupName = group:getName()
-												local placefree = true
-												if not ctld.extractableGroups[groupName] then
-													table.insert(ctld.extractableGroups, groupName)
-					
-													if unitsCoa == 1 then
-														table.insert(ctld.droppedTroopsRED, groupName)
-														env.info(ModuleName .. " added group to RED dropped: " .. tostring(groupName))
-													elseif unitsCoa == 2 then
-														table.insert(ctld.droppedTroopsBLUE, groupName)
-														env.info(ModuleName .. " added group to BLUE dropped: " .. tostring(groupName))
-													else 
-														table.insert(ctld.droppedTroopsNEUTRAL, groupName)
-														env.info(ModuleName .. " added group to RED dropped: " .. tostring(groupName))
-													end
-					
-													env.info(ModuleName .. " AddInfantriesOnBirth group of units added as extractable")
-												end
-											end
-										end
-									end			
 								end
-							end
-						end					
+							end	
+						end
 					end
 				end
-				world.addEventHandler(EMBD.AddInfantriesOnBirth)
-			else
-				env.info(ModuleName .. " DSMC custom ctld version also detected, this SHOULD NOT HAPPEN")
 			end
+			world.addEventHandler(EMBD.AddVehicleOnBirth)
+
+			EMBD.AddInfantriesOnBirth = {}
+			function EMBD.AddInfantriesOnBirth:onEvent(event)	
+				if	b == true then
+					if event.id == world.event.S_EVENT_BIRTH and event.initiator then
+						if Object.getCategory(event.initiator) == 1 then	
+							local unit = event.initiator
+							if unit then
+								--local unitID = unit:getID()					
+								if unit:hasAttribute("Infantry") then
+
+									env.info(ModuleName .. " AddInfantriesOnBirth unit " .. tostring(unit:getName()) .. " is an infantry, evaluating group composition")
+
+									
+									local group = unit:getGroup()
+									if group then
+										local countTot = 0
+										local countInf = 0
+										local unitsCoa = nil
+										for units_id, units_data in pairs(group:getUnits()) do
+											countTot = countTot + 1
+											if units_data:hasAttribute("Infantry") then
+												countInf = countInf +1
+												unitsCoa = units_data:getCoalition()
+											end
+										end
+										
+										if countInf == countTot and unitsCoa then
+
+											env.info(ModuleName .. " AddInfantriesOnBirth all units in the group are infantry")
+											local groupID = group:getID()
+											local groupName = group:getName()
+											local placefree = true
+											if not ctld.extractableGroups[groupName] then
+												table.insert(ctld.extractableGroups, groupName)
+				
+												if unitsCoa == 1 then
+													table.insert(ctld.droppedTroopsRED, groupName)
+													env.info(ModuleName .. " added group to RED dropped: " .. tostring(groupName))
+												elseif unitsCoa == 2 then
+													table.insert(ctld.droppedTroopsBLUE, groupName)
+													env.info(ModuleName .. " added group to BLUE dropped: " .. tostring(groupName))
+												else 
+													table.insert(ctld.droppedTroopsNEUTRAL, groupName)
+													env.info(ModuleName .. " added group to RED dropped: " .. tostring(groupName))
+												end
+				
+												env.info(ModuleName .. " AddInfantriesOnBirth group of units added as extractable")
+											end
+										end
+									end
+								end			
+							end
+						end
+					end					
+				end
+			end
+			world.addEventHandler(EMBD.AddInfantriesOnBirth)
+
 		end
 	end
 
@@ -2113,9 +2127,6 @@ end
 EMBD.scheduleCTLDsupport()
 
 EMBD.oncallworkflow("desanitized")
-
-
-
 
 
 env.info((ModuleName .. ": Loaded EMBD in the new way"))

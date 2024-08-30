@@ -98,7 +98,7 @@ function doStatics(missionEnv, tblDeaths)
 			end
 		else
 			HOOK.writeDebugDetail(ModuleName .. ": doStatics filtered object: " .. tostring(deadData.objTypeName) .. ", unitId: " .. tostring(deadData.unitId))
-			return false
+			--return false
 		end
 	end
 	if table.getn(tblDeaths) > 0 and addedDeathsDone == addedDeathsPreview then

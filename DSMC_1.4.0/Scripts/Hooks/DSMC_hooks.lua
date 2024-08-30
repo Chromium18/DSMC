@@ -36,10 +36,10 @@ package.path =
 
 DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
-DSMC_SubVersion 	= "3"
-DSMC_SubSubVersion 	= "9"
-DSMC_Build 			= "2808"
-DSMC_Date			= "2024/08/12"
+DSMC_SubVersion 	= "4"
+DSMC_SubSubVersion 	= "0"
+DSMC_Build 			= "2811"
+DSMC_Date			= "2024/08/31"
 
 -- ## DEBUG TO TEXT FUNCTION DO NOT TOUCH THIS
 local forceServerMode 	= false
