@@ -74,12 +74,6 @@ end
 timer.scheduleFunction(checkLOGIandCTLD, {}, timer.getTime() + 20)
 
 
-
-
-
-
-
-
 --### UTILS	
 
 function IntegratedbasicSerialize(s)
