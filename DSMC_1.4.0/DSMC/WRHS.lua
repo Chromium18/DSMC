@@ -47,7 +47,7 @@ function updateWarehouses(tblContent, tempWarehouses)
 
 					-- set specific values as on
 					--whData.allowHotStart = false
-					whData.dynamicSpawn = true
+					-- whData.dynamicSpawn = true
 
 
 					if HOOK.WRHS_real then
@@ -142,7 +142,7 @@ function updateWarehouses(tblContent, tempWarehouses)
 				--HOOK.writeDebugDetail(ModuleName .. ": updateWarehouses checking warehouses")
 				for whId, whData in pairs(whTbl) do -- cycle in warehouse table
 
-					whData.dynamicSpawn = true
+					--whData.dynamicSpawn = true
 
 					if HOOK.WRHS_real then
 						--HOOK.writeDebugDetail(ModuleName .. ": physical convoys mode active, resetting wh to zero")
