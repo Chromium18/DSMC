@@ -38,8 +38,8 @@ DSMC_ModuleName  	= "HOOKS"
 DSMC_MainVersion 	= "1"
 DSMC_SubVersion 	= "4"
 DSMC_SubSubVersion 	= "0"
-DSMC_Build 			= "2811"
-DSMC_Date			= "2024/08/31"
+DSMC_Build 			= "2815"
+DSMC_Date			= "2024/10/08"
 
 -- ## DEBUG TO TEXT FUNCTION DO NOT TOUCH THIS
 local forceServerMode 	= false
@@ -192,7 +192,7 @@ local function missionscripting_modifier()
 		local oldText = f:read("*all")
 		io.close(f)
 		local alreadyModified = false		
-		if contains(oldText, [[pcall(dofile, lfs.writedir() .. "DSMC/EMBD_inj.lua")]]) then
+		if contains(oldText, [[if string.sub(DCS.getMissionName(),1,4) == "DSMC" then pcall(dofile, lfs.writedir() .. "DSMC/EMBD_inj.lua") end]]) then
 			alreadyModified = true
 		end
 
@@ -200,7 +200,7 @@ local function missionscripting_modifier()
 		
 		if alreadyModified == false then
 			local check = contains(oldText, [[dofile('Scripts/ScriptingSystem.lua')]])
-			local newText = replaceText(oldText, [[dofile('Scripts/ScriptingSystem.lua')]], [[dofile('Scripts/ScriptingSystem.lua')]] .. "\n" .. [[pcall(dofile, lfs.writedir() .. "DSMC/EMBD_inj.lua") -- DSMC added code]])
+			local newText = replaceText(oldText, [[dofile('Scripts/ScriptingSystem.lua')]], [[dofile('Scripts/ScriptingSystem.lua')]] .. "\n" .. [[if string.sub(DCS.getMissionName(),1,4) == "DSMC" then pcall(dofile, lfs.writedir() .. "DSMC/EMBD_inj.lua") end]])
 			local o = io.open(missionscriptingluaPath, "w")
 			o:write(newText)
 			o:close()
@@ -1168,21 +1168,33 @@ if DSMC_metarWeatherAtStart == true then
 end
 
 function DSMC.onMissionLoadBegin()
-	writeDebugDetail(DSMC_ModuleName .. ": onMissionLoadBegin, called")		
-	loadedMizFileName = DCS.getMissionName()
-	loadedMissionPath = DCS.getMissionFilename()	
-	if 	DSMC_metarWeatherAtStart == true then
-		if wh_update == false then
-			writeDebugDetail(DSMC_ModuleName .. ": onMissionLoadBegin, loadedMissionPath: " .. tostring(loadedMissionPath))			
-			writeDebugDetail(DSMC_ModuleName .. ": onMissionLoadBegin, loadedMizFileName: " .. tostring(loadedMizFileName))
-		else
-			writeDebugDetail(DSMC_ModuleName .. ": onMissionLoadBegin: wh_update is true, update names skipped")	
+	writeDebugBase(DSMC_ModuleName .. ": onMissionLoadBegin, called")		
+	local lmz = DCS.getMissionName()
+	if lmz then
+		writeDebugBase(DSMC_ModuleName .. ": onMissionLoadBegin, lmz: " .. tostring(lmz))	
+		writeDebugBase(DSMC_ModuleName .. ": onMissionLoadBegin, lmz filtered: " .. tostring(string.sub(lmz,1,4)))	
+		if string.sub(DCS.getMissionName(),1,4) == StartFilterCode then
+			loadedMizFileName = DCS.getMissionName()
+			loadedMissionPath = DCS.getMissionFilename()	
+			if 	DSMC_metarWeatherAtStart == true then
+				if wh_update == false then
+					writeDebugBase(DSMC_ModuleName .. ": onMissionLoadBegin, loadedMissionPath: " .. tostring(loadedMissionPath))			
+					writeDebugBase(DSMC_ModuleName .. ": onMissionLoadBegin, loadedMizFileName: " .. tostring(loadedMizFileName))
+				else
+					writeDebugBase(DSMC_ModuleName .. ": onMissionLoadBegin: wh_update is true, update names skipped")	
+				end
+			end
 		end
 	end
 end
 
 function DSMC.onSimulationStart()
-	startDSMCprocess()
+	local lmz = DCS.getMissionName()
+	if lmz then
+		if string.sub(lmz,1,4) == StartFilterCode then
+			startDSMCprocess()
+		end
+	end
 end
 
 function DSMC.onTriggerMessage(message)	
