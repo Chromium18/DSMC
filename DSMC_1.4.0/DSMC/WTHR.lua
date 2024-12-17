@@ -3134,6 +3134,7 @@ function elabWeather(missionEnv)
 			end
 			HOOK.writeDebugDetail(ModuleName .. ": elabWeather, wind ok")
 
+			--[[
 			--	set fog
 			local fogEnable, fogThickness, fogDistance, fogDensity = getFog(wthTable, missionEnv.weather.clouds.iprecptns, missionEnv.weather.season.temperature, missionEnv.weather.wind.atGround.speed, clHumid, missionEnv.weather.clouds.density, clDewPoint)
 			HOOK.writeDebugDetail(ModuleName .. ": elabWeather, done getFog")
@@ -3152,9 +3153,17 @@ function elabWeather(missionEnv)
 				missionEnv.weather.fog.dust_density = dustDistance
 			end			
 			HOOK.writeDebugDetail(ModuleName .. ": elabWeather, done getDust")
+			--]]--
+			
+			missionEnv.weather.halo = {}
+			missionEnv.weather.halo.preset = "auto"
+
+			missionEnv.weather.enable_dust = false
+			missionEnv.weather.fog2 = {}
+			missionEnv.weather.fog2.mode = 2
 		
 			-- set pressure
-			local newPressure =getPressure(wthTable, missionEnv.weather.clouds.iprecptns, missionEnv.weather.clouds.density)			
+			local newPressure = getPressure(wthTable, missionEnv.weather.clouds.iprecptns, missionEnv.weather.clouds.density)			
 			if newPressure then
 				missionEnv.weather.qnh = newPressure
 			end

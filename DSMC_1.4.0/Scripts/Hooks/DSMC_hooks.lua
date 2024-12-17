@@ -33,13 +33,12 @@ package.path =
 	.. './MAC_Gui/?.lua;'	
 	.. package.path
 
-
-DSMC_ModuleName  	= "HOOKS"
-DSMC_MainVersion 	= "1"
-DSMC_SubVersion 	= "4"
-DSMC_SubSubVersion 	= "0"
-DSMC_Build 			= "2815"
-DSMC_Date			= "2024/10/08"
+DSMC_ModuleName  			= "HOOKS"
+DSMC_MainVersion 			= "1"
+DSMC_SubVersion 			= "4"
+DSMC_SubSubVersion 			= "0"
+DSMC_Build 					= "2819"
+DSMC_Date					= "2024/12/17"
 
 -- ## DEBUG TO TEXT FUNCTION DO NOT TOUCH THIS
 local forceServerMode 	= false
@@ -192,15 +191,13 @@ local function missionscripting_modifier()
 		local oldText = f:read("*all")
 		io.close(f)
 		local alreadyModified = false		
-		if contains(oldText, [[if string.sub(DCS.getMissionName(),1,4) == "DSMC" then pcall(dofile, lfs.writedir() .. "DSMC/EMBD_inj.lua") end]]) then
+		if contains(oldText, [[pcall(dofile, lfs.writedir() .. "DSMC/EMBD_inj.lua")]]) then
 			alreadyModified = true
-		end
-
-		
+		end		
 		
 		if alreadyModified == false then
 			local check = contains(oldText, [[dofile('Scripts/ScriptingSystem.lua')]])
-			local newText = replaceText(oldText, [[dofile('Scripts/ScriptingSystem.lua')]], [[dofile('Scripts/ScriptingSystem.lua')]] .. "\n" .. [[if string.sub(DCS.getMissionName(),1,4) == "DSMC" then pcall(dofile, lfs.writedir() .. "DSMC/EMBD_inj.lua") end]])
+			local newText = replaceText(oldText, [[dofile('Scripts/ScriptingSystem.lua')]], [[dofile('Scripts/ScriptingSystem.lua')]] .. "\n" .. [[pcall(dofile, lfs.writedir() .. "DSMC/EMBD_inj.lua")]])
 			local o = io.open(missionscriptingluaPath, "w")
 			o:write(newText)
 			o:close()
@@ -334,6 +331,7 @@ function cleanTemp()
 end
 
 function startDSMCprocess()
+
 	if UTIL and SAVE then
 		
 		DCS_Multy	= DCS.isMultiplayer()
@@ -477,7 +475,6 @@ function startDSMCprocess()
 			TMUP_max_var						= opt_TMUP_max_var
 			WRHS_rblt							= opt_WRHS_var
 			WTHR_var							= opt_WTHR_var
-			WTHR_fog							= opt_WTHRfog_var
 			ATRL_var							= opt_ATRL_var
 			ATRL_time_var						= opt_ATRL_time_var
 			S247_var							= opt_S247_time_var
@@ -492,7 +489,6 @@ function startDSMCprocess()
 			TMUP_max_var						= DSMC_StarTimeHourMax
 			WRHS_rblt							= DSMC_WarehouseAutoSetup
 			WTHR_var							= DSMC_WeatherUpdate	
-			WTHR_fog							= DSMC_DisableFog
 			ATRL_var							= DSMC_AutosaveProcess 
 			ATRL_time_var						= DSMC_AutosaveProcess_min 
 			S247_var							= DSMC_24_7_serverStandardSetup
@@ -602,7 +598,6 @@ function startDSMCprocess()
 		writeDebugBase(DSMC_ModuleName .. ": MOBJ_var = " ..tostring(MOBJ_var))
 		writeDebugBase(DSMC_ModuleName .. ": CRST_var = " ..tostring(CRST_var))
 		writeDebugBase(DSMC_ModuleName .. ": WTHR_var = " ..tostring(WTHR_var))
-		writeDebugBase(DSMC_ModuleName .. ": WTHR_fog = " ..tostring(WTHR_fog))
 		writeDebugBase(DSMC_ModuleName .. ": TMUP_var = " ..tostring(TMUP_var))
 		writeDebugBase(DSMC_ModuleName .. ": TMUP_cont_var = " ..tostring(TMUP_cont_var))
 		writeDebugBase(DSMC_ModuleName .. ": TMUP_max_var = " ..tostring(TMUP_max_var))
@@ -787,6 +782,9 @@ function startDSMCprocess()
 						UTIL.filterNamingTables(SAVE.tempEnv.mission) --SAVE.tempEnv.dictionary
 
 						-- inject version
+						local filtered = "'" .. string.sub(loadedMizFileName,1,4) .. "'"
+						writeDebugDetail(DSMC_ModuleName .. ": filtered = " .. tostring(filtered))
+						UTIL.inJectCode("DSMC_code", "DSMC_code = " .. tostring(filtered) )
 						UTIL.inJectCode("DSMC_MainVersion", "DSMC_MainVersion = " .. tostring(DSMC_MainVersion))
 						UTIL.inJectCode("DSMC_SubVersion", "DSMC_SubVersion = " .. tostring(DSMC_SubVersion))
 						UTIL.inJectCode("DSMC_Build", "DSMC_Build = " .. tostring(DSMC_Build))

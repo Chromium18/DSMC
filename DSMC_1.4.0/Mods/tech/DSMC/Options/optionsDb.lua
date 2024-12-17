@@ -27,8 +27,7 @@ return {
 																	DbOption.Item(_('21:00')):Value(3),
 																	DbOption.Item(_('23:00')):Value(4),}),
 	WRHS						= DbOption.new():setValue(true):checkbox():setEnforceable(), 	
-	WTHR						= DbOption.new():setValue(true):checkbox():setEnforceable(), 	
-	WTHRfog						= DbOption.new():setValue(false):checkbox():setEnforceable(), 	
+	WTHR						= DbOption.new():setValue(true):checkbox():setEnforceable(),
 	
 	ATRL						= DbOption.new():setValue(true):checkbox():setEnforceable(), 
 	ATRL_time 					= DbOption.new():setValue(1):slider(Range(1, 60)),

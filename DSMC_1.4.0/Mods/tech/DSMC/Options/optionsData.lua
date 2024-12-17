@@ -12,8 +12,7 @@ cdata =
 	TMUP_cont_REAL						= _("Saved scenery start on real world date, same time as original mission"), 
 	
 	WRHS_txt							= _("Automatic rebuilt of the supply net (see manual for details)"),	
-	WTHR_txt							= _("Enable or disable automatic weather update"),	
-	WTHRfog_txt							= _("Prevent atmosferic fog creation in saved files"),
+	WTHR_txt							= _("Enable or disable automatic weather update"),
 	
 	SWG_Preference_Title				= _("Server with graphics options"),
 	SWG_Preference_Foot1				= _("These options takes effect only if you run a local multiplayer server from the main menù"),

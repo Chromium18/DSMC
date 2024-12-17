@@ -363,7 +363,6 @@ function EMBD.getAptInfo(builtResMap)
 
 	tblAirbases = {}
 	local apt_Table = world.getAirbases()
-	--EMBD.dumpTable("apt_Table.lua", apt_Table)
 	for Aid, Adata in pairs(apt_Table) do
 
 		if builtResMap == true then
@@ -1311,7 +1310,7 @@ function EMBD.deathRecorder:onEvent(event)
 		end
 	end	
 end
-world.addEventHandler(EMBD.deathRecorder)
+
 
 EMBD.coaChangeEventRecorder = {}
 function EMBD.coaChangeEventRecorder:onEvent(event)
@@ -1355,7 +1354,7 @@ function EMBD.coaChangeEventRecorder:onEvent(event)
 		end
 	end	
 end
-world.addEventHandler(EMBD.coaChangeEventRecorder)
+
 
 local takeofflandLocker = {}
 
@@ -1371,7 +1370,7 @@ function EMBD.systemFail:onEvent(event)
 		end
 	end
 end
-world.addEventHandler(EMBD.systemFail)	
+
 
 EMBD.baseCapture = {}
 function EMBD.baseCapture:onEvent(event)	
@@ -1416,7 +1415,7 @@ function EMBD.baseCapture:onEvent(event)
 		end
 	end
 end
-world.addEventHandler(EMBD.baseCapture)	
+
 
 EMBD.collectSpawned = {} 
 function EMBD.collectSpawned:onEvent(event)
@@ -1514,6 +1513,7 @@ function EMBD.collectSpawned:onEvent(event)
 					env.info(("EMBD.collectSpawned airbase_farp added"))
 					tblSpawned[ei_gName] = {gID = tonumber(ei_ID), gCat = Object.getCategory(event.initiator), gAlt= ei_Altitude, gName = ei_gName, gCoalition = ei_coalition, gCountry = ei_country, gType = "static", gCounter = tblSpawnedcounter, gTable = ei, gPos = ei_pos, gUnits = ei_unitTable, gStaticAlive = true}
 				end
+
 			elseif Object.getCategory(event.initiator) == 6 then -- cargo
 				env.info(("EMBD.collectSpawned cargo"))
 				local _eiUnitData = event.initiator
@@ -1541,6 +1541,7 @@ function EMBD.collectSpawned:onEvent(event)
 					tblSpawnedcounter = tblSpawnedcounter + 1
 					tblSpawned[ei_gName] = {gID = tonumber(ei_ID), gCat = Object.getCategory(event.initiator), gAlt= ei_Altitude, gName = ei_gName, gCoalition = ei_coalition, gCountry = ei_country, gType = "static", gCounter = tblSpawnedcounter, gTable = ei, gPos = ei_pos, gUnits = ei_unitTable, gStaticAlive = true}					
 				end		
+
 			elseif Object.getCategory(event.initiator) == 3 then -- static
 				env.info(("EMBD.collectSpawned static"))
 				local _eiUnitData = event.initiator
@@ -1578,7 +1579,7 @@ function EMBD.collectSpawned:onEvent(event)
 		end
 	end
 end
-world.addEventHandler(EMBD.collectSpawned)
+
 
 EMBD.sceneryDestroyRefresh = {}
 function EMBD.sceneryDestroyRefresh:onEvent(event)
@@ -1593,7 +1594,7 @@ function EMBD.sceneryDestroyRefresh:onEvent(event)
 		timer.scheduleFunction(resetFlag, {}, timer.getTime() + 5)
 	end
 end
-world.addEventHandler(EMBD.sceneryDestroyRefresh)
+
 
 EMBD.airDeathFixRecorder = {} 
 function EMBD.airDeathFixRecorder:onEvent(event)
@@ -1608,7 +1609,7 @@ function EMBD.airDeathFixRecorder:onEvent(event)
 		end
 	end
 end
-world.addEventHandler(EMBD.airDeathFixRecorder)
+
 
 function EMBD.sceneryDestroyRefreshRemote()
 	local function setFlag()
@@ -1630,7 +1631,7 @@ function EMBD.fuelTest:onEvent(event)
 		if event.initiator then
 			if Object.getCategory(event.initiator) == 1 then -- unit. if it's a unit, can have fuel
 				local fuel = event.initiator:getFuel()
-				env.info(("EMBD.fuelTest event birth found, name: " .. tostring(event.initiator:getName()) .. ", fuel: " .. tostring(fuel)))
+				
 				if fuel then
 					local isClient = event.initiator:getPlayerName()
 					if fuel == 0 and isClient == false then
@@ -1682,7 +1683,7 @@ function EMBD.fuelTest:onEvent(event)
 		end
 	end
 end
-world.addEventHandler(EMBD.fuelTest)
+
 
 
 --### FARP Workaround!
@@ -1757,69 +1758,93 @@ EMBD.setDestroyedObjectAtStart = function()
 	end
 	timer.scheduleFunction(fxc, {}, timer.getTime() + 1)
 end
-EMBD.setDestroyedObjectAtStart()
 
 --### SET FUNCTIONS
 
 --do functions
 --EMBD.getFreeCountry()
-EMBD.getAptInfo(true)
+
 local checkOptions = function()
+	env.info(("EMBD: DSMC_code = " .. tostring(DSMC_code)))
+	env.info(("EMBD: DSMC variable settings: DSMC_debugProcessDetail = " ..tostring(DSMC_debugProcessDetail)))
+	env.info(("EMBD: DSMC variable settings: DSMC_autosavefrequency = " ..tostring(DSMC_autosavefrequency)))
+	env.info(("EMBD: DSMC variable settings: DSMC_AutosaveExit_timer = " ..tostring(DSMC_AutosaveExit_timer)))
 
-	-- mex
-	trigger.action.outText("DSMC is active in this mission", 10)
-	if not DSMC_multy then
-		trigger.action.outText("DSMC is in single player mode: you must remember to save the mission on your own!", 5)
-	end
+	if DSMC_code == "DSMC" then
+		
+		world.addEventHandler(EMBD.deathRecorder)
+		world.addEventHandler(EMBD.coaChangeEventRecorder)
+		world.addEventHandler(EMBD.systemFail)	
+		world.addEventHandler(EMBD.baseCapture)	
+		world.addEventHandler(EMBD.collectSpawned)
+		world.addEventHandler(EMBD.sceneryDestroyRefresh)
+		world.addEventHandler(EMBD.airDeathFixRecorder)
 
-	-- sets
-	ExclusionTag				= DSMC_ExclusionTag or "DSMC_NoUp"
+		world.addEventHandler(EMBD.fuelTest)
+		EMBD.setDestroyedObjectAtStart()
+		EMBD.getAptInfo(true)
 
-	-- functions
-	timer.scheduleFunction(EMBD.createRadioMenu, nil, timer.getTime() + 1)
-	if DSMC_debugProcessDetail == true then
-		local function dumpThreats()
-			if DSMC_io and DSMC_lfs then
-				EMBD.dumpTable("EMBD.tblThreatsRange.lua", EMBD.tblThreatsRange, "int")
-			end
+		-- mex
+		trigger.action.outText("DSMC is active in this mission", 10)
+		if not DSMC_multy then
+			trigger.action.outText("DSMC is in single player mode: you must remember to save the mission on your own!", 5)
 		end
-		timer.scheduleFunction(dumpThreats, {}, timer.getTime() + 2)
-	end
 
-	if DSMC_autosavefrequency and DSMC_multy and DSMC_io and DSMC_lfs then
-		timer.scheduleFunction(EMBD.scheduleAutosave, {}, timer.getTime() + tonumber(DSMC_autosavefrequency))
-	end
-	
-	if DSMC_AutosaveExit_timer then
-		if DSMC_AutosaveExit_timer > 0 then
-			local function autostop()
-				if DSMC_allowStop == false then
-					trigger.action.outText("DSMC is trying to restart the server! land or disconnect as soon as you can: DSMC will try again in 10 minutes", 10)		
-					timer.scheduleFunction(autostop, {}, timer.getTime() + 600)
-				else
-					timer.scheduleFunction(autostop, {}, timer.getTime() + 10)
+		-- sets
+		ExclusionTag				= DSMC_ExclusionTag or "DSMC_NoUp"
+
+		-- functions
+		timer.scheduleFunction(EMBD.createRadioMenu, nil, timer.getTime() + 1)
+		if DSMC_debugProcessDetail == true then
+			local function dumpThreats()
+				if DSMC_io and DSMC_lfs then
+					EMBD.dumpTable("EMBD.tblThreatsRange.lua", EMBD.tblThreatsRange, "int")
 				end
 			end
-			timer.scheduleFunction(autostop, {}, timer.getTime() + tonumber(DSMC_AutosaveExit_timer))
+			timer.scheduleFunction(dumpThreats, {}, timer.getTime() + 2)
 		end
-	end
 
-	-- debug
-	if DSMC_debugProcessDetail then
-		env.info(("EMBD: DSMC variable settings: DSMC_debugProcessDetail = " ..tostring(DSMC_debugProcessDetail)))
-		env.info(("EMBD: DSMC variable settings: DSMC_autosavefrequency = " ..tostring(DSMC_autosavefrequency)))
-		env.info(("EMBD: DSMC variable settings: DSMC_AutosaveExit_timer = " ..tostring(DSMC_AutosaveExit_timer)))
-	end
+		if DSMC_autosavefrequency and DSMC_multy and DSMC_io and DSMC_lfs then
+			timer.scheduleFunction(EMBD.scheduleAutosave, {}, timer.getTime() + tonumber(DSMC_autosavefrequency))
+		end
+		
+		if DSMC_AutosaveExit_timer then
+			if DSMC_AutosaveExit_timer > 0 then
+				local function autostop()
+					if DSMC_allowStop == false then
+						trigger.action.outText("DSMC is trying to restart the server! land or disconnect as soon as you can: DSMC will try again in 10 minutes", 10)		
+						timer.scheduleFunction(autostop, {}, timer.getTime() + 600)
+					else
+						timer.scheduleFunction(autostop, {}, timer.getTime() + 10)
+					end
+				end
+				timer.scheduleFunction(autostop, {}, timer.getTime() + tonumber(DSMC_AutosaveExit_timer))
+			end
+		end
 
-	if DSMC_debugProcessDetail == true then
-		env.info(("EMBD set setErrorMessageBoxEnabled : true"))
-		env.info(("EMBD DSMC_ExclusionTag : " .. tostring(DSMC_ExclusionTag)))
-		env.info(("EMBD set ExclusionTag : " .. tostring(ExclusionTag)))
-		env.info(("EMBD set WRHS_module_active : " .. tostring(WRHS_module_active)))
-	end
-	
-	if wsTypesTbl and DSMC_debugProcessDetail == true then
-		env.info(("DSMC wsTypesTbl exist"))
+		-- debug
+		if DSMC_debugProcessDetail then
+			env.info(("EMBD: DSMC variable settings: DSMC_debugProcessDetail = " ..tostring(DSMC_debugProcessDetail)))
+			env.info(("EMBD: DSMC variable settings: DSMC_autosavefrequency = " ..tostring(DSMC_autosavefrequency)))
+			env.info(("EMBD: DSMC variable settings: DSMC_AutosaveExit_timer = " ..tostring(DSMC_AutosaveExit_timer)))
+		end
+
+		if DSMC_debugProcessDetail == true then
+			env.info(("EMBD set setErrorMessageBoxEnabled : true"))
+			env.info(("EMBD DSMC_ExclusionTag : " .. tostring(DSMC_ExclusionTag)))
+			env.info(("EMBD set ExclusionTag : " .. tostring(ExclusionTag)))
+			env.info(("EMBD set WRHS_module_active : " .. tostring(WRHS_module_active)))
+		end
+		
+		if wsTypesTbl and DSMC_debugProcessDetail == true then
+			env.info(("DSMC wsTypesTbl exist"))
+		end
+
+		EMBD.scheduleCTLDsupport()
+		EMBD.oncallworkflow("desanitized")
+		env.info((ModuleName .. ": Loaded EMBD in the new way"))
+	else
+		env.info((ModuleName .. ": DSMC EMBD not loaded, mission does not have the tag"))
 	end
 
 end
@@ -2124,10 +2149,4 @@ EMBD.scheduleCTLDsupport = function()
 
 	timer.scheduleFunction(launchCTLDsupport, {}, timesec)
 end
-EMBD.scheduleCTLDsupport()
-
-EMBD.oncallworkflow("desanitized")
-
-
-env.info((ModuleName .. ": Loaded EMBD in the new way"))
 --~=

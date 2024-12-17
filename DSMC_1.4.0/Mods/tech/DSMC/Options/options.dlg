@@ -448,26 +448,7 @@ dialog = {
 					},
 					["skin"] = CheckBoxSkin,
 					["type"] = "CheckBox",
-				},
-				["WTHRfogCheckbox"] = {
-					["params"] = {
-						["bounds"] = {
-								["h"] = verticalBound,
-								["w"] = width, 
-								["x"] = leftMargin1,
-								["y"] = verticalStack*11.5,
-						},
-						["enabled"] = true,
-						["state"] = false,
-						["tabOrder"] = 0,
-						["text"] = "$WTHRfog_txt",
-						["tooltip"] = "if not checked, DSMC weather system will create fog when could be expected due to moisture levels. If true, it will prevent fog formation in any conditions.",
-						["visible"] = true,
-						["zindex"] = 0,
-					},
-					["skin"] = CheckBoxSkin,
-					["type"] = "CheckBox",
-				},								
+				},	
 
 				["SWG_Preference_Title_label"] = {
 					["params"] = {
