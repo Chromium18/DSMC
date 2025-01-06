@@ -14,6 +14,7 @@ DSMC_StarTimeHourMin        	= 5         -- 1-> 14. hour 0-24 that will be used 
 DSMC_StarTimeHourMax        	= 16        -- 15-> 23. hour 0-24 that will be used as maximum in the start mission time randomization, valid only with DSMC_UpdateStartTime set to true and DSMC_UpdateStartTime_mode set to "2". Out of the defined range, the value will be set as "16"
 DSMC_WarehouseAutoSetup     	= true      -- true / false. If true, at each mission end the supply net will be automatically rebuilt. Check manual!
 DSMC_WeatherUpdate              = true      -- true / false. If false, DSMC weather system won't run and update the mission
+DSMC_PersistFlagsValue          = true      -- true / false. If true, flags between 1 and 10.000 value or true/false state will be persisted in the saved mission, and will be updated at second 1 after mission start
 DSMC_Excl_Tag                   = "DSMC_NoUp"     -- text. Any not flying group name (NOT UNIT) with this tag won't be saved/tracked/removed/added, it will be simply ignored by the save code.
 
 -- ##################################################################

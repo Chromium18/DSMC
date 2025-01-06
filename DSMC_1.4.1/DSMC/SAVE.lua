@@ -62,167 +62,6 @@ end
 
 --## FUNCTIONS
 
-function updateAirbaseTable(missionEnv)
-
-	local terrainAirdromes = {}
-	for airdromeNumber, airdromeInfo in pairs(Terrain.GetTerrainConfig('Airdromes')) do
-		if (airdromeInfo.reference_point) and (airdromeInfo.abandoned ~= true) then
-			terrainAirdromes[airdromeNumber] = airdromeInfo
-		end
-	end
-
-	for admId, admData in pairs(tblAirbases) do
-		HOOK.writeDebugDetail(ModuleName .. ": updating id " .. tostring(admData.id) .. ", name " .. tostring(admData.name))
-
-		local paramsInsertFARP = {
-			["SHELTER"] = 0,
-			["FOR_HELICOPTERS"] = 1,
-			["FOR_AIRPLANES"] = 0,
-			["HEIGHT"] = 50,
-			["LENGTH"] = 50,
-			["WIDTH"] = 50,
-		}
-
-		local paramsInsertCarrier = {
-			["SHELTER"] = 0,
-			["FOR_HELICOPTERS"] = 1,
-			["FOR_AIRPLANES"] = 1,
-			["HEIGHT"] = 40,
-			["LENGTH"] = 40,
-			["WIDTH"] = 40,
-		}
-		
-		--HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: checking type: " .. tostring(admData.desc.typeName))
-
-		if admData.desc.category == 0 then
-			--HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: category 0")
-			local nearestAFB = getNearestAirdrome(terrainAirdromes, admData.pos.x, admData.pos.z)
-			local parkList = getStandList(nearestAFB.roadnet)		-- ME_parking.
-			if parkList then
-				admData["parkings"] = parkList
-
-				-- count airplane slots
-				local fwPk = 0
-				for _, pData in pairs(parkList) do
-					for rId, rData in pairs(pData.params) do
-						if rId == "FOR_AIRPLANES" then
-							if rData == 1 then
-								fwPk = fwPk + 1
-							end
-						end
-					end
-				end
-				-- count heli slots
-				local rwPk = 0
-				for _, pData in pairs(parkList) do
-					for rId, rData in pairs(pData.params) do
-						if rId == "FOR_HELICOPTERS" then
-							if rData == 1 then
-								rwPk = rwPk + 1
-							end
-						end
-					end
-				end
-
-				admData["fw_parkNum"] = fwPk
-				admData["rw_parkNum"] = rwPk
-
-				--HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: added parkings")
-			else
-				--HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: unable to identify parking table")
-			end
-
-		elseif admData.desc.category == 1 then
-			admData["parkings"] = {}
-			for i=1, 4 do
-				table.insert(admData["parkings"], {name = tostring(i), numParking = i, params = paramsInsertFARP, flag = 64, crossroad_index = 0, x = admData.pos.x, y = admData.pos.z})
-			end
-			--HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: added parkings")
-			
-		elseif admData.desc.category == 2 then
-			--HOOK.writeDebugDetail(ModuleName .. " updateAirbaseTable: category 2")
-			local unitDef = ME_DB.unit_by_type[admData.desc.typeName]
-			local dataFound = false
-
-			if admData.desc.attributes.Buildings == true then -- this include also single helipad and invisible farps!
-				--HOOK.writeDebugDetail(ModuleName .. " updateAirbaseTable: building, 1 parking available for next mission")					
-				admData["parkings"] = {}
-				table.insert(admData["parkings"], {name = tostring(1), numParking = 1, params = paramsInsertFARP, flag = 64, crossroad_index = 0, x = admData.pos.x, y = admData.pos.z})
-				--HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: added parkings")
-				dataFound = true
-			end
-
-			if dataFound == false then
-				if unitDef then
-					if unitDef.RunWays then
-						admData["parkings"] = getStandListForShip(admData.pos.x, admData.pos.z, unitDef.RunWays) -- ME_parking.
-						for spId, spData in pairs(admData["parkings"]) do
-							spData["params"] = paramsInsertCarrier
-						end
-						--HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: added parkings")
-						
-					elseif unitDef.numParking then
-						admData["parkings"] = {}
-						if unitDef.numParking == 1 then
-							table.insert(admData["parkings"], {name = tostring(1), numParking = 1, params = paramsInsertFARP, flag = 64, crossroad_index = 0, x = admData.pos.x, y = admData.pos.z})
-						else
-							for i=1, unitDef.numParking do
-								table.insert(admData["parkings"], {name = tostring(i), numParking = i, params = paramsInsertFARP, flag = 64, crossroad_index = 0, x = admData.pos.x, y = admData.pos.z})
-							end
-						end
-						--HOOK.writeDebugDetail(ModuleName .. ": updateAirbaseTable: added parkings")
-					end
-				else
-					--HOOK.writeDebugDetail(ModuleName .. " updateAirbaseTable: type not available: ERROR")
-				end
-			else
-				--HOOK.writeDebugDetail(ModuleName .. " updateAirbaseTable: already defined as building")
-			end
-		end
-	end
-
-	-- rewrite the parking set for ME setup in airbaseSlot
-	for admId, admData in pairs(tblAirbases) do
-		if admData.parkings then
-			for pId, pData in pairs(admData.parkings) do
-				pData.nameME = tostring(pId)
-
-			end
-		end
-	end
-
-	--UTIL.dumpTable("tblAirbases_updated.lua", tblAirbases)
-end
-
-function getStandList(roadnet)
-	local sList = Terrain.getStandList(roadnet, {"SHELTER","FOR_HELICOPTERS","FOR_AIRPLANES","WIDTH","LENGTH","HEIGHT"})    
-	local listP = {}
-	if sList then
-		for k, v in pairs(sList) do
-			listP[v.crossroad_index] = v	  
-			if v.params then
-				local params = {}
-				for kk, vv in pairs(v.params) do
-					params[kk] = tonumber(vv)
-				end
-				v.params = params
-			end    
-		end
-	end
-	return listP
-end
-
-function getStandListForShip(a_x, a_y, a_RunWays)
-	local listP = {}
-							
-	for k, RunWay in pairs(a_RunWays) do
-		if type(k) == 'number' and k > 1 then
-			table.insert(listP, {name = tostring(k-1), numParking = k-1, x = a_x, y = a_y, offsetX = RunWay[1][1], offsetY = RunWay[1][3]})			
-		end
-	end
-	return listP
-end
-
 function IncludeSpawned(missionEnv, tbl, whEnv) -- , dictEnv
 	if SPWN and missionEnv and tbl and whEnv then -- and dictEnv
 		local lthStr, lthStrErr = SPWN.doSpawned(missionEnv, tbl, whEnv) -- , dictEnv
@@ -462,10 +301,8 @@ function updateUnits(missionEnv)
 	local unitsUpdatePreview = table.getn(tblUnitsUpdate)
 	local unitsUpdateNumber = 0 
 
-	tblToBeKilled = {} -- added 2022.06.26, check if ok
+	tblToBeKilled = {}
 
-
-	--usedParkings = {}
 	for coalitionID,coalition in pairs(missionEnv["coalition"]) do
 		for countryID,country in pairs(coalition["country"]) do
 			for attrID,attr in pairs(country) do
@@ -474,21 +311,164 @@ function updateUnits(missionEnv)
 						HOOK.writeDebugDetail(ModuleName .. ": plane or helo found, skip")
 					elseif attrID == "ship" then
 						for groupID,group in pairs(attr["group"]) do
-							if (group) then		
-								local isCarrierGroup = false
-								HOOK.writeDebugDetail(ModuleName .. ": updateUnits checking carrier group")
-								for unitID,unit in pairs(group["units"]) do		
-									for id, updatedData in pairs (tblUnitsUpdate) do
-										if tonumber(updatedData.unitId) == tonumber(unit.unitId) then
-											if updatedData.carrier == true then
-												isCarrierGroup = true
-												--HOOK.writeDebugDetail(ModuleName .. ": updateUnits, unit " .. tonumber(unit.unitId) .. " is a carrier")
+							if (group) then
+								
+								HOOK.writeDebugDetail(ModuleName .. ": updateUnits, checking group " .. tostring(group.name))
+								local excluded = false
+								if string.find(group.name, HOOK.EMBD_var) then
+									HOOK.writeDebugDetail(ModuleName .. ": updateUnits, group " .. tostring(group.name) .. " is excluded")
+									excluded = true
+								end
+
+								if excluded == false then
+									local isCarrierGroup = false
+									HOOK.writeDebugDetail(ModuleName .. ": updateUnits checking carrier group")
+									for unitID,unit in pairs(group["units"]) do		
+										for id, updatedData in pairs (tblUnitsUpdate) do
+											if tonumber(updatedData.unitId) == tonumber(unit.unitId) then
+												if updatedData.carrier == true then
+													isCarrierGroup = true
+													--HOOK.writeDebugDetail(ModuleName .. ": updateUnits, unit " .. tonumber(unit.unitId) .. " is a carrier")
+												end
+											end
+										end
+									end
+									
+									if isCarrierGroup == false then
+										for unitID,unit in pairs(group["units"]) do
+											--HOOK.writeDebugDetail(ModuleName .. ": updateUnits looking for unit number " .. tostring(unitID) .. ", unitId: " .. tostring(unit.unitId))
+											local isAlive = true
+											for id, deadData in pairs (tblDeadUnits) do -- check if this unit is dead
+												if tonumber(deadData.unitId) == tonumber(unit.unitId) then
+													isAlive = false
+												end
+											end
+											--HOOK.writeDebugDetail(ModuleName .. ": updateUnits isAlive: " .. tostring(isAlive))
+											if isAlive == false then
+												tblToBeKilled[#tblToBeKilled+1] = {uId = unit.unitId, gId = group.groupId}
+												--HOOK.writeDebugDetail(ModuleName .. ": updateUnits isAlive: " .. tostring(isAlive) .. ", unit added to tblToBeKilled")
+											else
+												--update the unit
+												if group and unit then
+													--HOOK.writeDebugDetail(ModuleName .. ": updateUnits updating unit")
+													for id, updatedData in pairs (tblUnitsUpdate) do
+														if tonumber(updatedData.unitId) == tonumber(unit.unitId) then
+															
+															local posChanged = false
+															if math.floor(unit["x"]) ~= math.floor(updatedData.x) and math.floor(unit["y"]) ~= math.floor(updatedData.z) then
+																--HOOK.writeDebugDetail(ModuleName .. ": updateUnits position is changed: x = " .. tostring(unit["x"]) .. ", new x = " .. tostring(updatedData.x))
+																--HOOK.writeDebugDetail(ModuleName .. ": updateUnits position is changed: y = " .. tostring(unit["y"]) .. ", new y = " .. tostring(updatedData.z))
+																posChanged = true
+															end
+															if posChanged == true then
+																if group["lateActivation"] == true then
+																	HOOK.writeDebugDetail(ModuleName .. ": updateUnits unit was late activation, removing the option")
+																	group["lateActivation"] = nil
+																end
+															
+																unit["x"] = updatedData.x;
+																unit["y"] = updatedData.z;
+
+																if unitID == 1 then  -- try to fix ME stuff
+																	group["x"] = unit["x"];
+																	group["y"] = unit["y"];
+																	HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 position")
+
+																	group.route.points[1]["x"] = unit["x"];
+																	group.route.points[1]["y"] = unit["y"];
+
+																	HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 route")
+																	group.route.spans = {
+																							[1] = 
+																							{
+																								[1] = 
+																								{
+																									["y"] = unit["y"],
+																									["x"] = unit["x"],
+																								}, -- end of [1]
+																								[2] = 
+																								{
+																									["y"] = unit["y"]+0.0001,
+																									["x"] = unit["x"]+0.0001,
+																								}, -- end of [2]
+																							}, -- end of [1]													
+																						} -- end of ["spans"]
+																	HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 spans")												
+																end
+																
+																for id, pointData in pairs (group.route.points) do
+																	if id > 1 then
+																		--table.remove(group.route.points, id);
+																		group.route.points[id] = nil
+																	end
+																end
+
+																if unit.skill == "Random" and fixSkillsDSMC2 == true then
+																	local rnd = math.random(1,10)
+																	if unitID == 1 or unitID == 2 then
+																		if rnd >= 8 then
+																			unit.skill = "Excellent"
+																		elseif rnd >= 5 then
+																			unit.skill = "High"
+																		elseif rnd >= 3 then
+																			unit.skill = "Good"
+																		else
+																			unit.skill = "Average"
+																		end
+																	else
+																		if rnd >= 9 then
+																			unit.skill = "Excellent"
+																		elseif rnd >= 7 then
+																			unit.skill = "High"
+																		elseif rnd >= 4 then
+																			unit.skill = "Good"
+																		else
+																			unit.skill = "Average"
+																		end
+																	end
+																end															
+																--if group.route.spans then
+																--	group.route.spans = nil 
+																--end
+																HOOK.writeDebugDetail(ModuleName .. ": updateUnits unit updated")
+																unitsUpdateNumber = unitsUpdateNumber + 1
+															end
+														end
+													end												
+												end
+											end
+										end
+									else
+										for unitID,unit in pairs(group["units"]) do
+											--HOOK.writeDebugDetail(ModuleName .. ": updateUnits looking for carrier group unit number " .. tostring(unitID) .. ", unitId: " .. tostring(unit.unitId))
+											local isAlive = true
+											for id, deadData in pairs (tblDeadUnits) do -- check if this unit is dead
+												if tonumber(deadData.unitId) == tonumber(unit.unitId) then
+													isAlive = false
+												end
+											end
+											--HOOK.writeDebugDetail(ModuleName .. ": updateUnits isAlive: " .. tostring(isAlive))
+											if isAlive == false then
+												tblToBeKilled[#tblToBeKilled+1] = {uId = unit.unitId, gId = group.groupId}
+												HOOK.writeDebugDetail(ModuleName .. ": updateUnits  carrier group unit isAlive: " .. tostring(isAlive) .. ", unit added to tblToBeKilled")
 											end
 										end
 									end
 								end
-								
-								if isCarrierGroup == false then
+							end
+						end					
+					else
+						for groupID,group in pairs(attr["group"]) do
+							if (group) then				
+																
+								HOOK.writeDebugDetail(ModuleName .. ": updateUnits, checking group " .. tostring(group.name))
+								local excluded = false
+								if string.find(group.name, HOOK.EMBD_var) then
+									HOOK.writeDebugDetail(ModuleName .. ": updateUnits, group " .. tostring(group.name) .. " is excluded")
+									excluded = true
+								end
+
+								if excluded == false then		
 									for unitID,unit in pairs(group["units"]) do
 										--HOOK.writeDebugDetail(ModuleName .. ": updateUnits looking for unit number " .. tostring(unitID) .. ", unitId: " .. tostring(unit.unitId))
 										local isAlive = true
@@ -506,57 +486,17 @@ function updateUnits(missionEnv)
 											if group and unit then
 												--HOOK.writeDebugDetail(ModuleName .. ": updateUnits updating unit")
 												for id, updatedData in pairs (tblUnitsUpdate) do
-													if tonumber(updatedData.unitId) == tonumber(unit.unitId) then
+													if tonumber(updatedData.unitId) == tonumber(unit.unitId) then	
+														--HOOK.writeDebugDetail(ModuleName .. ": updateUnits updating unit: found update data ")							
+														if updatedData.aircraft == false then
 														
-														local posChanged = false
-														if math.floor(unit["x"]) ~= math.floor(updatedData.x) and math.floor(unit["y"]) ~= math.floor(updatedData.z) then
-															--HOOK.writeDebugDetail(ModuleName .. ": updateUnits position is changed: x = " .. tostring(unit["x"]) .. ", new x = " .. tostring(updatedData.x))
-															--HOOK.writeDebugDetail(ModuleName .. ": updateUnits position is changed: y = " .. tostring(unit["y"]) .. ", new y = " .. tostring(updatedData.z))
-															posChanged = true
-														end
-														if posChanged == true then
-															if group["lateActivation"] == true then
-																HOOK.writeDebugDetail(ModuleName .. ": updateUnits unit was late activation, removing the option")
-																group["lateActivation"] = nil
-															end
-														
-															unit["x"] = updatedData.x;
-															unit["y"] = updatedData.z;
-
-															if unitID == 1 then  -- try to fix ME stuff
-																group["x"] = unit["x"];
-																group["y"] = unit["y"];
-																HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 position")
-
-																group.route.points[1]["x"] = unit["x"];
-																group.route.points[1]["y"] = unit["y"];
-
-																HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 route")
-																group.route.spans = {
-																						[1] = 
-																						{
-																							[1] = 
-																							{
-																								["y"] = unit["y"],
-																								["x"] = unit["x"],
-																							}, -- end of [1]
-																							[2] = 
-																							{
-																								["y"] = unit["y"]+0.0001,
-																								["x"] = unit["x"]+0.0001,
-																							}, -- end of [2]
-																						}, -- end of [1]													
-																					} -- end of ["spans"]
-																HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 spans")												
+															local posChanged = false
+															if math.floor(unit["x"]) ~= math.floor(updatedData.x) and math.floor(unit["y"]) ~= math.floor(updatedData.z) then
+																HOOK.writeDebugDetail(ModuleName .. ": updateUnits position is changed: x = " .. tostring(unit["x"]) .. ", new x = " .. tostring(updatedData.x))
+																HOOK.writeDebugDetail(ModuleName .. ": updateUnits position is changed: y = " .. tostring(unit["y"]) .. ", new y = " .. tostring(updatedData.z))
+																posChanged = true
 															end
 															
-															for id, pointData in pairs (group.route.points) do
-																if id > 1 then
-																	--table.remove(group.route.points, id);
-																	group.route.points[id] = nil
-																end
-															end
-
 															if unit.skill == "Random" and fixSkillsDSMC2 == true then
 																local rnd = math.random(1,10)
 																if unitID == 1 or unitID == 2 then
@@ -580,149 +520,65 @@ function updateUnits(missionEnv)
 																		unit.skill = "Average"
 																	end
 																end
-															end															
-															--if group.route.spans then
-															--	group.route.spans = nil 
-															--end
-															HOOK.writeDebugDetail(ModuleName .. ": updateUnits unit updated")
-															unitsUpdateNumber = unitsUpdateNumber + 1
+															end	
+
+															if posChanged == true then
+																if group["lateActivation"] == true then
+																	HOOK.writeDebugDetail(ModuleName .. ": updateUnits unit was late activation, removing the option")
+																	group["lateActivation"] = nil
+																end
+
+															
+																unit["x"] = updatedData.x;
+																unit["y"] = updatedData.z;
+
+																if unitID == 1 then  -- try to fix ME stuff -- QUESTO VA AGGIORNATO!!!!
+
+																	group["x"] = unit["x"];
+																	group["y"] = unit["y"];
+																	--HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 position")
+
+																	group.route.points[1]["x"] = unit["x"];
+																	group.route.points[1]["y"] = unit["y"];
+
+																	--HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 route")
+																	group.route.spans = {
+																							[1] = 
+																							{
+																								[1] = 
+																								{
+																									["y"] = unit["y"],
+																									["x"] = unit["x"],
+																								}, -- end of [1]
+																								[2] = 
+																								{
+																									["y"] = unit["y"]+0.0001,
+																									["x"] = unit["x"]+0.0001,
+																								}, -- end of [2]
+																							}, -- end of [1]													
+																						} -- end of ["spans"]
+																	--HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 spans")													
+																end
+																
+																for id, pointData in pairs (group.route.points) do
+																	if id > 1 then
+																		table.remove(group.route.points, id);
+																	end
+																end
+																
+																--if group.route.spans then 
+																--	group.route.spans = nil 
+																--end
+																HOOK.writeDebugDetail(ModuleName .. ": updateUnits unit updated")
+																unitsUpdateNumber = unitsUpdateNumber + 1
+															end
 														end
 													end
 												end												
 											end
 										end
 									end
-								else
-									for unitID,unit in pairs(group["units"]) do
-										--HOOK.writeDebugDetail(ModuleName .. ": updateUnits looking for carrier group unit number " .. tostring(unitID) .. ", unitId: " .. tostring(unit.unitId))
-										local isAlive = true
-										for id, deadData in pairs (tblDeadUnits) do -- check if this unit is dead
-											if tonumber(deadData.unitId) == tonumber(unit.unitId) then
-												isAlive = false
-											end
-										end
-										--HOOK.writeDebugDetail(ModuleName .. ": updateUnits isAlive: " .. tostring(isAlive))
-										if isAlive == false then
-											tblToBeKilled[#tblToBeKilled+1] = {uId = unit.unitId, gId = group.groupId}
-											HOOK.writeDebugDetail(ModuleName .. ": updateUnits  carrier group unit isAlive: " .. tostring(isAlive) .. ", unit added to tblToBeKilled")
-										end
-									end
 								end
-							end
-						end					
-					else
-						for groupID,group in pairs(attr["group"]) do
-							if (group) then						
-								for unitID,unit in pairs(group["units"]) do
-									--HOOK.writeDebugDetail(ModuleName .. ": updateUnits looking for unit number " .. tostring(unitID) .. ", unitId: " .. tostring(unit.unitId))
-									local isAlive = true
-									for id, deadData in pairs (tblDeadUnits) do -- check if this unit is dead
-										if tonumber(deadData.unitId) == tonumber(unit.unitId) then
-											isAlive = false
-										end
-									end
-									--HOOK.writeDebugDetail(ModuleName .. ": updateUnits isAlive: " .. tostring(isAlive))
-									if isAlive == false then
-										tblToBeKilled[#tblToBeKilled+1] = {uId = unit.unitId, gId = group.groupId}
-										--HOOK.writeDebugDetail(ModuleName .. ": updateUnits isAlive: " .. tostring(isAlive) .. ", unit added to tblToBeKilled")
-									else
-										--update the unit
-										if group and unit then
-											--HOOK.writeDebugDetail(ModuleName .. ": updateUnits updating unit")
-											for id, updatedData in pairs (tblUnitsUpdate) do
-												if tonumber(updatedData.unitId) == tonumber(unit.unitId) then	
-													--HOOK.writeDebugDetail(ModuleName .. ": updateUnits updating unit: found update data ")							
-													if updatedData.aircraft == false then
-													
-														local posChanged = false
-														if math.floor(unit["x"]) ~= math.floor(updatedData.x) and math.floor(unit["y"]) ~= math.floor(updatedData.z) then
-															HOOK.writeDebugDetail(ModuleName .. ": updateUnits position is changed: x = " .. tostring(unit["x"]) .. ", new x = " .. tostring(updatedData.x))
-															HOOK.writeDebugDetail(ModuleName .. ": updateUnits position is changed: y = " .. tostring(unit["y"]) .. ", new y = " .. tostring(updatedData.z))
-															posChanged = true
-														end
-														
-														if unit.skill == "Random" and fixSkillsDSMC2 == true then
-															local rnd = math.random(1,10)
-															if unitID == 1 or unitID == 2 then
-																if rnd >= 8 then
-																	unit.skill = "Excellent"
-																elseif rnd >= 5 then
-																	unit.skill = "High"
-																elseif rnd >= 3 then
-																	unit.skill = "Good"
-																else
-																	unit.skill = "Average"
-																end
-															else
-																if rnd >= 9 then
-																	unit.skill = "Excellent"
-																elseif rnd >= 7 then
-																	unit.skill = "High"
-																elseif rnd >= 4 then
-																	unit.skill = "Good"
-																else
-																	unit.skill = "Average"
-																end
-															end
-														end	
-
-														if posChanged == true then
-															if group["lateActivation"] == true then
-																HOOK.writeDebugDetail(ModuleName .. ": updateUnits unit was late activation, removing the option")
-																group["lateActivation"] = nil
-															end
-
-														
-															unit["x"] = updatedData.x;
-															unit["y"] = updatedData.z;
-
-															if unitID == 1 then  -- try to fix ME stuff -- QUESTO VA AGGIORNATO!!!!
-
-																group["x"] = unit["x"];
-																group["y"] = unit["y"];
-																--HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 position")
-
-																group.route.points[1]["x"] = unit["x"];
-																group.route.points[1]["y"] = unit["y"];
-
-																--HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 route")
-																group.route.spans = {
-																						[1] = 
-																						{
-																							[1] = 
-																							{
-																								["y"] = unit["y"],
-																								["x"] = unit["x"],
-																							}, -- end of [1]
-																							[2] = 
-																							{
-																								["y"] = unit["y"]+0.0001,
-																								["x"] = unit["x"]+0.0001,
-																							}, -- end of [2]
-																						}, -- end of [1]													
-																					} -- end of ["spans"]
-																--HOOK.writeDebugDetail(ModuleName .. ": updateUnits updated unit 1 spans")													
-															end
-															
-															for id, pointData in pairs (group.route.points) do
-																if id > 1 then
-																	table.remove(group.route.points, id);
-																end
-															end
-															
-															--if group.route.spans then 
-															--	group.route.spans = nil 
-															--end
-															HOOK.writeDebugDetail(ModuleName .. ": updateUnits unit updated")
-															unitsUpdateNumber = unitsUpdateNumber + 1
-														end
-													end
-												end
-											end												
-										end
-									end
-								end
-
 							end
 						end				
 					end
@@ -1056,6 +912,36 @@ function updateWeather(missionEnv)
 end
 HOOK.writeDebugDetail(ModuleName .. ": WTHR loaded")
 
+function updateFlags(tblFlags)
+	if ADTR and ADTR.ADTRloaded == true then
+		if tblFlags then
+			local stringFile = "do\n"
+			for flag, value in pairs(tblFlags) do
+				local s = "trigger.action.setUserFlag('" .. tostring(flag) .. "', " .. tostring(value) .. ")"
+				stringFile = stringFile .. s .. "\n"
+			end
+
+			stringFile = stringFile .. "trigger.action.outText('DSMC: trigger flags updated', 10)\n"
+			stringFile = stringFile .. "end"
+			UTIL.saveFile("tblFlagsSetter.lua", stringFile, HOOK.DSMCdirectory .. "Files/")
+			
+			local bDir_3 = HOOK.DSMCdirectory .. "Files/tblFlagsSetter.lua"
+			local check = "tblFlagsSetter.lua"
+
+			-- remove previously created states
+			for fId, fData in pairs(ADTR.tblAddResources) do
+				if fData.file == check then
+					ADTR.tblAddResources[fId] = nil
+				end
+			end
+
+			-- add updated conditions
+			ADTR.tblAddResources[#ADTR.tblAddResources+1] = {path = bDir_3, cat = "lua", file = "tblFlagsSetter.lua"}
+		end
+	end
+end
+HOOK.writeDebugDetail(ModuleName .. ": updateFlags loaded")
+
 function updateResources(missionEnv, mapEnv, tblRes)
 	if ADTR and ADTR.ADTRloaded == true then
 		ADTR.updateMapResources(missionEnv, mapEnv, tblRes)
@@ -1106,15 +992,13 @@ function save()
 		mResFun()	
 		HOOK.writeDebugDetail(ModuleName .. ": save mixFun, dictFun, wrhsFun & mResFun available")
 		
-		updateAirbaseTable(env.mission)
+		--updateAirbaseTable(env.mission)
 		
 		updateUnits(env.mission)	
 		updateStaticCoa(env.mission)
 		killUnits(env.mission)		
 		killStatics(env.mission)
 
-
-		
 		if HOOK.SPWN_var == true then
 			IncludeSpawned(env.mission, tblSpawned, wrhs_env.warehouses) -- , dict_env.dictionary
 			HOOK.writeDebugDetail(ModuleName .. ": env.mission maxDictId: " .. tostring(env.mission.maxDictId))
@@ -1137,7 +1021,7 @@ function save()
 		updateCountryCoa(env.mission)
 		updateBases(env.mission, wrhs_env.warehouses) 
 		
-
+		local doPlans = false -- till DGWS active
 		if HOOK.WRHS_var == true then
 
 			-- reset warehouse if mission is 000
@@ -1148,9 +1032,15 @@ function save()
 			
 			if strSub == "000" then
 				HOOK.writeDebugDetail(ModuleName .. ": mission is 000, resetting warehouse content")
-				UTIL.whAutoReset(wrhs_env.warehouses)
+				UTIL.whAutoReset(wrhs_env.warehouses, env.mission)
+				UTIL.whAutoPopulateDepotsAndProduction(wrhs_env.warehouses, env.mission)
+				doPlans = false
+			elseif strSub == "998" then
+				HOOK.writeDebugDetail(ModuleName .. ": mission is 998, setting all wh to void")
+				UTIL.whAutoZero(wrhs_env.warehouses)
+				doPlans = false
 			else
-				updateWarehouse(tblWarehousesContent, wrhs_env.warehouses)
+				updateWarehouse(tblWarehousesContent, wrhs_env.warehouses) -- also update airbaseTbl
 			end
 
 			-- fix wh if necessary
@@ -1172,6 +1062,24 @@ function save()
 					end
 				end
 			end
+		end
+				
+		-- plan module for DSMC 2.0
+		if UTIL.fileExist(HOOK.DSMCdirectory .. "DGWS" .. ".lua") == true and HOOK.DGWS_var == true and doPlans == true then
+			HOOK.writeDebugDetail(ModuleName .. " starting DGWS...")
+			local m = UTIL.deepCopy(env.mission)
+			local d = UTIL.deepCopy(dict_env.dictionary)
+			local w = UTIL.deepCopy(wrhs_env.warehouses)
+			local r = UTIL.deepCopy(mRes_env.mapResource)
+			
+			env.mission, dict_env.dictionary = DGWS.executePlanning(m, d, w)
+			HOOK.writeDebugDetail(ModuleName .. " DGWS done")
+
+		end	
+
+		-- update flags
+		if HOOK.FLAG_var == true then
+			updateFlags(tblFlags)
 		end
 
 		if ADTR.tblAddResources then

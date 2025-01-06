@@ -15,11 +15,15 @@ local lfs 			= require('lfs')
 local os 			= require('os')
 local ME_DB   		= require('me_db_api')
 local ConfigHelper 	= require('ConfigHelper')
+local loadLiveries	= require('loadLiveries')
 
 -- ## DEBUG
 
 
 HOOK.writeDebugBase(ModuleName .. ": local required loaded")
+if not loadLiveries then
+	HOOK.writeDebugBase(ModuleName .. ": loadLiveries missing")
+end
 
 -- ## LOCAL VARIABLES
 UTILloaded						= false
@@ -74,7 +78,111 @@ local tblWhWpnMultiplier = {
 	["rocket"] = 100,
 	["missile"] = 20,
 	["other"] = 20,
-	["bomb"] = 30,
+	["bomb"] = 20,
+	["tech"] = 1,
+	["fuelTanks"] = 5,
+}
+local fuelMultiplier = 5
+
+local mission_payloadPref = {
+    ["Anti-ship Strike"] = {"missileAG", "bombGuided"},
+    ["AFAC"] = {"rocket", "bombUnguided"},
+    ["SEAD"] = {"ARM"},
+    ["Ground Attack"] = {"missileAG", "bombGuided", "bombUnguided"},
+    ["CAS"] = {"missileAG", "bombGuided", "bombUnguided", "bombCluster", "rocket"}, 
+    ["Pinpoint Strike"] = {"bombGuided", "missileAG"},
+    ["Reconnaissance"] = {"tech"},
+    ["Escort"] = {"missileAA"},
+    ["Intercept"] = {"missileAA"},
+    ["Refueling"] = {"tech"},
+    ["Runway Attack"] = {"bombGuided", "bombCluster"},
+    ["Fighter Sweep"] = {"missileAA"},
+    ["CAP"] = {"missileAA"},
+}
+
+local country_keywords = {
+    ["Belgium"] = {"BAF", "Belgian", "Florennes"},
+    ["Slovakia"] = {"Slovak"},
+    ["Greece"] = {"HAF", "Hellenic", "Greek"},
+    ["United Kingdom"] = {"RAF", "Sqn", "Coningsby", "Marham", "uk army", "UK Army"},
+    ["Third Reich"] = {"Luftwaffe", "Wehrmacht", "Nazi"},
+    ["Hungary"] = {"Hungarian", "HuAF"},
+    ["Abkhazia"] = {"Abkhazian"},
+    ["The Netherlands"] = {"KLu", "RNLAF", "Volkel"},
+    ["Morocco"] = {"Moroccan"},
+    ["Bolivia"] = {"Bolivian"},
+    ["Switzerland"] = {"Swiss", "SwAF"},
+    ["Jordan"] = {"RJAF", "Jordanian"},
+    ["Vietnam"] = {"VPAF", "Vietnamese"},
+    ["China"] = {"PLAAF", "Chinese", "PLA"},
+    ["Yemen"] = {"Yemeni"},
+    ["USAF Aggressors"] = {"Aggressor", "USAF Aggressors"},
+    ["Kuwait"] = {"Kuwaiti"},
+    ["Serbia"] = {"Serbian", "SRB"},
+    ["Oman"] = {"RAFO", "Omani"},
+	["Israel"] = {"IAF", "IDF", "iaf", "106th SQN", "ah-64_d_isr", "Israeli"},
+    ["India"] = {"Indian", "iaf - 1956"},
+    ["Egypt"] = {"EAF", "Egyptian"},
+    ["North Korea"] = {"KPAF", "North Korean"},
+    ["Syria"] = {"SyAAF", "Syrian", "SYR"},
+    ["South Ossetia"] = {"South Ossetian"},
+    ["Kazakhstan"] = {"Kazakh"},
+    ["Germany"] = {"Luftwaffe", "Bundeswehr", "JG"},
+    ["Sweden"] = {"SwAF", "Swedish", "SE Air Force"},
+    ["Indonesia"] = {"Indonesian"},
+    ["Croatia"] = {"Croatian"},
+    ["Afghanistan"] = {"Afghan"},
+    ["GDR"] = {"East German", "GDR"},
+    ["Nigeria"] = {"Nigerian"},
+    ["Ecuador"] = {"Ecuadorian"},
+    ["Portugal"] = {"Portuguese"},
+    ["Yugoslavia"] = {"Yugoslav", "YUG"},
+    ["Ghana"] = {"Ghanaian"},
+    ["Bulgaria"] = {"Bulgarian"},
+    ["Cyprus"] = {"Cypriot", "CYP"},
+    ["Bahrain"] = {"Bahraini"},
+    ["UN"] = {"UN", "United Nations"},
+    ["Tunisia"] = {"Tunisian"},
+    ["Lebanon"] = {"Lebanese", "LEB"},
+    ["Peru"] = {"Peruvian"},
+    ["Cuba"] = {"Cuban"},
+	["Iran"] = {"IRIAF"},
+    ["Finland"] = {"Finnish", "FiAF"},
+    ["Insurgents"] = {"Insurgent", "Militia"},
+    ["Honduras"] = {"Honduran"},
+    ["France"] = {"Mont-de-Marsan", "Alsace", "Lorraine", "FAFL", "Reims", "Colmar Meyenheim", "Dijon"},
+    ["USA"] = {"USAF", "Navy", "Marines", "ANG", "FW", "AFRES", "Guard"},
+    ["Saudi Arabia"] = {"RSAF", "Saudi"},
+    ["Qatar"] = {"Qatari"},
+    ["Russia"] = {"VVS", "Russian", "RUAF", "Lipetsk"},
+    ["United Arab Emirates"] = {"UAE", "Emirati", "Al Dhafra"},
+    ["Italian Social Republic"] = {"RSI", "Italian Social Republic"},
+    ["Belarus"] = {"Belarusian", "Belorussian"},
+    ["Argentina"] = {"Argentine", "FAA"},
+    ["Italy"] = {"AMI", "Aeronautica", "ItAF", "Grosseto", "Grazzanise", "Italian"},
+    ["Chile"] = {"Chilean"},
+    ["Turkey"] = {"af f16", "TuAF", "Turkish", "Anatolian", "Ankara"},
+    ["Philippines"] = {"Philippine"},
+    ["Algeria"] = {"Algerian"},
+    ["Pakistan"] = {"PAF", "Pakistani"},
+    ["Malaysia"] = {"Malaysian"},
+    ["Czech Republic"] = {"CzAF", "Czech"},
+    ["Iraq"] = {"IQAF", "Iraqi"},
+    ["New Zealand"] = {"RNZAF", "Kiwi"},
+    ["South Africa"] = {"SAAF", "South African"},
+    ["Denmark"] = {"RDAF", "Danish"},
+    ["Spain"] = {"Ejército del Aire", "Spanish"},
+    ["Ukraine"] = {"limanskoye", "Ukraine", "ukraine", "Ukrainian", "ukrainian"},
+	["Mexico"] = {"Mexican", "FAM"},
+    ["Brazil"] = {"FAB", "Brazilian"},
+    ["South Korea"] = {"ROKAF", "South Korean"},
+    ["Austria"] = {"Austrian"},
+    ["Canada"] = {"RCAF", "Canadian"},
+    ["Poland"] = {"Polish", "Poznan", "Krzesiny"},
+    ["Ethiopia"] = {"Ethiopian"},
+    ["Japan"] = {"JASDF", "Japan", "Nyutabaru"},
+    ["Thailand"] = {"RTAF", "Thai"},
+    ["USSR"] = {"Soviet", "USSR", "Red Star", "Red Army"},
 }
 
 -- ## UTILS
@@ -132,6 +240,31 @@ function get2Ddistance(point1, point2)
     local yDiff = yUnit - yZone
 
     return math.sqrt(xDiff * xDiff + yDiff * yDiff)
+end
+
+local function getDist(point1, point2) -- can be Vec2 or Vec3, or mixed.
+	
+    local xUnit = point1.x
+    local yUnit = nil
+    local xZone = point2.x
+    local yZone = nil	
+	if point1.z then
+		yUnit = point1.z
+	elseif point1.y then
+		yUnit = point1.y
+	end
+	if point2.z then
+		yZone = point2.z
+	elseif point2.y then
+		yZone = point2.y
+	end
+    local xDiff = xUnit - xZone
+    local yDiff = yUnit - yZone
+    return math.sqrt(xDiff * xDiff + yDiff * yDiff)
+end
+
+local function getMedPoint(p1, p2) -- must be Vec3.
+    return {x = (p1.x + p2.x) / 2, y = (p1.y + p2.y) / 2, z = (p1.z + p2.z) / 2}
 end
 
 function fileExist(name)
@@ -367,10 +500,10 @@ function saveTable(fname, tabledata, savedir, varInt)
 	end
 end
 
-function saveText(fname, textString, savedir)
-	local filespath = savedir
+function saveFile(fname, textString, savedir)
+	local filespath = savedir or lfs.writedir() .. [[DSMC\Debug\]]
 	if io then
-		local fdir = filespath .. fname .. ".csv"
+		local fdir = filespath .. fname
 		local f = io.open(fdir, 'w')
 		local str = textString
 
@@ -399,6 +532,52 @@ function inJectCode(Code_name, CodeString)
 	return str
 end
 
+function IncludeTriggeredScript(missionEnv, code, trigComment)
+	HOOK.writeDebugDetail(ModuleName .. ": IncludeTriggeredSCript, starting... ")
+
+	local currentTrigNum = nil
+	
+	local serializedCode = Integratedserialize(trigComment, code)
+
+	for tgId, tgData in pairs (missionEnv.trigrules) do
+		if tgData.comment == "DSMC_adding_files" then
+			currentTrigNum = tgId
+			HOOK.writeDebugDetail(ModuleName .. ": additional resource trigger already existant. id: " .. tostring(currentTrigNum))
+		end
+	end
+
+	if not currentTrigNum then 
+		currentTrigNum	= table.getn(missionEnv.trig.flag) + 1 
+	end
+
+	missionEnv.trigrules[currentTrigNum] = {
+		["rules"] = {},
+		["eventlist"] = "",
+		["comment"] = trigComment,
+		["actions"] = {
+			[1] = 
+			{
+				["text"] = serializedCode,
+				["predicate"] = "a_do_script",
+			}, -- end of [1]
+		}, -- end of ["actions"]			
+		["predicate"] = "triggerOnce",
+	}
+
+	--local actionStr = '"a_do_script(\"' .. serializedCode .. '\"); mission.trig.func[' .. currentTrigNum .. ']=nil;'
+
+	-- trigrules + actions + conditions + funcStartup
+	missionEnv.trig.flag[currentTrigNum] = true
+	missionEnv.trig.func[currentTrigNum] = "if mission.trig.conditions[" .. currentTrigNum .. "]() then mission.trig.actions[" .. currentTrigNum .. "]() end"
+	missionEnv.trig.conditions[currentTrigNum] = "return(true)"
+	missionEnv.trig.actions[currentTrigNum] = '"a_do_script(\"' .. serializedCode .. '\"); mission.trig.func[' .. currentTrigNum .. ']=nil;'
+
+	HOOK.writeDebugDetail(ModuleName .. ": IncludeTriggeredScript, done... ")
+	
+	--return missionEnv
+
+end
+
 function filterNamingTables(mission)	 -- DICTPROBLEM: dictionary
 
 	HOOK.writeDebugDetail(ModuleName .. ": tblFOBnames starting items: " .. tostring(#tblFOBnames))
@@ -425,22 +604,6 @@ function filterNamingTables(mission)	 -- DICTPROBLEM: dictionary
 			end
 		end
 	end
-
-	--DICTPROBLEM (deleted with new structure)
-	--[[
-	for _, dData in pairs(dictionary) do
-		if dData ~= "" then
-		--filter FOB tables
-			
-			for aId, aData in pairs(tblFOBnames) do
-				if string.find(dData, aData) then
-					HOOK.writeDebugDetail(ModuleName .. ": tblFOBnames removing: " .. tostring(aData))
-					table.remove(tblFOBnames, aId)
-				end
-			end
-		end
-	end
-	--]]--
 
 	HOOK.writeDebugDetail(ModuleName .. ": tblFOBnames items: " .. tostring(#tblFOBnames))
 	if #tblFOBnames > 30 then
@@ -620,8 +783,557 @@ function getPayloadOfEachAcf()
 
 end
 
+function getCountryLivery(acf, countryName)
+	local liveryId = nil
+	if db_planes[acf] then
+		local numLiv = 0
+		local livTbl = {}
+		for _, lData in pairs(db_planes[acf]["liveries"]) do
+			if lData.country == countryName then
+				numLiv = numLiv + 1
+				livTbl[#livTbl+1] = lData.id
+			end
+		end
+		if numLiv > 0 then
+			liveryId = livTbl[math.random(numLiv)]
+		end
+	end
 
--- #### WAREHOUSE ####
+	return liveryId
+end
+
+local function nostar_pathfind( start, goal, nodes, coa, dist ) -- my mod code to get as many point as possibile 
+
+	-- dist eval function
+	local function checkDist(point1, point2)
+		local xUnit = point1.x
+		local yUnit = nil
+		local xZone = point2.x
+		local yZone = nil	
+		if point1.z then
+			yUnit = point1.z
+		elseif point1.y then
+			yUnit = point1.y
+		end
+		if point2.z then
+			yZone = point2.z
+		elseif point2.y then
+			yZone = point2.y
+		end
+		local xDiff = xUnit - xZone
+		local yDiff = yUnit - yZone
+		return math.sqrt(xDiff * xDiff + yDiff * yDiff)
+	end
+
+	-- nearestCorrectNode function
+	local function nearNodeToGoal(point)
+		local dc = checkDist(point, goal)
+		local distVal = 1000
+		while distVal < 400000 do
+			for nId, nData in pairs(nodes) do
+				if nData.id ~= point.id then
+					local stack = checkDist(point, nData)
+					if stack < distVal then
+						local cur = checkDist(nData, goal) 
+						if cur < dc then
+							return nData
+						end
+					end
+				end
+			end
+			distVal = distVal + 1000
+		end
+		return false
+	end
+
+	local current = start
+	local solved = false
+	local path = {}
+
+	while solved == false do
+		if current.id == goal.id then
+			solved = true
+			--UTIL.dumpTable("DSMC_FEBA.lua", path, "int")
+			HOOK.writeDebugDetail(ModuleName .. ": nostar_pathfind solved")
+			return path
+		end
+		HOOK.writeDebugDetail(ModuleName .. ": nostar_pathfind not solved yet, current id: " .. tostring(current.id))
+
+		path[#path+1] = current
+
+		current = nearNodeToGoal(current)
+		if not current then
+			HOOK.writeDebugDetail(ModuleName .. ": nostar_pathfind error getting current")
+		end
+
+	end
+
+	return nil -- no valid nostar_path
+end
+
+function getFEBA(cTbl, coalition) -- OLD?
+	local FEBA = nil
+	local vertices = {}
+	local vert_id = 1
+	for cId, cData in pairs(cTbl) do
+
+		local skip = false
+		if cData.a_owner == 0 or cData.b_owner == 0 then
+			skip = true
+		end
+
+		if skip == false then
+			--[[
+			local o1 = nil 
+			local o2 = nil
+			if cData.a_owner == coalition or cData.b_owner == 9 then
+				o1 = cData.a_owner
+			end
+			if cData.b_owner == coalition or cData.b_owner == 9 then
+				o2 = cData.a_owner
+			end
+			--]]--
+
+			if cData.a_owner == 9 or cData.b_owner == 9 then -- cData.a_owner == 9 or cData.b_owner == 9    --- o1 ~= o2
+				local xPos = (cData.a_pos.x + cData.b_pos.x)/2
+				local yPos = (cData.a_pos.z + cData.b_pos.z)/2
+				vertices[#vertices+1] = {x = xPos, y = yPos, id = vert_id, coa = 0}
+				vert_id = vert_id+1
+			end
+		end
+	end
+	if vertices and #vertices > 1 then
+		
+		-- identify the farthest one
+		local s = nil
+		local a = nil
+		local sId = nil
+		local maxDist = 0
+		for vId, vData in pairs(vertices) do
+			for xId, xData in pairs(vertices) do
+				local d = getDist(vData, xData)
+				if d > maxDist then
+					maxDist = d
+					s = vData
+					a = xData
+					sId = vId								
+				end
+			end
+		end
+
+		if s and a then -- s and a
+
+			local p = nostar_pathfind(s, a, vertices, false, 200000)
+			if p then
+				FEBA = p
+			end
+		end
+	end
+
+	if FEBA then
+		return FEBA
+	end
+
+end
+
+function getFEBA2(points)
+
+	
+
+    local red_points = {}
+    local blue_points = {}
+    local contested_points = {}
+
+	local function simplifyLine2D(points, maxPoints)
+		-- Controlla se il numero di punti è sufficiente
+		if #points <= maxPoints then
+			return points -- Nessuna semplificazione necessaria
+		end
+	
+		-- Numero di punti intermedi da calcolare
+		local middlePoints = maxPoints - 2
+		local segmentLength = (#points - 2) / middlePoints
+	
+		-- Nuova linea semplificata
+		local simplified = {points[1]} -- Inizia con il primo punto
+	
+		-- Calcola i punti intermedi
+		for i = 1, middlePoints do
+			local startIdx = math.floor(1 + (i - 1) * segmentLength)
+			local endIdx = math.floor(1 + i * segmentLength)
+			
+			-- Calcola il punto medio del segmento
+			local avgX, avgY = 0, 0
+			local count = 0
+			for j = startIdx, endIdx do
+				avgX = avgX + points[j].x
+				avgY = avgY + points[j].y
+				count = count + 1
+			end
+			avgX = avgX / count
+			avgY = avgY / count
+	
+			-- Crea un nuovo punto medio
+			local newPoint = {x = avgX, y = avgY}
+			table.insert(simplified, newPoint)
+		end
+	
+		-- Aggiungi l'ultimo punto
+		table.insert(simplified, points[#points])
+	
+		return simplified
+	end
+
+    -- Separare i punti in base all'owner
+    for _, point in ipairs(points) do
+        if point.owner == 1 then
+            table.insert(red_points, point)
+        elseif point.owner == 2 then
+            table.insert(blue_points, point)
+        elseif point.owner == 9 then
+            table.insert(contested_points, point)
+        end
+    end
+
+    -- Se ci sono punti contesi, usarli come base per la linea di confine
+    local boundary_points = {}
+    if #contested_points > 2 then -- at least 3 points
+        table.sort(contested_points, function(a, b) return a.pos.z < b.pos.z end) -- Ordinare per z
+
+        for i = 1, #contested_points - 1 do
+            table.insert(boundary_points, contested_points[i])
+
+            -- Calcolare la distanza tra due punti contesi consecutivi
+            local distance = getDist(contested_points[i].pos, contested_points[i+1].pos)
+            if distance > 5000 then
+                -- Se la distanza è maggiore di 5000, aggiungere un punto mediano
+                local mid = getMedPoint(contested_points[i].pos, contested_points[i+1].pos)
+                table.insert(boundary_points, {pos = mid})
+            end
+        end
+
+        -- Inserire l'ultimo punto conteso
+        table.insert(boundary_points, contested_points[#contested_points])
+    else
+        
+		if #contested_points > 1 then
+			table.sort(contested_points, function(a, b) return a.pos.z < b.pos.z end) -- Ordinare per z
+
+			for i = 1, #contested_points - 1 do
+				table.insert(boundary_points, contested_points[i])
+	
+				-- Calcolare la distanza tra due punti contesi consecutivi
+				local distance = getDist(contested_points[i].pos, contested_points[i+1].pos)
+				if distance > 5000 then
+					-- Se la distanza è maggiore di 5000, aggiungere un punto mediano
+					local mid = getMedPoint(contested_points[i].pos, contested_points[i+1].pos)
+					table.insert(boundary_points, {pos = mid})
+				end
+			end
+	
+			-- Inserire l'ultimo punto conteso
+			table.insert(boundary_points, contested_points[#contested_points])
+		end
+		
+		-- Creare punti mediani tra città rosse e blu più vicine se non ci sono punti contesi
+        for _, red_point in ipairs(red_points) do
+            local nearest_blue = nil
+            local min_distance = math.huge
+
+            -- Trovare la città blu più vicina
+            for _, blue_point in ipairs(blue_points) do
+                local distance = getDist(red_point.pos, blue_point.pos)
+                if distance < min_distance then
+                    min_distance = distance
+                    nearest_blue = blue_point
+                end
+            end
+
+            -- Aggiungere il punto mediano tra la città rossa e la città blu più vicina
+            if nearest_blue then
+                local mid = getMedPoint(red_point.pos, nearest_blue.pos)
+                table.insert(boundary_points, {pos = mid})
+            end
+        end
+    end
+
+    -- Creare la tabella risultante con solo x e y (dove y è il vecchio z)
+    local result_points = {}
+	table.sort(boundary_points, function(a, b) return a.pos.z < b.pos.z end) -- Ordinare per z
+    for i, point in ipairs(boundary_points) do
+        table.insert(result_points, {x = point.pos.x, y = point.pos.z}) -- mappare z a y nella tabella risultante
+    end
+
+	--dumpTable("DGWS_points_FEBA.lua", result_points, "int")
+	if result_points and #result_points > 10 then
+		result_points = simplifyLine2D(result_points, 10)
+	end
+
+    return result_points
+end
+
+function generate_cap_pairs(flot_points, external_point, leg_distance, distance_from_flot, interasse_cap)
+    local dca_points = {}
+
+    -- Prendi il primo e l'ultimo punto della FLOT
+    local p1 = flot_points[1]
+    local p2 = flot_points[#flot_points]
+
+    HOOK.writeDebugDetail(ModuleName .. ": Inizio generazione CAP pairs.")
+    HOOK.writeDebugDetail(ModuleName .. ": P1 = {x = " .. p1.x .. ", y = " .. p1.y .. ", z = " .. p1.z .. "}, P2 = {x = " .. p2.x .. ", y = " .. p2.y .. ", z = " .. p2.z .. "}")
+
+    -- Calcola il vettore che descrive la linea del fronte (p2 - p1)
+    local dx_fronte = p2.x - p1.x
+    local dz_fronte = p2.z - p1.z
+    local length_fronte = math.sqrt(dx_fronte^2 + dz_fronte^2)
+    HOOK.writeDebugDetail(ModuleName .. ": Lunghezza fronte = " .. length_fronte)
+
+    -- Calcola la normale alla linea del fronte
+    local normal_x = -dz_fronte / length_fronte
+    local normal_z = dx_fronte / length_fronte
+    HOOK.writeDebugDetail(ModuleName .. ": Normale fronte normal_x = " .. normal_x .. ", normal_z = " .. normal_z)
+
+    -- Calcola il numero di coppie di punti CAP
+    local n_caps = math.floor(length_fronte / interasse_cap)
+    HOOK.writeDebugDetail(ModuleName .. ": Numero di coppie di CAP da generare = " .. n_caps)
+
+    -- Genera le coppie di CAP
+    for i = 0, n_caps do
+        -- Calcola la posizione del punto sulla linea del fronte
+        local t = i * interasse_cap / length_fronte
+        local flot_x = p1.x + t * dx_fronte
+        local flot_z = p1.z + t * dz_fronte
+
+        HOOK.writeDebugDetail(ModuleName .. ": Generazione coppia CAP " .. (i + 1) .. ". Flot_x = " .. flot_x .. ", Flot_z = " .. flot_z)
+
+        -- Determina il lato rispetto al punto esterno
+        local dx_ext = external_point.x - flot_x
+        local dz_ext = external_point.z - flot_z
+        local side = (dx_ext * dz_fronte) - (dz_ext * dx_fronte)
+
+        -- Genera i punti CAP a partire dalla normale, in base al lato
+        local cap_p1, cap_p2
+        if side < 0 then
+            -- Lato sinistro del fronte
+            cap_p1 = {
+                x = flot_x + normal_x * distance_from_flot,
+                y = external_point.y,
+                z = flot_z + normal_z * distance_from_flot
+            }
+            cap_p2 = {
+                x = cap_p1.x + normal_x * leg_distance,
+                y = cap_p1.y,
+                z = cap_p1.z + normal_z * leg_distance
+            }
+        else
+            -- Lato destro del fronte
+            cap_p1 = {
+                x = flot_x - normal_x * distance_from_flot,
+                y = external_point.y,
+                z = flot_z - normal_z * distance_from_flot
+            }
+            cap_p2 = {
+                x = cap_p1.x - normal_x * leg_distance,
+                y = cap_p1.y,
+                z = cap_p1.z - normal_z * leg_distance
+            }
+        end
+
+        -- Aggiunge la coppia di punti CAP alla tabella dca_points
+        dca_points[#dca_points + 1] = { p1 = cap_p1, p2 = cap_p2 }
+
+        -- Log dei punti CAP calcolati
+        HOOK.writeDebugDetail(ModuleName .. ": CAP " .. (i + 1) .. " generata. p1 = {x = " .. cap_p1.x .. ", y = " .. cap_p1.y .. ", z = " .. cap_p1.z .. "}, p2 = {x = " .. cap_p2.x .. ", y = " .. cap_p2.y .. ", z = " .. cap_p2.z .. "}")
+    end
+
+    -- Log di fine funzione
+    HOOK.writeDebugDetail(ModuleName .. ": Fine generazione CAP pairs.")
+
+    return dca_points
+end
+
+
+
+-- ### DATABASES ###
+
+function getWeaponsDataForDb(unique)
+	if unique then
+		local data = resource_by_unique_name[unique]
+		if data then
+			local weapon = {}
+
+			-- wsString, useful for db_plane navigation
+			local wsTable = data.wsTypeOfWeapon or data.ws_type or data.attribute
+			if type(wsTable) == "table" then
+				if #wsTable == 4 then
+					local wsString = wsTypeToString(wsTable)	
+					weapon.string = wsString
+				end
+			end
+
+			-- category
+			local category = data.type_name or "other"
+			if wsTable[1] == 4 and wsTable[2] == 15 then
+				category = "tech"
+			elseif wsTable[1] == 1 and wsTable[2] == 3 and wsTable[3] == 43 then
+				category = "fuelTanks"
+			end
+			weapon.cat = category
+
+			-- general data
+			weapon.mass = data.mass
+			weapon.name = data.display_name or data.displayName
+
+			if weapon.name then
+
+				weapon.CLSID = data.CLSID
+
+				-- derived hand-compiled data
+				weapon.cat_detail 		= "none"
+				weapon.srk 				= "none" 
+				weapon.weightClass 		= "none" -- for bombs
+
+				if wsTable[2] == 4 then
+					if wsTable[3] == 7 then
+						weapon.cat_detail = "missileAA"
+						if data.Head_Type then
+							if data.Head_Type == 1 then
+								weapon.srk = "IR"
+							elseif data.Head_Type == 2 then
+								weapon.srk = "Active"
+							elseif data.Head_Type == 6 then
+								weapon.srk = "SemiActive"
+							end
+						elseif data.server then
+							if data.server.Head_Type then
+								if data.server.Head_Type == 1 then
+									weapon.srk = "IR"
+								elseif data.server.Head_Type == 2 then
+									weapon.srk = "Active"
+								elseif data.server.Head_Type == 6 then
+									weapon.srk = "SemiActive"
+								end
+							end
+						end
+						
+					elseif wsTable[3] == 8 then
+						weapon.cat_detail = "missileAG"
+						if data.name == "AGM_88" or data.name == "LD-10" or data.name == "AGM_45A" or data.name == "AGM_45B" or data.name == "X_25MR" or data.name == "X_58" or data.name == "X_58" or data.name == "AGM_78B"or data.name == "AGM_78A" or data.name == "ALARM" then
+							weapon.srk = "Radiation" -- added by me for managing SEAD
+							weapon.cat_detail = "ARM"
+						else
+							if data.Head_Type then
+								if data.Head_Type == 4 then
+									weapon.srk = "Laser"
+								elseif data.Head_Type == 5 then
+									weapon.srk = "Optical"
+								elseif data.Head_Type == 2 then
+									weapon.srk = "Radar"
+								elseif data.Head_Type == 7 then
+									weapon.srk = "Beam"
+								else
+									weapon.srk = "Other"
+								end
+							elseif data.server then
+								if data.server.Head_Type then
+									if data.server.Head_Type == 4 then
+										weapon.srk = "Laser"
+									elseif data.server.Head_Type == 5 then
+										weapon.srk = "Optical"
+									elseif data.server.Head_Type == 2 then
+										weapon.srk = "Radar"
+									elseif data.server.Head_Type == 7 then
+										weapon.srk = "Beam"
+									else
+										weapon.srk = "Other"
+									end
+								end
+							end
+						end
+					end
+				
+				elseif wsTable[2] == 5 then
+					if wsTable[3] == 9 or wsTable[3] == 37 then
+						weapon.cat_detail = "bombUnguided"
+						local mass = data.mass or data.M
+						local massClass = nil
+						if mass then
+							if mass > 50 then
+								if mass < 350 then
+									massClass = "Light"
+								elseif mass < 700 then
+									massClass = "Medium"
+								elseif mass < 1300 then
+									massClass = "Heavy"
+								end
+							end
+						end
+						weapon.weightClass = massClass
+
+					elseif wsTable[3] == 36 then
+						weapon.cat_detail = "bombGuided"
+						local mass = data.mass or data.M
+						local massClass = nil
+						if mass then
+							if mass < 350 then
+								massClass = "Light"
+							elseif mass < 700 then
+								massClass = "Medium"
+							elseif mass < 1300 then
+								massClass = "Heavy"
+							end
+						end
+						weapon.weightClass = massClass
+
+					elseif wsTable[3] == 38 then
+						weapon.cat_detail = "bombCluster"
+						local mass = data.mass or data.M
+						local massClass = nil
+						if mass then
+							if mass < 350 then
+								massClass = "Light"
+							elseif mass < 700 then
+								massClass = "Medium"
+							elseif mass < 1300 then
+								massClass = "Heavy"
+							end
+						end
+						weapon.weightClass = massClass
+
+					end
+
+				elseif wsTable[2] == 7 then
+					if wsTable[3] == 33 then
+						weapon.cat_detail = "rocket"
+					end
+
+				end
+
+				-- specific data
+				weapon.range = data.Range_max
+				local advData = data.server or data.client -- useful cause many wpn has two nested dataset instead of a single one
+				if advData then	
+					if not weapon.Range_max then
+						weapon.range = advData.Range_max
+					end
+				end
+
+				weapon.SeekerGen = data.SeekerGen
+				local advData = data.server or data.client -- useful cause many wpn has two nested dataset instead of a single one
+				if advData then	
+					if not weapon.SeekerGen then
+						weapon.SeekerGen = advData.SeekerGen
+					end
+				end
+
+				return weapon
+			else
+				return nil
+			end
+
+		end
+	end
+end
 
 function CTLD_integrationWeaponDB()
 
@@ -1443,51 +2155,8 @@ function populateStandardPlaneTypes(db)
 				p.payload.flare = aData.passivCounterm.flare.default
 			end
 		end
-		
-		-- built radio
-		--[[
-		p.Radio= {}
-		if aData.panelRadio then
-			for rId, rData in pairs(aData.panelRadio) do
-				p.Radio[rId] = {}
-
-				p.Radio[rId].modulations = {} -- controlla
-				if rData.range then
-					local m = {}
-					for rmId, rmData in pairs(rData.range) do
-						if rmId == "modulation" then
-							m[rId] = rmData
-						end
-					end
-					p.Radio[rId].modulations = m
-				end				
-				
-				p.Radio[rId].channels = {} -- controlla
-				p.Radio[rId].channelsNames = {}
-				if rData.channels then
-					local c = {}
-					--local n = {}
-					for rcId, rcData in pairs(rData.channels) do
-						c[rcId] = rcData.default
-						--n[rcId] = rcData.name
-					end
-					p.Radio[rId].channels = c
-					--p.Radio[rId].channelsNames = n
-				end
-			end			
-		end
-
-		-- built AddPropAircraft
-		p.AddPropAircraft = {}
-		if aData.AddPropAircraft then
-			for pId, pData in pairs(aData.AddPropAircraft) do
-				p.AddPropAircraft[pData.id] = pData.defValue
-			end
-		end
 
 		standardHeloTypes[aId] = p
-		--]]--
-
 	end
 
 	-- planes
@@ -1525,51 +2194,11 @@ function populateStandardPlaneTypes(db)
 			end
 		end
 		
-		-- built radio
-		--[[
-		p.Radio= {}
-		if aData.panelRadio then
-			for rId, rData in pairs(aData.panelRadio) do
-				p.Radio[rId] = {}
-
-				p.Radio[rId].modulations = {} -- controlla
-				if rData.range then
-					local m = {}
-					for rmId, rmData in pairs(rData.range) do
-						if rmId == "modulation" then
-							m[rId] = rmData
-						end
-					end
-					p.Radio[rId].modulations = m
-				end				
-				
-				p.Radio[rId].channels = {} -- controlla
-				p.Radio[rId].channelsNames = {}
-				if rData.channels then
-					local c = {}
-					--local n = {}
-					for rcId, rcData in pairs(rData.channels) do
-						c[rcId] = rcData.default
-						--n[rcId] = rcData.name
-					end
-					p.Radio[rId].channels = c
-					--p.Radio[rId].channelsNames = n
-				end
-			end			
-		end
-
-		-- built AddPropAircraft
-		p.AddPropAircraft = {}
-		if aData.AddPropAircraft then
-			for pId, pData in pairs(aData.AddPropAircraft) do
-				p.AddPropAircraft[pData.id] = pData.defValue
-			end
-		end
-		--]]--
-
 		standardPlaneTypes[aId] = p
 	end
 
+	--UTIL.dumpTable("DGWS_standardPlaneTypes.lua", standardPlaneTypes, "int")
+	--UTIL.dumpTable("DGWS_standardHeloTypes.lua", standardHeloTypes, "int")
 
 end
 
@@ -1751,6 +2380,7 @@ function addFARPwhBase(unitId, coa, wh, voidIt)
 		["unlimitedMunitions"] = true,
 		["dynamicSpawn"] = true,
 		["allowHotStart"] = false,
+		["dynamicCargo"] = true,
 		["methanol_mixture"] = 
 		{
 			["InitFuel"] = 10,
@@ -1832,8 +2462,11 @@ function addFARPwhBase(unitId, coa, wh, voidIt)
 			toZero.size							= 1
 			toZero.periodicity					= 1000
 			toZero.suppliers					= {}
-
-			defaultWhTbl = toZero
+			toZero.dynamicSpawn 				= true
+			toZero.allowHotStart 				= false
+			toZero.dynamicCargo 				= true
+			
+			defaultWhTbl 						= toZero
 
 			HOOK.writeDebugDetail(ModuleName .. ": addFARPwhBase: warehouse has been set to all 0, id: " .. tostring(unitId))
 		else
@@ -1933,7 +2566,6 @@ function getZeroedAirbase(whTbl) -- used here and in SAVE
 			if zbData.unlimitedMunitions == false and zbData.unlimitedAircrafts == false then
 
 				HOOK.writeDebugDetail(ModuleName .. ": zeroWarehouse: found limited base")
-
 
 				-- zero weapons
 				for wId, wData in pairs(zbData.weapons) do
@@ -3183,8 +3815,13 @@ function escapeHTML(s)
     return (string.gsub(s, "[&\"'<>&]", function(c) return escapeTable[c] end))
 end
 
+function escapeLuaPattern(text)
+    local specialChars = "%%%^%$%(%)%.%[%]%*%+%-%?"
+    return text:gsub("([" .. specialChars .. "])", "%%%1")
+end
 
---
+
+--[[--
 local bName = "dbYears.lua"
 local bpath = HOOK.DSMCdirectory .. bName
 local boutFile = io.open(bpath, "w");
@@ -3511,7 +4148,7 @@ tblFOBnames = {
 ctryList = {}
 if ME_DB.db.CountriesByName then
 	for cName, cData in pairs(ME_DB.db.CountriesByName) do
-		ctryList[#ctryList+1] = {n = cName, i = cData.WorldID}
+		ctryList[#ctryList+1] = {n = cName, i = cData.WorldID, sn = cData.ShortName}
 	end
 end
 --dumpTable("ctryList_pre.lua", ctryList)
@@ -3519,9 +4156,8 @@ end
 --tblBriefingImages = createImagesTbl()
 --getPayloadOfEachAcf()
 --populateStandardPlaneTypes(ME_DB)
+--dumpTable("DGWS_unitsPayloads.lua", DGWS_unitsPayloads, "int")
 
 HOOK.writeDebugBase(ModuleName .. ": Loaded " .. MainVersion .. "." .. SubVersion .. "." .. Build .. ", released " .. Date)
 UTILloaded = true
 --~=
-
---CTLD_integrationWeaponDB()

@@ -60,6 +60,8 @@ tblWarehouseChangeCoa 			= {}
 tblWarehousesContent			= {}
 tblAircraftInFlightFix			= {}
 tblCoaChanges					= {}
+tblUncontrolledAcf				= {}	
+tblFlags						= {}	
 
 -- airlift crates cross support
 local checkLOGIandCTLD = function()
@@ -196,13 +198,30 @@ function deepCopy(object)
 	return _copy(object)
 end
 
+local function getDist(point1, point2) -- needed
+    local xUnit = point1.x
+    local yUnit = nil
+    local xZone = point2.x
+    local yZone = nil	
+	if point1.z then
+		yUnit = point1.z
+	elseif point1.y then
+		yUnit = point1.y
+	end
+	if point2.z then
+		yZone = point2.z
+	elseif point2.y then
+		yZone = point2.y
+	end
+    local xDiff = xUnit - xZone
+    local yDiff = yUnit - yZone
+    return math.sqrt(xDiff * xDiff + yDiff * yDiff)
+end
+
 if DSMC_io and DSMC_lfs then
 	env.info(("EMBD loading desanitized additional function"))
 	
 	DSMC_EMBDmodule 	= "funzia"
-	--env.info(("EMBD module test = " .. tostring(HOOK.StartFilterCode)))
-	--env.info(("EMBD requiring net module... "))
-	--DSMC_net = require('net')
 
 	function tableShow(tbl, loc, indent, tableshow_tbls)
 		tableshow_tbls = tableshow_tbls or {} --create table of tables
@@ -272,9 +291,9 @@ if DSMC_io and DSMC_lfs then
 		end
 	end
 
-	function EMBD.saveTable(fname, tabledata)		
+	function EMBD.saveTable(fname, tabledata, optPath)		
 		if DSMC_lfs and DSMC_io then
-			local DSMCfiles = DSMC_lfs.writedir() .. "Missions/Temp/Files/"
+			local DSMCfiles = optPath or DSMC_lfs.writedir() .. "Missions/Temp/Files/"
 			local fdir = DSMCfiles .. fname .. ".lua"
 			local f = DSMC_io.open(fdir, 'w')
 			local str = IntegratedserializeWithCycles(fname, tabledata)
@@ -314,50 +333,6 @@ function EMBD.dumpTable(fname, tabledata, varInt)
 
 	end
 end
-
---[=[local fullPath = DSMC_lfs.currentdir() .. "Scripts/JSON.lua"
-DSMC_JSON = dofile(fullPath)
-
-if DSMC_JSON then
-	env.info(("EMBD DSMC_JSON available"))
-else
-	env.info(("EMBD DSMC_JSON not available"))
-end
-
-uString = nil
---]=]--
-
-
---EMBD.dumpTable("_G_SSE.lua", _G)
-
--- ##CORE
-
---[[
-function EMBD.getFreeCountry()
-	for i=1,100 do		
-		local found = true
-		for cId, cData in pairs(env.mission.coalitions) do
-		--EMBD.dumpTable("env.mission.coalitions.lua", env.mission.coalitions)
-			--env.info(("EMBD firstNeutralCountry check 1"))
-			if cId == "blue" or cId == "red" then
-				if cData then
-					for fId, fData in pairs(cData) do
-						if fData == i then
-							env.info(("EMBD.getAptInfo: firstNeutralCountry excluded " .. tostring(i)))
-							found = false
-						end
-					end
-				end
-			end
-		end
-		if found == true then
-			firstNeutralCountry = tonumber(i)
-			env.info(("EMBD.getAptInfo: firstNeutralCountry =  " .. tostring(firstNeutralCountry)))	
-			break
-		end		
-	end 
-end
---]]--
 
 function EMBD.getAptInfo(builtResMap)
 
@@ -866,11 +841,89 @@ function EMBD.updateSpawnedPosition(tblSpawned, missionEnv)
 	end		
 end
 
+function EMBD.getOnGroundAcf()
+
+	tblUncontrolledAcf = {}
+
+	for i=1, 2 do
+		local p = coalition.getGroups(i, 0)
+		for _, pData in pairs(p) do
+			for _, uData in pairs( pData:getUnits() ) do
+				local ctrl = uData:inAir()
+				if not ctrl then
+
+					local distMax = 10000
+					local ab = nil
+					local abs = coalition.getAirbases(i)
+					if abs and #abs > 0 then
+						for aId, aData in pairs(abs) do
+							local abs_p = Airbase.getPoint(aData)
+							local d = getDist(abs_p, uData:getPoint())
+							if d and d < distMax then
+								distMax = d
+								ab = aData
+							end
+						end
+					end
+
+					if ab then
+						local wh = ab:getWarehouse()
+						--tblAircraftInFlightFix[#tblAircraftInFlightFix+1] = {id = uData:getID(), u = uData, p = ab, w = wh}	
+						tblUncontrolledAcf[#tblUncontrolledAcf+1] = {id = uData:getID(), u = uData, p = ab, w = wh}
+					end
+				end
+			end
+		end
+
+		local h = coalition.getGroups(i, 1)
+		for _, hData in pairs(h) do
+			for _, uData in pairs( hData:getUnits() ) do
+				local ctrl = uData:inAir()
+				if not ctrl then
+
+					local distMax = 10000
+					local ab = nil
+					local abs = coalition.getAirbases(i)
+					if abs and #abs > 0 then
+						for aId, aData in pairs(abs) do
+							local abs_p = Airbase.getPoint(aData)
+							local d = getDist(abs_p, uData:getPoint())
+							if d and d < distMax then
+								distMax = d
+								ab = aData
+							end
+						end
+					end
+
+					if ab then
+						local wh = ab:getWarehouse()
+						--tblAircraftInFlightFix[#tblAircraftInFlightFix+1] = {id = uData:getID(), u = uData, p = ab, w = wh}	
+						tblUncontrolledAcf[#tblUncontrolledAcf+1] = {id = uData:getID(), u = uData, p = ab, w = wh}
+					end
+				end
+			end
+		end
+
+	end
+
+	EMBD.dumpTable("tblUncontrolledAcf.lua", tblUncontrolledAcf, "int")
+
+end
+
 function EMBD.getWarehouses()
 	tblWarehousesContent = {}
 	tblWarehousesWsTable = {}
 	local wh_Table = world.getAirbases()
 	--EMBD.dumpTable("wh_Table.lua", wh_Table)
+
+	-- from uncontrolled
+	EMBD.getOnGroundAcf()
+
+	for _, fData in pairs(tblUncontrolledAcf) do
+		tblAircraftInFlightFix[#tblAircraftInFlightFix+1] = fData
+	end
+
+	EMBD.dumpTable("tblAircraftInFlightFix.lua", tblAircraftInFlightFix, "int")
 
 	-- from wh table
 	EMBD.aliveAcfWhAdder()
@@ -908,6 +961,14 @@ function EMBD.getWarehouses()
 
 	EMBD.aliveAcfWhSubber()
 
+	for tId, tData in pairs(tblAircraftInFlightFix) do
+		for _, fData in pairs(tblUncontrolledAcf) do
+			if fData.id == tData.id then
+				tblAircraftInFlightFix[tId] = nil
+			end
+		end
+	end
+
 end
 
 function EMBD.aliveAcfWhAdder()
@@ -934,6 +995,20 @@ function EMBD.aliveAcfWhSubber()
 	end
 end
 
+function EMBD.getFlags()
+	tblFlags = {}
+	for i = 1, 10000 do
+		local v = trigger.misc.getUserFlag(tostring(i))
+		if v == 1 then
+			v = true
+		elseif v == 0 then
+			v = false
+		end
+		tblFlags[i] = v
+
+	end
+end
+
 EMBD.oncallworkflow = function(sanivar, recall)
 	env.info(("EMBD.oncallworkflow sanivar: " .. tostring(sanivar) .. ", recall: " .. tostring(recall)))
 	DSMC_allowStop = false
@@ -951,6 +1026,7 @@ EMBD.oncallworkflow = function(sanivar, recall)
 		EMBD.changeWarehouseCoalition(env.mission)
 		EMBD.updateSpawnedPosition(tblSpawned, env.mission)
 		EMBD.getWarehouses()
+		EMBD.getFlags()
 		
 		
 		local function funcAirbases()
@@ -985,6 +1061,10 @@ EMBD.oncallworkflow = function(sanivar, recall)
 			EMBD.saveTable("tblWarehousesContent", tblWarehousesContent)
 		end	
 
+		local function funcFlagsTrack()
+			EMBD.saveTable("tblFlags", tblFlags) -- , DSMC_lfs.writedir() .. "DSMC/Files/"
+		end	
+
 		local function funcCoaChangeTrack()
 			EMBD.saveTable("tblCoaChanges", tblCoaChanges)
 		end				
@@ -1009,6 +1089,8 @@ EMBD.oncallworkflow = function(sanivar, recall)
 		cur_Stack = cur_Stack + prt_stack	
 		timer.scheduleFunction(funcWarehouseTrack, {}, timer.getTime() + cur_Stack)
 		cur_Stack = cur_Stack + prt_stack	
+		timer.scheduleFunction(funcFlagsTrack, {}, timer.getTime() + cur_Stack)
+		cur_Stack = cur_Stack + prt_stack	
 		timer.scheduleFunction(funcCoaChangeTrack, {}, timer.getTime() + cur_Stack)
 		cur_Stack = cur_Stack + prt_stack			
 	
@@ -1022,6 +1104,10 @@ EMBD.oncallworkflow = function(sanivar, recall)
 		end	
 
 		cur_Stack = 0.5	
+	else
+		if recall == "recall" then
+			trigger.action.outText("DSMC info message: DSMC does not have writing permission, check manual: if not sufficient, report on discord", 20)
+		end
 	end
 	env.info(("EMBD.oncallworkflow saveProcess finished"))
 end
@@ -1080,11 +1166,9 @@ function EMBD.deathRecorder:onEvent(event)
 
 	if event.id == world.event.S_EVENT_UNIT_LOST or event.id ==  world.event.S_EVENT_CRASH then --world.event.S_EVENT_DEAD
 		if event.initiator then
-			local o = deepCopy(event.initiator)
-
-			local SOcategory 	= Object.getCategory(o)
-			local SOpos 		= o:getPosition().p
-			local SOtypeName	= o:getTypeName()	
+			local SOcategory 	= Object.getCategory(event.initiator)
+			local SOpos 		= event.initiator:getPosition().p
+			local SOtypeName	= event.initiator:getTypeName()	
 			env.info(("EMBD.deathRecorder death event "))
 
 			if SOcategory and SOpos and SOtypeName then
@@ -1099,13 +1183,13 @@ function EMBD.deathRecorder:onEvent(event)
 						
 						local exist = false
 						for _, deadData in pairs(tblDeadScenObj) do 
-							if tostring(deadData.objId) == tostring(o:getName()) then
+							if tostring(deadData.objId) == tostring(event.initiator:getName()) then
 								env.info(("EMBD.deathRecorder death event category 5, skipped cause already there"))
 								exist = true
 							end
 						end
 						if exist == false then
-							local Objdesc = o:getDesc()
+							local Objdesc = event.initiator:getDesc()
 							if Objdesc.life > 1 then
 
 								local y = env.mission.date.Year
@@ -1120,13 +1204,13 @@ function EMBD.deathRecorder:onEvent(event)
 									end
 								end
 
-								tblDeadScenObj[#tblDeadScenObj + 1] = {id = mapObj_deathcounter, x = SOpos.x, y = SOpos.z, objId = o:getName(), SOdesc = Objdesc, deathDay = dayValue} 
+								tblDeadScenObj[#tblDeadScenObj + 1] = {id = mapObj_deathcounter, x = SOpos.x, y = SOpos.z, objId = event.initiator:getName(), SOdesc = Objdesc, deathDay = dayValue} 
 							end
 						end
 
 
 					elseif SOcategory == 3 then 
-						local ObjdescCat = o:getDesc().category
+						local ObjdescCat = event.initiator:getDesc().category
 						local objCoalition		= nil
 						local objCountry		= nil
 						if DSMC_debugProcessDetail == true then
@@ -1149,7 +1233,7 @@ function EMBD.deathRecorder:onEvent(event)
 							end
 						end
 
-						tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(o:getID()), objCategory = 3, deathDay = dayValue, coalitionID = objCoalition, countryID = objCountry}		
+						tblDeadUnits[#tblDeadUnits + 1] = {unitId = tonumber(event.initiator:getID()), objCategory = 3, deathDay = dayValue, coalitionID = objCoalition, countryID = objCountry}		
 
 					elseif SOcategory == 1 then -- unit. Cargos, Bases and Weapons are left out 
 					
@@ -1183,12 +1267,12 @@ function EMBD.deathRecorder:onEvent(event)
 						local unitShip			= nil
 						
 						local groupTable 	= {}
-						if o then
-							unitName 			= o:getName()
+						if event.initiator then
+							unitName 			= event.initiator:getName()
 							if DSMC_debugProcessDetail == true then
 								env.info(("EMBD.deathRecorder dead unit name: " .. tostring(unitName)))	
 							end					
-							unitTable 			= o -- Unit.getByName(unitName)
+							unitTable 			= event.initiator -- Unit.getByName(unitName)
 							if unitTable then
 								unitPos 		= SOpos
 								unitCategory 	= unitTable:getDesc().category
@@ -1196,9 +1280,9 @@ function EMBD.deathRecorder:onEvent(event)
 								unitCoalition 	= unitTable:getCoalition()
 								unitCountry 	= unitTable:getCountry()
 								unitTypeName	= SOtypeName
-								unitID			= o:getID()
-								unitInfantry	= o:hasAttribute("Infantry")
-								unitShip		= o:hasAttribute("Ships")
+								unitID			= event.initiator:getID()
+								unitInfantry	= event.initiator:hasAttribute("Infantry")
+								unitShip		= event.initiator:hasAttribute("Ships")
 							end
 						end			
 						
@@ -1302,7 +1386,7 @@ function EMBD.deathRecorder:onEvent(event)
 
 			-- death in air fixers
 			for fId, fData in pairs(tblAircraftInFlightFix) do
-				if fData.u == o then
+				if fData.u == event.initiator then
 					tblAircraftInFlightFix[fId] = nil
 				end
 			end
@@ -1392,13 +1476,21 @@ function EMBD.baseCapture:onEvent(event)
 			if base:hasAttribute("Airfields") then
 				baseTYPE = "airports"
 			else
-				baseTYPE = "warehouses"
+				if not base:hasAttribute("Ships")  then -- and base:hasAttribute("Heliports")
+					baseTYPE = "warehouses"
+				end
 			end	
 
 			local proceed = true
 			if baseTYPE == "warehouses" then
-				if string.find(baseName, ExclusionTag) then
-					proceed = false
+				if Object.getCategory(base) == 4 then
+					local group = base:getGroup()
+					if group then
+						local groupName = group:getName()
+						if string.find(groupName, ExclusionTag) then
+							proceed = false
+						end
+					end
 				end
 			end
 
@@ -1439,7 +1531,7 @@ function EMBD.collectSpawned:onEvent(event)
 						local ei_gName = Unit.getGroup(event.initiator):getName()
 
 						if ei_gName and type(ei_gName) == "string" then
-							if string.find(ei_gName, "Downed Pilot") or string.find(string.lower(ei_gName), "dropped") or string.find(string.lower(ei_gName), "dsmc_resupply_") then --  or string.find(ei_gName, ExclusionTag)
+							if string.find(ei_gName, "Downed Pilot") or string.find(string.lower(ei_gName), "dsmc_resupply_") then --  or string.find(ei_gName, ExclusionTag) -- or string.find(string.lower(ei_gName), "dropped") or string.find(string.lower(ei_gName), "Dropped") 
 								env.info(("EMBD.collectSpawned unit is a downed pilot, a dropped troop or an excluded unit, skipping: " .. tostring(ei_gName)))
 								return
 							end
@@ -1596,7 +1688,7 @@ function EMBD.sceneryDestroyRefresh:onEvent(event)
 end
 
 
-EMBD.airDeathFixRecorder = {} 
+EMBD.airDeathFixRecorder = {}
 function EMBD.airDeathFixRecorder:onEvent(event)
 	if event.id == world.event.S_EVENT_TAKEOFF then
 		env.info(("EMBD.airDeathFixRecorder started"))
@@ -1604,8 +1696,9 @@ function EMBD.airDeathFixRecorder:onEvent(event)
 		local unit = event.initiator
 		local place = event.place
 		if place and unit then
+			local uId = unit:getID()
 			local warehouse = place:getWarehouse()
-			tblAircraftInFlightFix[#tblAircraftInFlightFix+1] = {u = unit, p = place, w = warehouse}			
+			tblAircraftInFlightFix[#tblAircraftInFlightFix+1] = {id = uId, u = unit, p = place, w = warehouse}			
 		end
 	end
 end
@@ -1683,8 +1776,6 @@ function EMBD.fuelTest:onEvent(event)
 		end
 	end
 end
-
-
 
 --### FARP Workaround!
 function EMBD.addFARPtoSpawned(object)
@@ -1838,6 +1929,10 @@ local checkOptions = function()
 		
 		if wsTypesTbl and DSMC_debugProcessDetail == true then
 			env.info(("DSMC wsTypesTbl exist"))
+		end
+		
+		if DGWS_code == true then
+			trigger.action.outText("DSMC starting dynamic war module", 5)
 		end
 
 		EMBD.scheduleCTLDsupport()
@@ -2032,6 +2127,17 @@ EMBD.scheduleCTLDsupport = function()
 	env.info((ModuleName .. ": checking CTLD needed support code in " .. tostring(timesec) .. " seconds"))
 	local launchCTLDsupport = function()
 		if ctld then
+			
+			ctld.nextUnitId = DSMC_baseUcounter
+			ctld.nextGroupId = DSMC_baseGcounter
+			ctld.getNextUnitId = function()
+				DSMC_baseUcounter = DSMC_baseUcounter + 1
+				return DSMC_baseUcounter
+			end
+			ctld.getNextGroupId = function()
+				DSMC_baseGcounter = DSMC_baseGcounter + 1
+				return DSMC_baseGcounter
+			end
 				
 			local a = DSMC_ctld_var1 or false
 			local b = DSMC_ctld_var2 or false

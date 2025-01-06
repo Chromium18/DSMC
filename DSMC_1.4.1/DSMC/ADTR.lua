@@ -26,7 +26,6 @@ local bDir_2 = HOOK.DSMCdirectory .. "Files/beaconsilent.ogg"
 tblAddResources = {
     [1] = {path = bDir_1, cat = "sound", file = "beacon.ogg"},
     [2] = {path = bDir_2, cat = "sound", file = "beaconsilent.ogg"},
-
 }
 
 --UTIL.dumpTable("tblAddResources.lua", tblAddResources)
@@ -89,7 +88,7 @@ function updateMapResources(missionEnv, mapEnv, tblAddResources)
 					currentTrigNum = tgId
 					HOOK.writeDebugDetail(ModuleName .. ": additional resource trigger already existant. id: " .. tostring(currentTrigNum))
 					--actionsId = table.getn(missionEnv.trigrules[currentTrigNum].actions) + 1
-					actionsStr = missionEnv.trig.actions[currentTrigNum]
+					actionStr = missionEnv.trig.actions[currentTrigNum]
 				end
 			end
 			
@@ -145,7 +144,7 @@ function updateMapResources(missionEnv, mapEnv, tblAddResources)
 			tblTrigRules["rules"] = {
 				[1] = 
 				{
-					["percent"] = 0,
+					["percent"] = 100,
 					["predicate"] = "c_random_less",
 					["zone"] = "",
 				}, -- end of [1]

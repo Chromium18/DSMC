@@ -5,13 +5,13 @@ local Range = DbOption.Range
 
 return {
 
-	SPWN						= DbOption.new():setValue(true):checkbox():setEnforceable(), -- track spawned objects
+	SPWN						= DbOption.new():setValue(true):checkbox(),
 	
-	DCSR						= DbOption.new():setValue(true):checkbox():setEnforceable(), 	
-	DEBUG						= DbOption.new():setValue(false):checkbox():setEnforceable(),
-	CRST						= DbOption.new():setValue(true):checkbox():setEnforceable(), 
-	TMUP_cont					= DbOption.new():setValue(true):checkbox():setEnforceable(),
-	TMUP_opt					= DbOption.new():setValue(2):setEnforceable():radio({	Name('TMUP_cont_true')	:Value(1),
+	DCSR						= DbOption.new():setValue(true):checkbox(), 	
+	DEBUG						= DbOption.new():setValue(false):checkbox(),
+	CRST						= DbOption.new():setValue(true):checkbox(), 
+	TMUP_cont					= DbOption.new():setValue(true):checkbox(),
+	TMUP_opt					= DbOption.new():setValue(2):radio({	Name('TMUP_cont_true')	:Value(1),
 																						Name('TMUP_cont_false')	:Value(2):OnlyArch64(),
 																						Name('TMUP_cont_real')	:Value(3):OnlyArch64(),
 																					}),
@@ -26,17 +26,18 @@ return {
 																	DbOption.Item(_('19:00')):Value(2),
 																	DbOption.Item(_('21:00')):Value(3),
 																	DbOption.Item(_('23:00')):Value(4),}),
-	WRHS						= DbOption.new():setValue(true):checkbox():setEnforceable(), 	
-	WTHR						= DbOption.new():setValue(true):checkbox():setEnforceable(),
+	WRHS						= DbOption.new():setValue(true):checkbox(), 	
+	WTHR						= DbOption.new():setValue(true):checkbox(),
+	FLAG						= DbOption.new():setValue(true):checkbox(), 
 	
-	ATRL						= DbOption.new():setValue(true):checkbox():setEnforceable(), 
+	ATRL						= DbOption.new():setValue(true):checkbox(), 
 	ATRL_time 					= DbOption.new():setValue(1):slider(Range(1, 60)),
-	S247						= DbOption.new():setValue(false):checkbox():setEnforceable(),
+	S247						= DbOption.new():setValue(false):checkbox(),
 	S247_time 					= DbOption.new():setValue(6):slider(Range(1, 24)),
-	RF10						= DbOption.new():setValue(false):checkbox():setEnforceable(), 
+	RF10						= DbOption.new():setValue(false):checkbox(), 
 	
-	CTLD1						= DbOption.new():setValue(true):checkbox():setEnforceable(), 
-	CTLD2						= DbOption.new():setValue(true):checkbox():setEnforceable(), 
+	CTLD1						= DbOption.new():setValue(true):checkbox(), 
+	CTLD2						= DbOption.new():setValue(true):checkbox(), 
 
 	EXCL_var					= DbOption.new():setValue(0):combo({DbOption.Item(_('Exclude')):Value(0),
 																	DbOption.Item(_('XCL')):Value(1),
@@ -47,11 +48,11 @@ return {
 																	DbOption.Item(_('NoKill')):Value(6),
 																	DbOption.Item(_('NoDeath')):Value(7),}),
 
-	--WRHS						= DbOption.new():setValue(true):checkbox():setEnforceable(), 
-	--TRPS						= DbOption.new():setValue(true):checkbox():setEnforceable(), 
-	--TRPS_setup					= DbOption.new():setValue(true):checkbox():setEnforceable(), 
-	--MOBJ						= DbOption.new():setValue(true):checkbox():setEnforceable(),
-	--WTHR						= DbOption.new():setValue(true):checkbox():setEnforceable(), 
-	--TMUP						= DbOption.new():setValue(true):checkbox():setEnforceable(), 
+	--WRHS						= DbOption.new():setValue(true):checkbox(), 
+	--TRPS						= DbOption.new():setValue(true):checkbox(), 
+	--TRPS_setup					= DbOption.new():setValue(true):checkbox(), 
+	--MOBJ						= DbOption.new():setValue(true):checkbox(),
+	--WTHR						= DbOption.new():setValue(true):checkbox(), 
+	--TMUP						= DbOption.new():setValue(true):checkbox(), 
 
 }

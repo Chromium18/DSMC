@@ -36,12 +36,12 @@ package.path =
 DSMC_ModuleName  			= "HOOKS"
 DSMC_MainVersion 			= "1"
 DSMC_SubVersion 			= "4"
-DSMC_SubSubVersion 			= "0"
-DSMC_Build 					= "2819"
-DSMC_Date					= "2024/12/17"
+DSMC_SubSubVersion 			= "1"
+DSMC_Build 					= "3014"
+DSMC_Date					= "2025/01/06"
 
 -- ## DEBUG TO TEXT FUNCTION DO NOT TOUCH THIS
-local forceServerMode 	= false
+local forceServerMode 		= false
 
 -- keep old DSMC.log file as "old"
 local cur_debuglogfile  = io.open(lfs.writedir() .. "Logs/" .. "DSMC.log", "r")
@@ -382,8 +382,7 @@ function startDSMCprocess()
 								opt_TMUP_max_var 	= pl_data.TMUP_max								
 								
 								opt_WRHS_var 		= pl_data.WRHS	
-								opt_WTHR_var 		= pl_data.WTHR	
-								opt_WTHRfog_var 	= pl_data.WTHRfog	
+								opt_WTHR_var 		= pl_data.WTHR		
 
 								opt_ATRL_var		= pl_data.ATRL
 								opt_ATRL_time_var	= pl_data.ATRL_time
@@ -394,6 +393,7 @@ function startDSMCprocess()
 								opt_CTLD1_var		= pl_data.CTLD1
 								opt_CTLD2_var		= pl_data.CTLD2
 								opt_EMDB_var		= pl_data.EXCL_var
+								opt_FLAG_var		= pl_data.FLAG
 
 								opt_DEBUG_var		= pl_data.DEBUG
 
@@ -479,7 +479,8 @@ function startDSMCprocess()
 			ATRL_time_var						= opt_ATRL_time_var
 			S247_var							= opt_S247_time_var
 			RF10_var							= opt_RF10_var 
-			EMBD_var							= opt_EMDB_var 
+			EMBD_var							= opt_EMDB_var
+			FLAG_var 							= opt_FLAG_var
 
 		else
 			DEBUG_var							= DSMC_DebugMode
@@ -494,6 +495,7 @@ function startDSMCprocess()
 			S247_var							= DSMC_24_7_serverStandardSetup
 			RF10_var							= DSMC_DisableF10save
 			EMBD_var							= DSMC_Excl_Tag
+			FLAG_var 							= DSMC_PersistFlagsValue
 
 		end
 
@@ -615,6 +617,7 @@ function startDSMCprocess()
 		writeDebugBase(DSMC_ModuleName .. ": CTLD1_var = " ..tostring(CTLD1_var))
 		writeDebugBase(DSMC_ModuleName .. ": CTLD2_var = " ..tostring(CTLD2_var))
 		writeDebugBase(DSMC_ModuleName .. ": EMBD_var = " ..tostring(EMBD_var))
+		writeDebugBase(DSMC_ModuleName .. ": FLAG_var = " ..tostring(FLAG_var))
 
 		-- ## DSMC ADDITIONAL MODULES
 		if UTIL.fileExist(DSMCdir .. "MOBJ" .. ".lua") == true and MOBJ_var == true then
@@ -1124,7 +1127,7 @@ function saveOnDisconnect()
 	local isServer 	= DCS.isServer()
 	if multy == true and isServer == true then
 		writeDebugDetail(DSMC_ModuleName .. ": onPlayerDisconnect checking for autosave")
-		local num_clients = false
+		local num_clients = nil
 		local player_tbl = net.get_player_list()
 		if player_tbl then
 			num_clients = tonumber(#player_tbl) - 1
@@ -1232,7 +1235,10 @@ function DSMC.onTriggerMessage(message)
 							writeDebugDetail(DSMC_ModuleName .. ": recognized & saved " .. tostring(tableName))
 						elseif tableName == "tblCoaChanges" then
 							UTIL.saveTable(tableName, tblCoaChanges, DSMCfiles)
-							writeDebugDetail(DSMC_ModuleName .. ": recognized & saved " .. tostring(tableName))																	
+							writeDebugDetail(DSMC_ModuleName .. ": recognized & saved " .. tostring(tableName))
+						elseif tableName == "tblFlags" then
+							UTIL.saveTable(tableName, tblFlags, DSMCfiles)
+							writeDebugDetail(DSMC_ModuleName .. ": recognized & saved " .. tostring(tableName))	
 						end			
 						writeDebugDetail(DSMC_ModuleName .. ": table loaded")			
 					else

@@ -13,6 +13,7 @@ cdata =
 	
 	WRHS_txt							= _("Automatic rebuilt of the supply net (see manual for details)"),	
 	WTHR_txt							= _("Enable or disable automatic weather update"),
+	FLAG_txt							= _("Enable or disable trigger flags value persistence"),
 	
 	SWG_Preference_Title				= _("Server with graphics options"),
 	SWG_Preference_Foot1				= _("These options takes effect only if you run a local multiplayer server from the main menù"),
