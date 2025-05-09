@@ -29,6 +29,7 @@ return {
 	WRHS						= DbOption.new():setValue(true):checkbox(), 	
 	WTHR						= DbOption.new():setValue(true):checkbox(),
 	FLAG						= DbOption.new():setValue(true):checkbox(), 
+	DYNC						= DbOption.new():setValue(true):checkbox(), 
 	
 	ATRL						= DbOption.new():setValue(true):checkbox(), 
 	ATRL_time 					= DbOption.new():setValue(1):slider(Range(1, 60)),

@@ -1018,7 +1018,9 @@ function save()
 			updateWeather(env.mission)
 		end				
 
-		updateCountryCoa(env.mission)
+		if HOOK.DYNC_var == true then
+			updateCountryCoa(env.mission)
+		end
 		updateBases(env.mission, wrhs_env.warehouses) 
 		
 		local doPlans = false -- till DGWS active

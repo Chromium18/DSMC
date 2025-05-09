@@ -431,13 +431,13 @@ dialog = {
 					["skin"] = CheckBoxSkin,
 					["type"] = "CheckBox",
 				},	
-								["FLAGCheckbox"] = {
+				["FLAGCheckbox"] = {
 					["params"] = {
 						["bounds"] = {
 								["h"] = verticalBound,
 								["w"] = width, 
 								["x"] = leftMargin1,
-								["y"] = verticalStack*8.5,
+								["y"] = verticalStack*18,
 						},
 						["enabled"] = true,
 						["state"] = false,
@@ -450,6 +450,25 @@ dialog = {
 					["skin"] = CheckBoxSkin,
 					["type"] = "CheckBox",
 				},	
+				["DYNCCheckbox"] = {
+					["params"] = {
+						["bounds"] = {
+								["h"] = verticalBound,
+								["w"] = width, 
+								["x"] = leftMargin1,
+								["y"] = verticalStack*8.5,
+						},
+						["enabled"] = true,
+						["state"] = false,
+						["tabOrder"] = 0,
+						["text"] = "$DYNC_txt",
+						["tooltip"] = "If checked, when a neutral country asset is killed by one of the two coalitions, that country will join the opposing coalition in the saved file",
+						["visible"] = true,
+						["zindex"] = 0,
+					},
+					["skin"] = CheckBoxSkin,
+					["type"] = "CheckBox",
+				},
 
 				["SWG_Preference_Title_label"] = {
 					["params"] = {

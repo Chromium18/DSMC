@@ -29,6 +29,7 @@ local firstNeutralCountry		= 2
 local nearestAFBonLand			= 5000 -- this should be really improved, but atm no other solution than a fixed number.
 
 local ExclusionTag				= "notdefinedyet"
+local persistedFlags			= 1000
 
 DSMC_firstSaveAllowed			= false
 
@@ -997,7 +998,7 @@ end
 
 function EMBD.getFlags()
 	tblFlags = {}
-	for i = 1, 10000 do
+	for i = 1, persistedFlags do
 		local v = trigger.misc.getUserFlag(tostring(i))
 		if v == 1 then
 			v = true

@@ -37,8 +37,8 @@ DSMC_ModuleName  			= "HOOKS"
 DSMC_MainVersion 			= "1"
 DSMC_SubVersion 			= "4"
 DSMC_SubSubVersion 			= "1"
-DSMC_Build 					= "3015"
-DSMC_Date					= "2025/01/06"
+DSMC_Build 					= "3017"
+DSMC_Date					= "2025/05/10"
 
 -- ## DEBUG TO TEXT FUNCTION DO NOT TOUCH THIS
 local forceServerMode 		= false
@@ -394,6 +394,7 @@ function startDSMCprocess()
 								opt_CTLD2_var		= pl_data.CTLD2
 								opt_EMDB_var		= pl_data.EXCL_var
 								opt_FLAG_var		= pl_data.FLAG
+								opt_DYNC_var		= pl_data.DYNC
 
 								opt_DEBUG_var		= pl_data.DEBUG
 
@@ -481,6 +482,7 @@ function startDSMCprocess()
 			RF10_var							= opt_RF10_var 
 			EMBD_var							= opt_EMDB_var
 			FLAG_var 							= opt_FLAG_var
+			DYNC_var 							= opt_DYNC_var
 
 		else
 			DEBUG_var							= DSMC_DebugMode
@@ -496,6 +498,7 @@ function startDSMCprocess()
 			RF10_var							= DSMC_DisableF10save
 			EMBD_var							= DSMC_Excl_Tag
 			FLAG_var 							= DSMC_PersistFlagsValue
+			DYNC_var 							= DSMC_DynamicCoalitions
 
 		end
 
@@ -618,6 +621,7 @@ function startDSMCprocess()
 		writeDebugBase(DSMC_ModuleName .. ": CTLD2_var = " ..tostring(CTLD2_var))
 		writeDebugBase(DSMC_ModuleName .. ": EMBD_var = " ..tostring(EMBD_var))
 		writeDebugBase(DSMC_ModuleName .. ": FLAG_var = " ..tostring(FLAG_var))
+		writeDebugBase(DSMC_ModuleName .. ": DYNC_var = " ..tostring(DYNC_var))
 
 		-- ## DSMC ADDITIONAL MODULES
 		if UTIL.fileExist(DSMCdir .. "MOBJ" .. ".lua") == true and MOBJ_var == true then

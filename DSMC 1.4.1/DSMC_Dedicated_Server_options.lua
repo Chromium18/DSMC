@@ -16,6 +16,7 @@ DSMC_WarehouseAutoSetup     	= true      -- true / false. If true, at each missi
 DSMC_WeatherUpdate              = true      -- true / false. If false, DSMC weather system won't run and update the mission
 DSMC_PersistFlagsValue          = true      -- true / false. If true, flags between number 3 and 10.000 value or true/false state will be persisted in the saved mission, and will be updated at mission start
 DSMC_Excl_Tag                   = "DSMC_NoUp"     -- text. Any not flying group name (NOT UNIT) with this tag won't be saved/tracked/removed/added, it will be simply ignored by the save code.
+DSMC_DynamicCoalitions          = true      -- true / false. If true, when a neutral country asset is hit by one of the two coalition, the entire country will join the opposite coalition in the saved mission file
 
 -- ##################################################################
 -- DEDICATED SERVER / SERVER WITHOUT GRAPHICS CUSTOMIZATION #########
