@@ -1,7 +1,8 @@
-DSMC version 1.4.1.3015
+DSMC version 1.4.2.3308
 Changelog:
-- added flags persitency. Any flag between 3 to 10.000 will be persisted if option is enabled
-- CTLD spawned infantries are now persisted
+- fixes for freezes due to DCS structure changes when using as single player
+- CTLD integration always on (compatibility for DSMC 2)
+- new warehouse auto-reset and populate: just add the tag "resetwh" in the mission name, and you will have a full zeroize and filling based on available acf in limited warehouses. All the unlimited ones will be made void. All the static warehouse object will be filled along.
 - multiple minor fixes
 
 
