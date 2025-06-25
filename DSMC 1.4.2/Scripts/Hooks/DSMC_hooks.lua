@@ -35,7 +35,7 @@ DSMC_ModuleName  			= "HOOKS"
 DSMC_MainVersion 			= "1"
 DSMC_SubVersion 			= "4"
 DSMC_SubSubVersion 			= "2"
-DSMC_Build 					= "3309"
+DSMC_Build 					= "3310"
 DSMC_Date					= "2025/06/25"
 
 -- ## DEBUG TO TEXT FUNCTION DO NOT TOUCH THIS
@@ -268,6 +268,31 @@ end
 
 --## PROCESS FUNCTIONS
 
+local function cleanTemp()
+
+	local deletedir
+	deletedir = function(dir)
+		for file in lfs.dir(dir) do
+			if file then
+				local file_path = dir..'/'..file
+				if file ~= "." and file ~= ".." then
+					if lfs.attributes(file_path, 'mode') == 'file' then
+						os.remove(file_path)
+						--print('remove file',file_path)
+					elseif lfs.attributes(file_path, 'mode') == 'directory' then
+						--print('dir', file_path)
+						deletedir(file_path)
+					end
+				end
+			end
+		end
+		lfs.rmdir(dir)
+		--print('remove dir',dir)
+	end
+
+	deletedir(DSMCtemp)
+end
+
 local function recoverAutosave()
 	if 	UTIL.fileExist(DSMCfiles .. "tblDeadUnits.lua") and 
 		UTIL.fileExist(DSMCfiles .. "tblDeadScenObj.lua") and
@@ -301,32 +326,6 @@ local function recoverAutosave()
 		writeDebugBase(DSMC_ModuleName .. ": no mission to recover")
 		cleanTemp()
 	end
-end
-
-local function cleanTemp()
-
-	local deletedir
-	deletedir = function(dir)
-		for file in lfs.dir(dir) do
-			if file then
-				local file_path = dir..'/'..file
-				if file ~= "." and file ~= ".." then
-					if lfs.attributes(file_path, 'mode') == 'file' then
-						os.remove(file_path)
-						--print('remove file',file_path)
-					elseif lfs.attributes(file_path, 'mode') == 'directory' then
-						--print('dir', file_path)
-						deletedir(file_path)
-					end
-				end
-			end
-		end
-		lfs.rmdir(dir)
-		--print('remove dir',dir)
-	end
-
-
-	deletedir(DSMCtemp)
 end
 
 local function extractMissionNameDSMC(path)
