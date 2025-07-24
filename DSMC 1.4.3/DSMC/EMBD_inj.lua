@@ -1161,11 +1161,7 @@ EMBD.executeSAVE = function(recall)
 	env.info(("EMBD.executeSAVE launched. recall = " .. tostring(recall)))
 	local oksave = false
 
-	if DGWS then
-		oksave = DSMC_firstSaveAllowed
-	else
-		oksave = true
-	end
+	oksave = true
 
 	if DSMC_mizName then
 		env.info(("EMBD.executeSAVE DSMC_mizName (lower) = " .. tostring(string.lower(DSMC_mizName))))
@@ -1931,14 +1927,14 @@ local checkOptions = function()
 		-- functions
 		timer.scheduleFunction(EMBD.createRadioMenu, nil, timer.getTime() + 1)
 		
-		--[[
+
 		if DSMC_debugProcessDetail == true then
 			local function dumpThreats()
 				EMBD.dumpTable("EMBD.tblThreatsRange.lua", EMBD.tblThreatsRange, "int")
 			end
 			timer.scheduleFunction(dumpThreats, {}, timer.getTime() + 2)
 		end
-		--]]--
+
 
 		if DSMC_autosavefrequency and DSMC_multy and DSMC_io and DSMC_lfs then
 			timer.scheduleFunction(EMBD.scheduleAutosave, {}, timer.getTime() + tonumber(DSMC_autosavefrequency))
@@ -1974,10 +1970,6 @@ local checkOptions = function()
 		
 		if wsTypesTbl and DSMC_debugProcessDetail == true then
 			env.info(("DSMC wsTypesTbl exist"))
-		end
-
-		if DGWS_code == true then
-			trigger.action.outText("DSMC starting dynamic war module", 5)
 		end
 
 		EMBD.scheduleCTLDsupport()

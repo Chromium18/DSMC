@@ -1034,8 +1034,9 @@ function save()
 				HOOK.writeDebugDetail(ModuleName .. ": mission is warehouse auto reset mode, zeroize and creating warehouse content")
 				UTIL.whAutoZero(wrhs_env.warehouses)
 				UTIL.whAutoReset(wrhs_env.warehouses, env.mission)
-				UTIL.whAutoPopulateDepotsAndProduction(wrhs_env.warehouses, env.mission)
+				--UTIL.whAutoPopulateDepotsAndProduction(wrhs_env.warehouses, env.mission)
 				doPlans = false	
+			--[[--
 			elseif string.find(string.lower(HOOK.loadedMizFileName), "create") then
 				HOOK.writeDebugDetail(ModuleName .. ": mission is warehouse auto creation mode, creating warehouse content")
 				UTIL.whAutoReset(wrhs_env.warehouses, env.mission)
@@ -1049,6 +1050,7 @@ function save()
 				HOOK.writeDebugDetail(ModuleName .. ": mission is reset warehouse mode, setting all wh to void")
 				UTIL.whAutoZero(wrhs_env.warehouses, true)
 				doPlans = false
+			--]]--
 			else
 				updateWarehouse(tblWarehousesContent, wrhs_env.warehouses) -- also update airbaseTbl
 			end
@@ -1073,25 +1075,6 @@ function save()
 				end
 			end
 		end
-		
-		-- plan module for DSMC 2.0
-		if UTIL.fileExist(HOOK.DSMCdirectory .. "DGWS" .. ".lua") == true and HOOK.DGWS_var == true and doPlans == true then
-			HOOK.writeDebugDetail(ModuleName .. " starting DGWS...")
-			local m = UTIL.deepCopy(env.mission)
-			local d = UTIL.deepCopy(dict_env.dictionary)
-			local w = UTIL.deepCopy(wrhs_env.warehouses)
-			local r = UTIL.deepCopy(mRes_env.mapResource)
-			
-			env.mission, dict_env.dictionary = DGWS.executePlanning(m, d, w)
-			HOOK.writeDebugDetail(ModuleName .. " DGWS done")
-
-		end	
-
-		--[[ update flags
-		if HOOK.FLAG_var == true then
-			updateFlags(tblFlags)
-		end
-		--]]--
 
 		if ADTR.tblAddResources then
 			HOOK.writeDebugDetail(ModuleName .. " adding external files")
@@ -1686,38 +1669,6 @@ function buildNewMizFile(loadedMissionPath, loadedMizFileName, cpm_path)
 		UTIL.moveFile(HOOK.OldMResPath, HOOK.NewMResPath)
 		HOOK.writeDebugDetail(ModuleName .. ": buildNewMizFile - mapResource file moved")
 
-		--[=[
-		net.dostring_in("server", "log.info(\" f it\")")
-
-		local provatesto = [[
-			local testo = "provatestodila"
-			return testo
-		  ]]
-	  
-		  local result = net.dostring_in("server", provatesto)
-		  HOOK.writeDebugDetail(ModuleName .. ": PROVATESTO: " .. tostring(result))
-	  
-		  local provatesto2 = [[
-			local newText = uString
-			return newText
-		  ]]
-	  
-		  local dsmcUtbl, derr2 = net.dostring_in("server", provatesto2)
-		  HOOK.writeDebugDetail(ModuleName .. ": PROVATESTO2: " .. tostring(dsmcUtbl))
-		  HOOK.writeDebugDetail(ModuleName .. ": PROVATESTO2err: " .. tostring(derr2))
-
-		  local provatesto3 = [[
-            log.info("test")
-            local newText = pString
-            return newText
-          ]]
-	  
-		  local dsmcUtbl3, derr3 = net.dostring_in("server", provatesto3)
-		  HOOK.writeDebugDetail(ModuleName .. ": PROVATESTO3: " .. tostring(dsmcUtbl3))
-		  HOOK.writeDebugDetail(ModuleName .. ": PROVATESTO3err: " .. tostring(derr3))
-		  --]=]--
-
-		--("DSMC_NewSaveresourceFiles.lua", DSMC_NewSaveresourceFiles)
 
 		local miz = minizip.zipCreate(NewMizPath)
 		if miz then
@@ -1765,7 +1716,7 @@ function buildNewMizFile(loadedMissionPath, loadedMizFileName, cpm_path)
 			DSMC_NewSaveresourceFiles = nil
 			HOOK.writeDebugDetail(ModuleName .. ": buildNewMizFile - miz saved, sending message...")
 			net.dostring_in("mission", [[a_do_script("trigger.action.outText('scenery saved!', 10)")]])
-			--net.dostring_in("mission", [[EMBD.doMessage('scenery saved!')]])
+			--a_do_script( [[trigger.action.outText('scenery saved!', 10)]])
 
 			HOOK.writeDebugDetail(ModuleName .. ": buildNewMizFile - miz saved, message sent!")
 			UTIL.inJectCode("DSMC_allowStop", "DSMC_allowStop = true")
@@ -1795,3 +1746,8 @@ HOOK.writeDebugDetail(ModuleName .. ": buildNewMizFile loaded")
 
 HOOK.writeDebugBase(ModuleName .. ": Loaded " .. MainVersion .. "." .. SubVersion .. "." .. Build .. ", released " .. Date)
 --~=
+
+
+-- in autoexec.cfg
+--net.allow_unsafe_api = { "userhooks", "scripting", "gui",}
+--net.allow_dostring_in = {"mission", "scripting", "gui", "export", "config",}

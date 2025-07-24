@@ -756,8 +756,7 @@ dialog = {
 					},
 					["skin"] = CheckBoxSkin,
 					["type"] = "CheckBox",
-				},		
-
+				},
 			},
 			["params"] = {
 				["bounds"] = {

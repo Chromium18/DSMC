@@ -45,3 +45,24 @@ DSMC_AutosaveExit_safe      	= true     -- true / false. If false, the autosaveE
 DSMC_AutoRestart_active     	= false    -- true / false. If true, the server won't close and will be automatically loaded the saved mission. If false, the DCS server will be closed completely and will require a fresh start with an external solution (not included)
 DSMC_updateMissionList          = true     -- true / false. If true, once the server closes, DSMC will automatically update the mission list by setting only the saved mission as first one, and removing the others. If false, the mission list won't be updated and therefore at restart the same mission (not the saved one) will be loaded. Works only if DSMC_AutoRestart_active is set to false
 DSMC_restartCampaign            = true     -- true / false. If true, DSMC will check DCS "mission goals" and when reached, instead of restarting the saved mission, will specifically look for the "_000" miz file and load that one, to restart the campaign
+
+-- ##################################################################
+-- DYNAMIC WAR AI ENHANCEMENT AND PLANNING  #########################
+-- ##################################################################
+
+-- dynamic ground planning
+DSMC_campaign_AI                = "all"     -- "all", "blue", "red", "none". Case sensitive. If wrong, it reverts to "all". DSMC AI will plan actions for the choosen coalition or none for the saved mission
+
+-- dynamic campaign general setup
+DSMC_campaign_intensity         = 5         -- number, from 1 to 50 (above or below will be filtered to the min or max). Define the number of planned ground actions for each coailtion. The more, the faster/complex will be the campaign.
+DSMC_Show_F10_drawings          = true      -- true / false. If true, DSMC will set the tasking drawing on each coalition visible for that coalition in F10 map, as long as boundary line
+DSMC_sitrep_html                = "all"     -- REQUIRE DSMC_campaign_AI different from "none". "all", "blue", "red", "none". Case sensitive. If wrong, it reverts to "all". DSMC will create the briefing html file for the choosen coalition, both or none.
+DSMC_sitrep_path                = "default" -- "default" or any complete PC path. This will be the place where the html sitrep files will be saved. Beware: the path MUST exist and being accessibile for writing, or bad things may happen.
+
+-- AIEN script integration
+DSMC_enhancedAIbehaviour        = true      -- true / false. If true, DSMC will add AI dynamic reactions to threat, infantry dismount in battle, and artillery shooting when targets are available in real time. (might have performance hit in very complex scenario)
+
+-- AI flights settings         -- ## BOTH THESE REQUIRE AT LEAST ONE OF DSMC_campaign_AI_blue OR DSMC_campaign_AI_red TO BE TRUE!
+DSMC_blue_players_missions      = 0         -- number, from 0 to 30: number of blue coalition task that won't be filled by AI flights, left for players use. BEWARE: BARCAP/DCA flights won't be reserved.
+DSMC_red_players_missions       = 0         -- number, from 0 to 30: number of red coalition task that won't be filled by AI flights, left for players use. BEWARE: BARCAP/DCA flights won't be reserved.
+DSMC_AI_flights_delay           = 1800      -- number, seconds, is the minimum delay applied on AI flights before they start for planned missions

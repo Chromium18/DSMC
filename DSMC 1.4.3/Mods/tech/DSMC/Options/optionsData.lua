@@ -21,11 +21,28 @@ cdata =
 	S247_txt							= _("Restart saved mission every (hours):"),
 	RF10_txt							= _("Remove F10 menù option to save the mission"), 
 
+	AIEN_txt							= _("AI enhancement: AIEN script integration"),
+	HTML_coa_txt						= _("Generate SITREP for: "),
+	
 	DEBUG_txt							= _("Enable detail debug mode. WARNING: activate only for reproduce a bug"),
 	DEBUG_help							= _("When DEBUG mode is active, the reload options works with minutes instead of hours! so choosing '3' mean reload every 3 minutes"),
 	
 	EXTRA_Title							= _("Additional options"),
 	EXCL_txt							= _("Exclusion tag for group names: "),
 
+	
+	--CTLD_Title							= _("CTLD scripts enhanced automation features"),
+	--CTLD1_txt							= _("Helicopter client pilot recognition on spawn"),
+	--CTLD2_txt							= _("Trucks (troops, crates), IFV, APC (troops) vehicles recognition"),
+	--CTLD_Footnote						= _("Beware: if you use DSMC's CTLD version, these option are forced on"),	
+	--SPWN_txt				= _("Keeps spawned vehicles, crates & static object"),
+	--TRPS_txt				= _("Enable troops transport & crate logistic with CTLD by Ciribob"),
+	--DCSR_txt				= _("Enable integrated CSAR script by Ciribob"),
+	--MOBJ_txt				= _("Keeps demolished briges, building and scenery object"),
+	--WTHR_txt				= _("Update saved scenery weather based on real climate average data"),
+	--TMUP_txt				= _("Change next scenery simulation date & time"),
+	--WRHS_txt_help			= _("Logistic & resource system options"),
+	--WRHS_txt				= _("Keep depleted and added items from warehouses & airbases"), 	
+	--FLAG_txt							= _("Enable or disable trigger flags value persistence"),
 
 }

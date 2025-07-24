@@ -516,6 +516,8 @@ end
 function inJectTable(Table_name, Table_code)	
 	local tbl_serial = IntegratedserializeWithCycles(Table_name, Table_code)	
 	local str, strErr = net.dostring_in("mission", "a_do_script(" .. "[===[" .. tbl_serial .. "]===]" .. ")")
+	--local str, strErr = a_do_script( "[===[" .. tbl_serial .. "]===]")
+	
 	if not strErr then
 		HOOK.writeDebugDetail(ModuleName .. ": inject not worked: " .. tostring(strErr) .. ", str= " .. tostring("a_do_script(" .. "[===[" .. tbl_serial .. "]===]" .. ")") )
 	else
@@ -525,6 +527,7 @@ end
 
 function inJectCode(Code_name, CodeString)		
 	local str, strErr = net.dostring_in("mission", "a_do_script(" .. "[===[" .. CodeString .. "]===]" .. ")")	
+	--local str, strErr = a_do_script( "[===[" .. CodeString .. "]===]" )
 	if not strErr then
 		HOOK.writeDebugDetail(ModuleName .. ": inject worked: " .. tostring(strErr) .. ", str: " .. tostring(str))
 	else
@@ -2269,7 +2272,8 @@ function whAutoPopulateDepotsAndProduction(warehouse, mission)
 										for groupID,group in pairs(attr["group"]) do
 											if (group) then
 												for unitID,unit in pairs(group["units"]) do	
-													if tonumber(unit.unitId) == tonumber(whId) then						
+													if tonumber(unit.unitId) == tonumber(whId) then		
+														HOOK.writeDebugDetail(ModuleName .. ": whAutoPopulateDepotsAndProduction found wh in me file: " .. tostring(whId) .. ", type: " .. tostring(unit.type))				
 														if unit.category == "Warehouses" then
 															if unit.type == "Tank" or unit.type == "Tank 2" or unit.type == "Tank 3" then
 																typeWh = unit.type
@@ -2279,6 +2283,8 @@ function whAutoPopulateDepotsAndProduction(warehouse, mission)
 																catWh = "ammo"
 																countAmmoWh = countAmmoWh + 1
 															end
+														else
+															HOOK.writeDebugDetail(ModuleName .. ": whAutoPopulateDepotsAndProduction found wh in me file not a warehouse object")				
 														end
 													end
 												end
@@ -2421,9 +2427,10 @@ function whAutoReset(warehouse, mission)
 	local year = mission.date.Year
 
 	for ztCat, ztData in pairs(warehouse) do			
-		for zbId, zbData in pairs(ztData) do
+		for zbId, zbData_old in pairs(ztData) do
 			HOOK.writeDebugDetail(ModuleName .. ": whAutoReset; checking cat: " .. tostring(ztCat) .. ", zbId " .. tostring(zbId))
 			
+			local zbData = UTIL.deepCopy(zbData_old) -- copy the warehouse data to avoid modifying the original one
 			--zbData.dynamicSpawn = true
 
 			-- ### update fuel ###
@@ -2453,9 +2460,9 @@ function whAutoReset(warehouse, mission)
 				end
 				-- update value
 				zbData.jet_fuel.InitFuel = newFuel
-				--HOOK.writeDebugDetail(ModuleName .. ": whAutoReset; cat: " .. tostring(ztCat) .. ", zbId " .. tostring(zbId) .. ", new jet fuel " .. tostring(newFuel))
+				HOOK.writeDebugDetail(ModuleName .. ": whAutoReset; cat: " .. tostring(ztCat) .. ", zbId " .. tostring(zbId) .. ", new jet fuel " .. tostring(newFuel))
 			else
-				--HOOK.writeDebugDetail(ModuleName .. ": whAutoReset; cat: " .. tostring(ztCat) .. ", zbId " .. tostring(zbId) .. ", warehouse is set aircraft unlimited, so also fuel will be same")
+				HOOK.writeDebugDetail(ModuleName .. ": whAutoReset; cat: " .. tostring(ztCat) .. ", zbId " .. tostring(zbId) .. ", warehouse is set aircraft unlimited, so also fuel will be same")
 				zbData.jet_fuel.InitFuel = 100
 				zbData.unlimitedFuel = true
 			end
@@ -2486,9 +2493,8 @@ function whAutoReset(warehouse, mission)
 												
 												local wpnString = wsTypeToString(wpnData.wsType)
 												if wpnString == wId then
-													--HOOK.writeDebugDetail(ModuleName .. ": whAutoReset; cat: " .. tostring(ztCat) .. ", zbId " .. tostring(zbId) .. ", multiplier " .. tostring(multiplier))
 													wpnData.initialAmount = wpnData.initialAmount + expQty
-													--HOOK.writeDebugDetail(ModuleName .. ": whAutoReset; cat: " .. tostring(ztCat) .. ", zbId " .. tostring(zbId) .. ", wpnData.initialAmount " .. tostring(wpnData.initialAmount))
+													HOOK.writeDebugDetail(ModuleName .. ": whAutoReset; cat: " .. tostring(ztCat) .. ", zbId " .. tostring(zbId) .. ", wpnData.initialAmount " .. tostring(wpnData.initialAmount))
 												end
 											end
 										end
@@ -2503,6 +2509,8 @@ function whAutoReset(warehouse, mission)
 				zbData.unlimitedMunitions = true
 				zbData.weapons = {}
 			end
+
+			ztData[zbId] = zbData -- update the warehouse data with the modified one
 
 		end
 	end
@@ -4882,7 +4890,6 @@ end
 tblBriefingImages = createImagesTbl()
 getPayloadOfEachAcf()
 populateStandardPlaneTypes(ME_DB)
-dumpTable("DGWS_unitsPayloads.lua", DGWS_unitsPayloads, "int")
 
 HOOK.writeDebugBase(ModuleName .. ": Loaded " .. MainVersion .. "." .. SubVersion .. "." .. Build .. ", released " .. Date)
 UTILloaded = true

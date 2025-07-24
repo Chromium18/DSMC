@@ -34,9 +34,9 @@ package.path =
 DSMC_ModuleName  			= "HOOKS"
 DSMC_MainVersion 			= "1"
 DSMC_SubVersion 			= "4"
-DSMC_SubSubVersion 			= "2"
-DSMC_Build 					= "3310"
-DSMC_Date					= "2025/06/25"
+DSMC_SubSubVersion 			= "3"
+DSMC_Build 					= "3372"
+DSMC_Date					= "2025/07/24"
 
 -- ## DEBUG TO TEXT FUNCTION DO NOT TOUCH THIS
 local forceServerMode 		= false
@@ -140,6 +140,7 @@ ImagesPath 					= lfs.writedir() .. "DSMC/Images/"
 logpath 					= lfs.writedir() .. "Logs/mixpath.txt"
 tempPath 					= missionfilesdirectory .. "DSMC_tempFile.miz"
 missionscriptingluaPath		= lfs.currentdir() .. "Scripts/MissionScripting.lua"
+autoexeccfgluaPath			= lfs.writedir() .. "Config/autoexec.cfg"
 writeDebugDetail(DSMC_ModuleName .. ": paths variable loaded")
 
 local function missionscripting_modifier()
@@ -214,6 +215,87 @@ local function missionscripting_modifier()
 
 end
 
+local function autoexec_cfg_modifier()
+	local function escapePattern(pattern)
+		local specials = "().%+-*?[^$"
+		return pattern:gsub("[" .. specials .. "]", "%%%1")
+	end
+
+	local function replaceText(oldText, findText, replaceText)
+		local escapedFindText = escapePattern(findText)
+		return oldText:gsub(escapedFindText, replaceText)
+	end
+
+	local function contains(haystack, needle)
+		-- Effettua l'escape dei caratteri speciali nella stringa 'needle'
+		local function escape_special_characters(str)
+			local replacements = {
+				['%'] = '%%',
+				['^'] = '%^',
+				['$'] = '%$',
+				['('] = '%(',
+				[')'] = '%)',
+				['%['] = '%[%]',
+				['{'] = '%{',
+				['}'] = '%}',
+				['.'] = '%.',
+				['*'] = '%*',
+				['+'] = '%+',
+				['-'] = '%-',
+				['?'] = '%?',
+				['\0'] = '%z'
+			}
+			
+			return (str:gsub(".", replacements))
+		end
+	
+		-- Escape della stringa 'needle'
+		local escaped_needle = escape_special_characters(needle)
+		
+		-- Controlla se 'needle' è contenuta in 'haystack'
+		return haystack:find(escaped_needle) ~= nil
+	end
+
+	local codel1 = [=[if not net then net = {} end]=]
+	local codel2 = [=[net.allow_unsafe_api = { "userhooks", "scripting", "gui" }]=]
+	local codel3 = [=[net.allow_dostring_in = { "mission", "scripting", "gui", "export", "config" }]=]
+
+	local codel2b = [=[net.allow_unsafe_api = { "userhooks" }]=]
+	local codel3b = [=[net.allow_dostring_in = { "mission" }]=]
+
+	local checkSnippet1 = [=[net.allow_unsafe_api = { "userhooks"]=]
+	local checkSnippet2 = [=[net.allow_dostring_in = { "mission"]=]
+
+	-- Add autoexec.cfg lines
+	local f=io.open(autoexeccfgluaPath,"r")
+	if f~=nil then 
+		local oldText = f:read("*all")
+		io.close(f)
+		local alreadyModified = false		
+		if contains(oldText, checkSnippet1) and contains(oldText, checkSnippet2) then
+			alreadyModified = true
+		end
+		
+		if alreadyModified == false then
+			local newText = oldText .. "\n" .. codel1
+			newText = newText .. "\n" .. codel2b
+			newText = newText .. "\n" .. codel3b
+
+			local o = io.open(autoexeccfgluaPath, "w")
+			o:write(newText)
+			o:close()
+			writeDebugBase(DSMC_ModuleName .. ": added autoexec.cfg code")
+			return true
+		
+		else
+			writeDebugBase(DSMC_ModuleName .. ": autoexec.cfg already modified for net_dostring_in")
+			return true
+		end
+	else 
+		io.close(f) 
+	end
+end
+
 local function loadDSMCHooks()
 
 	-- ## DSMC CORE MODULES
@@ -224,6 +306,7 @@ local function loadDSMCHooks()
 
 			
 	missionscripting_modifier()
+	autoexec_cfg_modifier()
 	
 	-- built wpn database if version is changed
 	UTIL.createAircraftsDb()
@@ -289,6 +372,7 @@ local function cleanTemp()
 		lfs.rmdir(dir)
 		--print('remove dir',dir)
 	end
+
 
 	deletedir(DSMCtemp)
 end
@@ -404,6 +488,13 @@ local function startDSMCprocess()
 								opt_DYNC_var		= pl_data.DYNC
 								opt_DEBUG_var		= pl_data.DEBUG
 
+								--opt_CTLD1_var		= pl_data.CTLD1
+								--opt_CTLD2_var		= pl_data.CTLD2
+								--opt_MOBJ_var 		= true -- pl_data.MOBJ
+								--opt_TMUP_var		= true -- pl_data.TMUP
+								--opt_SPWN_var		= true -- pl_data.SPWN	
+								--opt_FLAG_var		= pl_data.FLAG	
+
 							end
 						end
 					end
@@ -462,9 +553,7 @@ local function startDSMCprocess()
 			opt_TMUP_max_var = 23
 		end
 		
-		writeDebugBase(DSMC_ModuleName .. ": opt_AIEN_var = " ..tostring(opt_AIEN_var))	
-		writeDebugBase(DSMC_ModuleName .. ": DSMC_enhancedAIbehaviour = " ..tostring(DSMC_enhancedAIbehaviour))	
-		
+
 		--###################################################################################################
 
 		-- fixed on variables
@@ -516,6 +605,9 @@ local function startDSMCprocess()
 		-- CTLD support variables
 		CTLD1_var							= true -- DSMC_ctld_recognizeHelos or false
 		CTLD2_var							= true -- DSMC_ctld_recognizeVehicles or false		
+		
+		--------------------------------------------------------------------------------
+		--WRHS_real							= opt_WRHS_real or DSMC_WarehouseConvoyResupply
 
 
 		--###################################################################################################
@@ -616,6 +708,11 @@ local function startDSMCprocess()
 		writeDebugBase(DSMC_ModuleName .. ": EMBD_var = " ..tostring(EMBD_var))
 		--writeDebugBase(DSMC_ModuleName .. ": FLAG_var = " ..tostring(FLAG_var))
 		writeDebugBase(DSMC_ModuleName .. ": DYNC_var = " ..tostring(DYNC_var))
+		writeDebugBase(DSMC_ModuleName .. ": STTS_var = " ..tostring(STTS_var))
+		writeDebugBase(DSMC_ModuleName .. ": STTS_path = " ..tostring(STTS_path))
+		writeDebugBase(DSMC_ModuleName .. ": STTS_rAM = " ..tostring(STTS_rAM))
+		writeDebugBase(DSMC_ModuleName .. ": STTS_rFM = " ..tostring(STTS_rFM))
+		writeDebugBase(DSMC_ModuleName .. ": STTS_type = " ..tostring(STTS_type))
 
 		-- ## DSMC ADDITIONAL MODULES
 		if UTIL.fileExist(DSMCdir .. "MOBJ" .. ".lua") == true and MOBJ_var == true then
@@ -642,13 +739,11 @@ local function startDSMCprocess()
 			SPWN 						= require("SPWN")
 			writeDebugBase(DSMC_ModuleName .. ": loaded in SPWN module")
 		end
-
 		if UTIL.fileExist(DSMCdir .. "ADTR" .. ".lua") == true then
 			ADTR 						= require("ADTR")
 			writeDebugBase(DSMC_ModuleName .. ": loaded in ADTR module")
 		end
 
-	
 		-- debug call check (doesn't print if debugProcessDetail is false!)
 		writeDebugDetail(DSMC_ModuleName .. ": debugProcessDetail = " .. tostring(debugProcessDetail))
 	
@@ -685,30 +780,6 @@ local function startDSMCprocess()
 		writeDebugBase(DSMC_ModuleName .. ": STOP_var_time = " ..tostring(STOP_var_time))
 	
 		-- ## DSMC LOCAL MODULES
-
-		--[[ this will decide the saved name in case of server mode and autosave on.
-		function getNewMizFile(curPath) -- NOT NEEDED ANYMORE?
-			if curPath then
-				if string.find(curPath, "DSMC_ServerReload_") then
-					local start, stop = string.find(curPath, "DSMC_ServerReload_")
-					local start2, stop2 = string.find(curPath, ".miz")
-					local progNum = string.sub(curPath, stop+1, start2-1)
-					writeDebugDetail(DSMC_ModuleName .. ": progNum = " .. tostring(progNum))
-					local numVal = tonumber(progNum)
-					local numVal2 = string.format("%03d", progNum+1)
-					local path = missionfilesdirectory .. "DSMC_ServerReload_" .. numVal2 .. ".miz"
-					writeDebugDetail(DSMC_ModuleName .. ": path = " .. tostring(path))
-				
-					return path
-				else
-					writeDebugDetail(DSMC_ModuleName .. ": returning, DSMC_ServerReload_001.miz")
-					return missionfilesdirectory .. "DSMC_ServerReload_001.miz"
-				end
-			else
-				writeDebugDetail(DSMC_ModuleName .. ": getNewMizFile, curPath non available")
-			end
-		end
-		--]]--
 		
 		if loadedMizFileName and loadedMissionPath then				
 			if string.sub(loadedMizFileName,1,4) == StartFilterCode then
