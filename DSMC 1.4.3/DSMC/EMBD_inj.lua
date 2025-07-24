@@ -313,20 +313,25 @@ end
 local function pcallGetCategory(obj) -- done to avoid DCS errors 
     local function effectiveCheck(obj)
         if obj then
-           if obj.isExist and obj:isExist() then
+           	--if obj.isExist and obj:isExist() then
                 if obj.getPosition and obj:getPosition() then
                     if Object.getCategory(obj) then
+						env.info(string.format("EMBD pcallGetCategory, issue 5")) 
                         return Object.getCategory(obj)
-                    else   
+                    else
+						env.info(string.format("EMBD pcallGetCategory, issue 4"))    
                         return nil
                     end
-                else 
+                else
+					env.info(string.format("EMBD pcallGetCategory, issue 3"))  
                     return nil
                 end
-            else   
-                return nil 
-            end
-        else  
+            --else
+				--env.info(string.format("EMBD pcallGetCategory, issue 2"))    
+                --return nil 
+            --end
+        else
+			env.info(string.format("EMBD pcallGetCategory, issue 1"))  
             return nil 
         end
     end
