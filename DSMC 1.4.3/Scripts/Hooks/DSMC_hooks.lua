@@ -35,8 +35,8 @@ DSMC_ModuleName  			= "HOOKS"
 DSMC_MainVersion 			= "1"
 DSMC_SubVersion 			= "4"
 DSMC_SubSubVersion 			= "3"
-DSMC_Build 					= "3372"
-DSMC_Date					= "2025/07/24"
+DSMC_Build 					= "3377"
+DSMC_Date					= "2025/08/03"
 
 -- ## DEBUG TO TEXT FUNCTION DO NOT TOUCH THIS
 local forceServerMode 		= false
@@ -142,6 +142,7 @@ tempPath 					= missionfilesdirectory .. "DSMC_tempFile.miz"
 missionscriptingluaPath		= lfs.currentdir() .. "Scripts/MissionScripting.lua"
 autoexeccfgluaPath			= lfs.writedir() .. "Config/autoexec.cfg"
 writeDebugDetail(DSMC_ModuleName .. ": paths variable loaded")
+DSMC_AutoModifyAutoexeccfg = false -- true / false. If true, DSMC will modify autoexec.cfg to allow net.dostring_in for userhooks and scripting. If false, it will not modify the file. don't use till ED put again the new system in place
 
 local function missionscripting_modifier()
 	local function escapePattern(pattern)
@@ -216,83 +217,90 @@ local function missionscripting_modifier()
 end
 
 local function autoexec_cfg_modifier()
-	local function escapePattern(pattern)
-		local specials = "().%+-*?[^$"
-		return pattern:gsub("[" .. specials .. "]", "%%%1")
-	end
 
-	local function replaceText(oldText, findText, replaceText)
-		local escapedFindText = escapePattern(findText)
-		return oldText:gsub(escapedFindText, replaceText)
-	end
+	if DSMC_AutoModifyAutoexeccfg == true then
 
-	local function contains(haystack, needle)
-		-- Effettua l'escape dei caratteri speciali nella stringa 'needle'
-		local function escape_special_characters(str)
-			local replacements = {
-				['%'] = '%%',
-				['^'] = '%^',
-				['$'] = '%$',
-				['('] = '%(',
-				[')'] = '%)',
-				['%['] = '%[%]',
-				['{'] = '%{',
-				['}'] = '%}',
-				['.'] = '%.',
-				['*'] = '%*',
-				['+'] = '%+',
-				['-'] = '%-',
-				['?'] = '%?',
-				['\0'] = '%z'
-			}
+		local function escapePattern(pattern)
+			local specials = "().%+-*?[^$"
+			return pattern:gsub("[" .. specials .. "]", "%%%1")
+		end
+
+		local function replaceText(oldText, findText, replaceText)
+			local escapedFindText = escapePattern(findText)
+			return oldText:gsub(escapedFindText, replaceText)
+		end
+
+		local function contains(haystack, needle)
+			-- Effettua l'escape dei caratteri speciali nella stringa 'needle'
+			local function escape_special_characters(str)
+				local replacements = {
+					['%'] = '%%',
+					['^'] = '%^',
+					['$'] = '%$',
+					['('] = '%(',
+					[')'] = '%)',
+					['%['] = '%[%]',
+					['{'] = '%{',
+					['}'] = '%}',
+					['.'] = '%.',
+					['*'] = '%*',
+					['+'] = '%+',
+					['-'] = '%-',
+					['?'] = '%?',
+					['\0'] = '%z'
+				}
+				
+				return (str:gsub(".", replacements))
+			end
+		
+			-- Escape della stringa 'needle'
+			local escaped_needle = escape_special_characters(needle)
 			
-			return (str:gsub(".", replacements))
+			-- Controlla se 'needle' è contenuta in 'haystack'
+			return haystack:find(escaped_needle) ~= nil
 		end
-	
-		-- Escape della stringa 'needle'
-		local escaped_needle = escape_special_characters(needle)
-		
-		-- Controlla se 'needle' è contenuta in 'haystack'
-		return haystack:find(escaped_needle) ~= nil
-	end
 
-	local codel1 = [=[if not net then net = {} end]=]
-	local codel2 = [=[net.allow_unsafe_api = { "userhooks", "scripting", "gui" }]=]
-	local codel3 = [=[net.allow_dostring_in = { "mission", "scripting", "gui", "export", "config" }]=]
+		local codel1 = [=[if not net then net = {} end]=]
+		local codel2 = [=[net.allow_unsafe_api = { "userhooks", "scripting", "gui" }]=]
+		local codel3 = [=[net.allow_dostring_in = { "mission", "scripting", "gui", "export", "config" }]=]
 
-	local codel2b = [=[net.allow_unsafe_api = { "userhooks" }]=]
-	local codel3b = [=[net.allow_dostring_in = { "mission" }]=]
+		local codel2b = [=[net.allow_unsafe_api = { "userhooks" }]=]
+		local codel3b = [=[net.allow_dostring_in = { "mission" }]=]
 
-	local checkSnippet1 = [=[net.allow_unsafe_api = { "userhooks"]=]
-	local checkSnippet2 = [=[net.allow_dostring_in = { "mission"]=]
+		local checkSnippet1 = [=[net.allow_unsafe_api = { "userhooks"]=]
+		local checkSnippet2 = [=[net.allow_dostring_in = { "mission"]=]
 
-	-- Add autoexec.cfg lines
-	local f=io.open(autoexeccfgluaPath,"r")
-	if f~=nil then 
-		local oldText = f:read("*all")
-		io.close(f)
-		local alreadyModified = false		
-		if contains(oldText, checkSnippet1) and contains(oldText, checkSnippet2) then
-			alreadyModified = true
+		-- Add autoexec.cfg lines
+		local f=io.open(autoexeccfgluaPath,"r")
+		if f~=nil then 
+			local oldText = f:read("*all")
+			io.close(f)
+			local alreadyModified = false		
+			if contains(oldText, checkSnippet1) and contains(oldText, checkSnippet2) then
+				alreadyModified = true
+			end
+			
+			if alreadyModified == false then
+				local newText = oldText .. "\n" .. codel1
+				newText = newText .. "\n" .. codel2b
+				newText = newText .. "\n" .. codel3b
+
+				local o = io.open(autoexeccfgluaPath, "w")
+				o:write(newText)
+				o:close()
+				writeDebugBase(DSMC_ModuleName .. ": added autoexec.cfg code")
+				return true
+			
+			else
+				writeDebugBase(DSMC_ModuleName .. ": autoexec.cfg already modified for net_dostring_in")
+				return true
+			end
+		else 
+			io.close(f) 
 		end
-		
-		if alreadyModified == false then
-			local newText = oldText .. "\n" .. codel1
-			newText = newText .. "\n" .. codel2b
-			newText = newText .. "\n" .. codel3b
-
-			local o = io.open(autoexeccfgluaPath, "w")
-			o:write(newText)
-			o:close()
-			writeDebugBase(DSMC_ModuleName .. ": added autoexec.cfg code")
-			return true
-		
-		else
-			writeDebugBase(DSMC_ModuleName .. ": autoexec.cfg already modified for net_dostring_in")
-			return true
-		end
-	else 
-		io.close(f) 
+	else
+		writeDebugBase(DSMC_ModuleName .. ": autoexec.cfg skip check, DSMC_AutoModifyAutoexeccfg is false")
+		return true
 	end
 end
 
