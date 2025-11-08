@@ -2822,26 +2822,34 @@ end
 function getUnitData()
 	local t = {}
 	for dbId, dbData in pairs(ME_DB) do
-		if dbId == "unit_by_type" then
+		if dbId == "car_by_name" then -- "unit_by_type"
 			for uType, uData in pairs(dbData) do
 				local tr = nil
+				local tr_min
 				local dt = nil
 				local sp = nil
 				local ir = nil
 				local at = nil
+				local ty = nil
 				for cId, cData in pairs(uData) do
 					if cId == "ThreatRange" then
 						tr = cData
+					elseif cId == "ThreatRangeMin" then
+						tr_min = cData						
 					elseif cId == "DetectionRange" then
 						dt = cData
 					elseif cId == "IR_emission_coeff" then
 						ir = cData
 					elseif cId == "attribute" then
 						at = cData
+					elseif cId == "type" then
+						ty = cData
 					end
 				end
-				if tr or dt or ir or at then
-					t[uType] = {detection = dt, threat = tr, irsignature = ir, attr = at}
+				if ty then -- remove for older db
+					if tr or dt or ir or at then
+						t[ty] = {detection = dt, threat = tr, threatmin = tr_min, irsignature = ir, attr = at} -- t[uType] = 
+					end
 				end
 			end
 		end

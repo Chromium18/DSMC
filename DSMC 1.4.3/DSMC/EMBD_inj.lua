@@ -1123,7 +1123,7 @@ EMBD.oncallworkflow = function(sanivar, recall)
 		cur_Stack = cur_Stack + prt_stack			
 	
 		if recall == "recall" then
-			trigger.action.outText("DSMC info message: DSMC is generating the new scenery file. It can take minutes, don't force DCS to stop", 20)
+			trigger.action.outText("DSMC info message: DSMC is saving the mission progress. It can take a while, don't force DCS to stop", 20)
 			timer.scheduleFunction(saveProcess, {}, timer.getTime() + cur_Stack)
 		end
 		
