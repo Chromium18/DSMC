@@ -19,6 +19,10 @@ local loadLiveries	= require('loadLiveries')
 
 -- ## DEBUG
 
+if not ME_DB then
+	HOOK.writeDebugBase(ModuleName .. ": MD_DB not available")
+end
+
 
 HOOK.writeDebugBase(ModuleName .. ": local required loaded")
 if not loadLiveries then
@@ -757,8 +761,10 @@ function getPayloadOfEachAcf()
 		--unitPayloadsFilenames = {}
 		
 		for i, filename in pairs(filenames) do
-	
+			
+			HOOK.writeDebugDetail(ModuleName .. ": getPayloadOfEachAcf unitPayloadsPaths")
 			local path = unitPayloadsPaths[filename]
+			HOOK.writeDebugDetail(ModuleName .. ": getPayloadOfEachAcf unitPayloadsPaths done")
 			local f, err = loadfile(path)
 			
 			if f then
@@ -781,6 +787,7 @@ function getPayloadOfEachAcf()
 		return unitsPayloads
 	end
 	
+
 	return loadPayloads()
 
 end
@@ -1088,6 +1095,11 @@ end
 
 -- ### DATABASES ###
 
+
+--dumpTable("ME_DB.lua", ME_DB)
+--dumpTable("_Goggi.lua", _G)
+
+
 function getWeaponsDataForDb(unique)
 	if unique then
 		local data = resource_by_unique_name[unique]
@@ -1097,7 +1109,7 @@ function getWeaponsDataForDb(unique)
 			-- wsString, useful for db_plane navigation
 			local wsTable = data.wsTypeOfWeapon or data.ws_type or data.attribute
 			if type(wsTable) == "table" then
-				if #wsTable == 4 then
+				if #wsTable == 4 and type (wsTable[4]) == "number" then
 					local wsString = wsTypeToString(wsTable)	
 					weapon.string = wsString
 				end
@@ -1721,37 +1733,41 @@ function createAircraftsDb()
 				wbc = dbData
 			end
 		end
-		--HOOK.writeDebugBase(ModuleName .. ": createAircraftsDb pre db_loadout")
+		HOOK.writeDebugBase(ModuleName .. ": createAircraftsDb pre db_loadout")
 
 		-- build reference for each wpn
-		--HOOK.writeDebugBase(ModuleName .. ": createAircraftsDb, building db_loadout")
+		HOOK.writeDebugBase(ModuleName .. ": createAircraftsDb, building db_loadout")
 		db_planes = {}
 		db_planes.version = _G._APP_VERSION
 		--db_liveries = {}
 
+		--HOOK.writeDebugBase(ModuleName .. ": createAircraftsDb, getPayloadOfEachAcf start")
 		local payloads = getPayloadOfEachAcf()
+		HOOK.writeDebugBase(ModuleName .. ": createAircraftsDb, getPayloadOfEachAcf done")
 
 		local db_loadout = {}
 		for uniID, uniData in pairs(rbun) do
 			local wsTable = uniData.wsTypeOfWeapon or uniData.ws_type or uniData.attribute --  <-- last one might be removed to exept fuel tanks etc
 			if wsTable then
+				--HOOK.writeDebugBase(ModuleName .. ": createAircraftsDb, uniID " .. tostring(uniID) .. ", wsTable found")
 				if type(wsTable) == "table" then
-					if #wsTable == 4 then
-						--if uniData.type_name == "missile" or uniData.type_name == "rocket" or uniData.type_name == "bomb" then
-							--HOOK.writeDebugDetail(ModuleName .. ": createAircraftsDb, wsTable found for " .. tostring(uniID))
-							local wsString = wsTypeToString(wsTable)	
-							--HOOK.writeDebugDetail(ModuleName .. ": createAircraftsDb, wsString for  " .. tostring(uniID).. " is " .. tostring(wsString))
-							local nameMultiVersion = uniData.display_name or uniData.displayName
-							local category = uniData.type_name or "other"
-							if wsTable[1] == 4 and wsTable[2] == 15 then
-								category = "tech"
-							elseif wsTable[1] == 1 and wsTable[2] == 3 and wsTable[3] == 43 then
-								category = "fuelTanks"
-							end
-							if nameMultiVersion then
-								db_loadout[uniID] = {string = wsString, name = nameMultiVersion, mass = uniData.mass, cat = category, CLSID = uniData.CLSID}
-							end
-						--end
+					--dumpTable("wsTable.lua", wsTable)
+					if #wsTable == 4 and type (wsTable[4]) == "number" then
+						--HOOK.writeDebugDetail(ModuleName .. ": createAircraftsDb, wsTable found for " .. tostring(uniID))
+						local wsString = wsTypeToString(wsTable)	
+						--HOOK.writeDebugDetail(ModuleName .. ": createAircraftsDb, wsString for  " .. tostring(uniID).. " is " .. tostring(wsString))
+						local nameMultiVersion = uniData.display_name or uniData.displayName
+						local category = uniData.type_name or "other"
+						if wsTable[1] == 4 and wsTable[2] == 15 then
+							category = "tech"
+						elseif wsTable[1] == 1 and wsTable[2] == 3 and wsTable[3] == 43 then
+							category = "fuelTanks"
+						end
+						if nameMultiVersion then
+							db_loadout[uniID] = {string = wsString, name = nameMultiVersion, mass = uniData.mass, cat = category, CLSID = uniData.CLSID}
+						end
+					else
+						HOOK.writeDebugBase(ModuleName .. ": createAircraftsDb, wsTable found but not 4 elements")
 					end
 				end
 			end
@@ -1824,7 +1840,7 @@ function createAircraftsDb()
 				end
 			end	
 			if typeAcf then
-				--HOOK.writeDebugBase(ModuleName .. ": createAircraftsDb, adding weapons to " .. tostring(uType))
+				HOOK.writeDebugBase(ModuleName .. ": createAircraftsDb, adding weapons to " .. tostring(uType))
 				local content = {}
 				content.category = typeAcf
 
@@ -2029,7 +2045,7 @@ function createWeaponsDb()
 		HOOK.writeDebugBase(ModuleName .. ": createWeaponsDb db_weapons exist and loaded")
 		if db_weapons.version == _G._APP_VERSION then
 			proceed = false
-			HOOK.writeDebugBase(ModuleName .. ": createAircraftsDb DCS is the same version, skipping")
+			HOOK.writeDebugBase(ModuleName .. ": createWeaponsDb DCS is the same version, skipping")
 		end
 	end
 
@@ -2046,7 +2062,7 @@ function createWeaponsDb()
 
 		for uniID, uniData in pairs(rbun) do
 			local wsTable = uniData.wsTypeOfWeapon or uniData.ws_type or uniData.attribute
-			if type(wsTable) == "table" and #wsTable == 4 then
+			if type(wsTable) == "table" and #wsTable == 4 and type(wsTable[4]) == "number" then
 				local wsString = wsTypeToString(wsTable)
 				local data = getWeaponsDataForDb(uniID)
 				if data then
@@ -2171,7 +2187,7 @@ function whAutoPopulateDepotsAndProduction(warehouse, mission)
 				if abData.unlimitedMunitions == false and abData.weapons and #abData.weapons > 0 then
 					local tblWpnCount = {}
 					for wId, wData in pairs(abData.weapons) do
-						if wData.wsType and type(wData.wsType) == 'table' then
+						if wData.wsType and type(wData.wsType) == 'table' and type(wData.wsType[4]) == "number" then
 							local a = wsTypeToString(wData.wsType)
 							if tblWpnCount[a] then
 								tblWpnCount[a] = tblWpnCount[a] + wData.initialAmount
@@ -2325,15 +2341,18 @@ function whAutoPopulateDepotsAndProduction(warehouse, mission)
 							HOOK.writeDebugDetail(ModuleName .. ": whAutoPopulateDepotsAndProduction ammo start")
 							if typeWh == ".Ammunition depot" or typeWh == "Warehouse" then
 								for _, wpnData in pairs(curWh.weapons) do
-									local wCode = wsTypeToString(wpnData.wsType)
 									local amount = nil
-									
-									if wCode then
-										for c, cData in pairs(tblCoaAbStores) do
-											if string.lower(c) == string.lower(curWh.coalition) then
-												local a = cData[wCode]
-												if a and type(a) == "number" then
-													amount = math.floor(a*2/countAmmoWh) -- check this... 
+									if wpnData.wsType and type(wpnData.wsType) == 'table' and type(wpnData.wsType[4]) == "number" then
+										local wCode = wsTypeToString(wpnData.wsType)
+										
+										
+										if wCode then
+											for c, cData in pairs(tblCoaAbStores) do
+												if string.lower(c) == string.lower(curWh.coalition) then
+													local a = cData[wCode]
+													if a and type(a) == "number" then
+														amount = math.floor(a*2/countAmmoWh) -- check this... 
+													end
 												end
 											end
 										end
@@ -2490,11 +2509,12 @@ function whAutoReset(warehouse, mission)
 											local expQty = multiplier * acfQty
 
 											for _, wpnData in pairs(zbData.weapons) do
-												
-												local wpnString = wsTypeToString(wpnData.wsType)
-												if wpnString == wId then
-													wpnData.initialAmount = wpnData.initialAmount + expQty
-													HOOK.writeDebugDetail(ModuleName .. ": whAutoReset; cat: " .. tostring(ztCat) .. ", zbId " .. tostring(zbId) .. ", wpnData.initialAmount " .. tostring(wpnData.initialAmount))
+												if wpnData.wsType and type(wpnData.wsType) == 'table' and type(wpnData.wsType[4]) == "number" then
+													local wpnString = wsTypeToString(wpnData.wsType)
+													if wpnString == wId then
+														wpnData.initialAmount = wpnData.initialAmount + expQty
+														HOOK.writeDebugDetail(ModuleName .. ": whAutoReset; cat: " .. tostring(ztCat) .. ", zbId " .. tostring(zbId) .. ", wpnData.initialAmount " .. tostring(wpnData.initialAmount))
+													end
 												end
 											end
 										end
@@ -2757,40 +2777,46 @@ function getWhRequirement(whTbl, cat, id, mission)
 			-- loops weapons
 			for _, wpnData in pairs(curWh.weapons) do
 
-				local wpnString = wsTypeToString(wpnData.wsType)
+
+				local wpnString = nil
+				if wpnData.wsType and type(wpnData.wsType) == 'table' and type(wpnData.wsType[4]) == "number" then
+					wpnString = wsTypeToString(wpnData.wsType)
+				end
 				local required = 0
 				local wpnUnique = nil
 				local wpnName = nil
 
 				-- cycle any airplane who use that wpn
-				for pType, pData in pairs(acfTbl) do
-					for wId, wData in pairs(pData.weapons) do 
-						if wpnString == wId then
+				if wpnString then
+					for pType, pData in pairs(acfTbl) do
+						for wId, wData in pairs(pData.weapons) do 
+							if wpnString == wId then
 
-							wpnUnique = wData.unique
-							wpnName = wData.name
+								wpnUnique = wData.unique
+								wpnName = wData.name
 
-							-- check year restriction
-							local allow = false
-							if db_years[wpnUnique] then
-								if year >= db_years[wpnUnique]["ALL"]["in_service"] then
-									allow = true
-								else
-									HOOK.writeDebugDetail(ModuleName .. ": getWhRequirement; weapons not yet created: " .. tostring(wpnUnique))
-								end
-							end
-
-							if allow == true then
-								-- define multiplier and totals
-								local multiplier = 1
-								for mCat, mNum in pairs(tblWhWpnMultiplier) do
-									if mCat == wData.category then
-										multiplier = mNum
+								-- check year restriction
+								local allow = false
+								if db_years[wpnUnique] then
+									if year >= db_years[wpnUnique]["ALL"]["in_service"] then
+										allow = true
+									else
+										HOOK.writeDebugDetail(ModuleName .. ": getWhRequirement; weapons not yet created: " .. tostring(wpnUnique))
 									end
 								end
 
-								HOOK.writeDebugDetail(ModuleName .. ": getWhRequirement; found wpn: " .. tostring(wpnName) .. " for " .. tostring(pType))
-								required = required + multiplier * pData.amount							
+								if allow == true then
+									-- define multiplier and totals
+									local multiplier = 1
+									for mCat, mNum in pairs(tblWhWpnMultiplier) do
+										if mCat == wData.category then
+											multiplier = mNum
+										end
+									end
+
+									HOOK.writeDebugDetail(ModuleName .. ": getWhRequirement; found wpn: " .. tostring(wpnName) .. " for " .. tostring(pType))
+									required = required + multiplier * pData.amount							
+								end
 							end
 						end
 					end
@@ -2972,9 +2998,11 @@ function exportWpnDb()
 		if wsTable then
 			if type(wsTable) == "table" then
 				if #wsTable == 4 then
-					local wsString = wsTypeToString(wsTable)	
-					--HOOK.writeDebugDetail(ModuleName .. ": createdbWpn, wsString for  " .. tostring(uniID).. " is " .. tostring(wsString))
-					dbWpn[#dbWpn+1] = {unique = uniID, name = uniData.name, wsData = wsString, dis_name = uniData.display_name}
+					if wsTable and type(wsTable) == 'table' and type(wsTable[4]) == "number" then
+						local wsString = wsTypeToString(wsTable)	
+						--HOOK.writeDebugDetail(ModuleName .. ": createdbWpn, wsString for  " .. tostring(uniID).. " is " .. tostring(wsString))
+						dbWpn[#dbWpn+1] = {unique = uniID, name = uniData.name, wsData = wsString, dis_name = uniData.display_name}
+					end
 				end
 			end
 		end
@@ -3043,16 +3071,19 @@ function exportWpnDb()
 																		wsId = wsData
 																		
 																	else
-																		--HOOK.writeDebugBase(ModuleName .. ": exportWpnDb, wsId is a table")
-																		local wsStr = wsTypeToString(wsData)
-																		--HOOK.writeDebugBase(ModuleName .. ": exportWpnDb, wsStr " .. tostring(wsStr))
-																		for hId, hData in pairs(dbWpn) do
-																			if hData.wsData == wsStr then
-																				--HOOK.writeDebugBase(ModuleName .. ": exportWpnDb, found in dbWpn")
-																				wsId = hData.unique
-																				--HOOK.writeDebugBase(ModuleName .. ": exportWpnDb, wsId " .. tostring(wsId))
-																				wpnName = hData.dis_name
-																				wsString = hData.wsData
+																		if wsData and type(wsData) == 'table' and type(wsData[4]) == "number" then
+																		
+																			--HOOK.writeDebugBase(ModuleName .. ": exportWpnDb, wsId is a table")
+																			local wsStr = wsTypeToString(wsData)
+																			--HOOK.writeDebugBase(ModuleName .. ": exportWpnDb, wsStr " .. tostring(wsStr))
+																			for hId, hData in pairs(dbWpn) do
+																				if hData.wsData == wsStr then
+																					--HOOK.writeDebugBase(ModuleName .. ": exportWpnDb, found in dbWpn")
+																					wsId = hData.unique
+																					--HOOK.writeDebugBase(ModuleName .. ": exportWpnDb, wsId " .. tostring(wsId))
+																					wpnName = hData.dis_name
+																					wsString = hData.wsData
+																				end
 																			end
 																		end
 																	end
@@ -3117,8 +3148,7 @@ function deepCopy(object)
 	return _copy(object)
 end
 
-function addFARPwhBase(unitId, coa, wh, voidIt)
-	HOOK.writeDebugDetail(ModuleName .. ": addFARPwhBase start for id: " .. tostring(unitId))
+function addFARPwhBase(unitId, coa, wh, voidIt) -- usato da SPWN
 
 	local defaultWhTbl = {
 		["gasoline"] = 
@@ -3226,7 +3256,7 @@ function addFARPwhBase(unitId, coa, wh, voidIt)
 	HOOK.writeDebugDetail(ModuleName .. ": addFARPwhBase: added entry to tblFARP, id: " .. tostring(unitId))
 end
 
-function addFARPwh(wh)
+function addFARPwh(wh) -- usato da SAVE
 	if tblFARP then
 		HOOK.writeDebugDetail(ModuleName .. ": addFARPwh start!")
 		for _id, _FARPdata in pairs(tblFARP) do
@@ -3391,32 +3421,34 @@ function setWeaponsAndFuel(whData, wpnDb)
 							
 							if bData.pylons then
 								for wId, wData in pairs(whData.weapons) do
-									local wString = wsTypeToString(wData.wsType)
-									for waId, waData in pairs(bData.pylons) do
-										local waString = "none"
-										local atString = "none"
-										
-										if waData.wsStr then
-											waString = wsTypeToString(waData.wsStr)
-										end
-										if waData.atStr then
-											atString = wsTypeToString(waData.atStr)
-										end
-
-										local check_ws = false
-										if wString == waString then
-											wData.initialAmount = wData.initialAmount + waData.num * wpnMultiplier * acfQuantity
-											HOOK.writeDebugDetail(ModuleName .. ": wpn updated using waString")
-											check_ws = true
-										end
- 
-										if check_ws == false then
-											if wString == atString then
-												wData.initialAmount = wData.initialAmount + waData.num * wpnMultiplier * acfQuantity
-												HOOK.writeDebugDetail(ModuleName .. ": wpn updated using atString")
+									if wData.wsType and type(wData.wsType) == 'table' and type(wData.wsType[4]) == "number" then
+										local wString = wsTypeToString(wData.wsType)
+										for waId, waData in pairs(bData.pylons) do
+											local waString = "none"
+											local atString = "none"
+											
+											if waData.wsStr then
+												waString = wsTypeToString(waData.wsStr)
 											end
-										end
-									end	
+											if waData.atStr then
+												atString = wsTypeToString(waData.atStr)
+											end
+
+											local check_ws = false
+											if wString == waString then
+												wData.initialAmount = wData.initialAmount + waData.num * wpnMultiplier * acfQuantity
+												HOOK.writeDebugDetail(ModuleName .. ": wpn updated using waString")
+												check_ws = true
+											end
+	
+											if check_ws == false then
+												if wString == atString then
+													wData.initialAmount = wData.initialAmount + waData.num * wpnMultiplier * acfQuantity
+													HOOK.writeDebugDetail(ModuleName .. ": wpn updated using atString")
+												end
+											end
+										end	
+									end
 								end
 							end
 						end
@@ -3498,22 +3530,24 @@ function whRestart(warehouse, airbases, mission)
 
 					for wId, wData in pairs(hData.weapons) do
 						if wData.initialAmount > 0 then
-							local ws1 = wsTypeToString(wData.wsType)
-							if table.getn(coaData.weapons) > 0 then
-								local isThere = false
-								for uId, uData in pairs(coaData.weapons) do
-									local ws2 = wsTypeToString(uData.wsType)
-									if ws1 == ws2 then
-										uData.initialAmount = uData.initialAmount + wData.initialAmount * depositMultiplier
-										isThere = true
+							if wData.wsType and type(wData.wsType) == 'table' and type(wData.wsType[4]) == "number" then
+								local ws1 = wsTypeToString(wData.wsType)
+								if table.getn(coaData.weapons) > 0 then
+									local isThere = false
+									for uId, uData in pairs(coaData.weapons) do
+										local ws2 = wsTypeToString(uData.wsType)
+										if ws1 == ws2 then
+											uData.initialAmount = uData.initialAmount + wData.initialAmount * depositMultiplier
+											isThere = true
+										end
 									end
-								end
 
-								if isThere == false then
+									if isThere == false then
+										coaData.weapons[#coaData.weapons+1] = {wsType = wData.wsType, initialAmount = wData.initialAmount * depositMultiplier }
+									end
+								else
 									coaData.weapons[#coaData.weapons+1] = {wsType = wData.wsType, initialAmount = wData.initialAmount * depositMultiplier }
 								end
-							else
-								coaData.weapons[#coaData.weapons+1] = {wsType = wData.wsType, initialAmount = wData.initialAmount * depositMultiplier }
 							end
 						end
 					end
@@ -3603,19 +3637,28 @@ function whRestart(warehouse, airbases, mission)
 																		-- reset weapons & aircrafts
 																		--HOOK.writeDebugDetail(ModuleName .. ": f1")
 																		for wId, wData in pairs(bData.weapons) do
-																			local ws1 = wsTypeToString(wData.wsType)																			
-																			for coa, coaData in pairs(WhTotals) do
-																				if string.lower(coa) == string.lower(_coalitionName) then
-																					--HOOK.writeDebugDetail(ModuleName .. ": f2")
-																					if table.getn(coaData.weapons) > 0 then
-																						for xId, xData in pairs(coaData.weapons) do
-																							local ws2 = wsTypeToString(xData.wsType)
-																							if ws1 == ws2 then
-																								HOOK.writeDebugDetail(ModuleName .. " xData.initialAmount: " .. tostring(xData.initialAmount))
-																								bData.weapons[wId] = xData
-																								--wData.InitialAmount = xData.InitialAmount
+																			local ws1 = nil		
+																			if wData.wsType and type(wData.wsType) == 'table' and type(wData.wsType[4]) == "number" then
+																				ws1 = wsTypeToString(wData.wsType)	
+																			end
+																			if ws1 then
+																				for coa, coaData in pairs(WhTotals) do
+																					if string.lower(coa) == string.lower(_coalitionName) then
+																						--HOOK.writeDebugDetail(ModuleName .. ": f2")
+																						if table.getn(coaData.weapons) > 0 then
+																							for xId, xData in pairs(coaData.weapons) do
+																								local ws2 = nil
+																								if xData.wsType and type(xData.wsType) == 'table' and type(xData.wsType[4]) == "number" then
+																									ws2 = wsTypeToString(xData.wsType)
+																								end
+
+																								if ws1 == ws2 then
+																									HOOK.writeDebugDetail(ModuleName .. " xData.initialAmount: " .. tostring(xData.initialAmount))
+																									bData.weapons[wId] = xData
+																									--wData.InitialAmount = xData.InitialAmount
+																								end																						
 																							end																						
-																						end																						
+																						end
 																					end
 																				end
 																			end
@@ -4250,7 +4293,11 @@ function getWpnItemNumber(wh, whType, whId, wpnStr)
 					
 					if afbData.unlimitedMunitions == false then
 						for lId, lData in pairs(afbData.weapons) do
-							local lWs = wsTypeToString(lData.wsType)
+							local lWs = nil
+							if lData.wsType and type(lData.wsType) == 'table' and type(lData.wsType[4]) == "number" then
+								lWs = wsTypeToString(lData.wsType)
+							end
+
 							if wpnStr == lWs then
 								--HOOK.writeDebugDetail(ModuleName .. ": getWpnItemNumber, lData.initialAmount: " .. tostring(lData.initialAmount))
 								return lData.initialAmount
@@ -4314,7 +4361,10 @@ function fixWarehouse(warehouse, base_qty)
 					end
 					if afbData.unlimitedMunitions == false then
 						for wId, wData in pairs(afbData.weapons) do
-							local wWs = wsTypeToString(wData.wsType)
+							local wWs = nil
+							if wData.wsType and type(wData.wsType) == 'table' and type(wData.wsType[4]) == "number" then
+								wWs = wsTypeToString(wData.wsType)
+							end
 							--HOOK.writeDebugDetail(ModuleName .. ": fixWarehouse - " .. tostring(wWs) .. " from " .. tostring(wData.initialAmount) .. " to " .. tostring(getWpnItemNumber(sourceTbl, wWs)))
 							wData.initialAmount = getWpnItemNumber(sCopy, afbType, afbId, wWs) or base_qty -- remove or 66
 							--HOOK.writeDebugDetail(ModuleName .. ": fixWarehouse - wWs: ".. tostring(wWs) .. ", wData.initialAmount: " .. tostring(wData.initialAmount))

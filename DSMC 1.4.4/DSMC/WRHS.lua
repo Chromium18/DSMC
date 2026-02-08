@@ -134,8 +134,17 @@ function updateWarehouses(tblContent, tempWarehouses)
 										if awId == "weapon" then
 											for wpnId, wpnData in pairs(awData) do
 												if type(wpnData) == 'table' then
-													local a = wsTypeToString(wpnData.wsd)	
-													local b = wsTypeToString(wConv)	
+
+													local a  = nil
+													local b  = nil
+
+													if wpnData.wsd and type(wpnData.wsd) == 'table' and type(wpnData.wsd[4]) == "number" then
+														a = wsTypeToString(wpnData.wsd)	
+													end
+
+													if wConv and type(wConv) == 'table' and type(wConv[4]) == "number" then
+														b = wsTypeToString(wConv)	
+													end
 													if a == b then
 														--HOOK.writeDebugDetail(ModuleName .. ": updateWarehouses whId " .. tostring(whId) .. " weapons data set found")
 														iData.initialAmount = wpnData.qty
@@ -239,8 +248,19 @@ function updateWarehouses(tblContent, tempWarehouses)
 										if awId == "weapon" then
 											for wpnId, wpnData in pairs(awData) do
 												if type(wpnData) == 'table' then
-													local a = wsTypeToString(wpnData.wsd)	
-													local b = wsTypeToString(wConv)	
+
+
+													local a  = nil
+													local b  = nil
+
+													if wpnData.wsd and type(wpnData.wsd) == 'table' and type(wpnData.wsd[4]) == "number" then
+														a = wsTypeToString(wpnData.wsd)	
+													end
+
+													if wConv and type(wConv) == 'table' and type(wConv[4]) == "number" then
+														b = wsTypeToString(wConv)	
+													end
+
 													if a == b then
 														--HOOK.writeDebugDetail(ModuleName .. ": updateWarehouses whId " .. tostring(whId) .. " weapons data set found")
 														iData.initialAmount = wpnData.qty
